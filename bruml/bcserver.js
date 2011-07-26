@@ -48,6 +48,7 @@ var server = http.createServer(function(request, response){
   var pathname = url.parse(request.url).pathname;
   var query    = url.parse(request.url, true).query;
   switch (pathname){
+    /*
     case '/':
       response.writeHead(200, {'Content-Type': 'text/html'});
       response.write(
@@ -64,8 +65,10 @@ var server = http.createServer(function(request, response){
       );
       response.end();
     break;
-    
+    */
+
     default:
+      /* Bypassing initial form
       if (pathname == '/bcmodule.html') {
         if (typeof(GLOBALS['username']) != 'undefined') {
           GLOBALS['username'] = query['username'];    
@@ -74,6 +77,7 @@ var server = http.createServer(function(request, response){
           console.log('NO USERNAME found');
         }
       } 
+      */
       paperboy
       .deliver(STATIC, request, response)
       // second arg is milliseconds!!
@@ -96,8 +100,7 @@ var server = http.createServer(function(request, response){
         response.end('404 - file "' + pathname + '" not found on chat server');
         log(404, request.url, ip, err);
       });
-    break;
-  } // switch;
+    } // switch;
 }); // http.createServer();
 
 // for paperboy;
