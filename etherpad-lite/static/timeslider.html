@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex, nofollow">
+
+  <title>Etherpad Lite Timeslider</title>
+  <link rel="stylesheet" href="../../static/css/pad.css">
+  <link rel="stylesheet" href="../../static/css/timeslider.css">
+  <style type="text/css" title="dynamicsyntax"></style>
+  <script src="../../static/js/jquery.min.js"></script>
+  <script>
+// <![CDATA[
+  var clientVars = {};
+
+  function createCookie(name,value,days) 
+  {
+	  if (days) {
+		  var date = new Date();
+		  date.setTime(date.getTime()+(days*24*60*60*1000));
+		  var expires = "; expires="+date.toGMTString();
+	  }
+	  else var expires = "";
+	  document.cookie = name+"="+value+expires+"; path=/";
+  }
+
+  function readCookie(name) 
+  {
+	  var nameEQ = name + "=";
+	  var ca = document.cookie.split(';');
+	  for(var i=0;i < ca.length;i++) {
+		  var c = ca[i];
+		  while (c.charAt(0)==' ') c = c.substring(1,c.length);
+		  if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+	  }
+	  return null;
+  }
+
+  function randomString() {
+	  var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
+	  var string_length = 20;
+	  var randomstring = '';
+	  for (var i=0; i<string_length; i++) {
+		  var rnum = Math.floor(Math.random() * chars.length);
+		  randomstring += chars.substring(rnum,rnum+1);
+	  }
+	  return "t." + randomstring;
+  }
+
+  var socket, token, padId;
+
+  $(window).load(function () 
+  {
+    //get the padId out of the url 
+    var urlParts= document.URL.split("/");
+    padId = urlParts[urlParts.length-2];
+        
+    //set the title
+    document.title = document.title + " | " + padId;
+        
+    //ensure we have a token
+    token = readCookie("token");
+    if(token == null)
+    {
+      token = randomString();
+      createCookie("token", token, 60);
+    }
+    
+    var loc = document.location;
+    //get the correct port
+    var port = loc.port == "" ? (loc.protocol == "https:" ? 443 : 80) : loc.port;
+    //create the url
+    var url = loc.protocol + "//" + loc.hostname + ":" + port + "/";
+    //find out in which subfolder we are
+    var resource = loc.pathname.substr(1,loc.pathname.indexOf("/p/")) + "socket.io";
+    
+    //build up the socket io connection
+    socket = io.connect(url, {resource: resource});
+    
+    //send the ready message once we're connected
+    socket.on('connect', function()
+    {
+      sendSocketMsg("CLIENT_READY", {});
+    });
+    
+    //route the incoming messages
+    socket.on('message', function(message)
+    {
+      if(window.console) console.log(message);
+      
+      if(message.type == "CLIENT_VARS")
+      {
+        handleClientVars(message);
+      }
+      else if(message.type == "CHANGESET_REQ")
+      {
+        changesetLoader.handleSocketResponse(message);
+      }
+    });
+  });
+  
+  //sends a message over the socket
+  function sendSocketMsg(type, data)
+  {
+    var msg = { "component" : "timeslider",
+                "type": type,
+                "data": data, 
+                "padId": padId,
+                "token": token,
+                "protocolVersion": 2};
+    
+    socket.json.send(msg);
+  }
+  
+  var fireWhenAllScriptsAreLoaded = [];
+  
+  function handleClientVars(message)
+  {
+    //save the client Vars
+    clientVars = message.data;
+    
+    //load all script that doesn't work without the clientVars
+    loadBroadcastSliderJS();
+    loadBroadcastRevisionsJS();
+    loadBroadcastJS();
+    
+    //fire all start functions of these scripts, formerly fired with window.load
+    for(var i=0;i < fireWhenAllScriptsAreLoaded.length;i++)
+    {
+      fireWhenAllScriptsAreLoaded[i]();
+    }
+  }
+
+  // ]]>
+  </script>
+  <script type="text/javascript" src="../../static/js/plugins.js"></script>
+  <script type="text/javascript" src="../../static/js/undo-xpopup.js"></script>
+  <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
+  <script type="text/javascript" src="../../static/js/json2.js"></script>
+  <script type="text/javascript" src="../../static/js/colorutils.js"></script>
+  <script type="text/javascript" src="../../static/js/draggable.js"></script>
+  <script type="text/javascript" src="../../static/js/pad_utils.js"></script>
+  <script type="text/javascript" src="../../static/js/pad_cookie.js"></script>
+  <script type="text/javascript" src="../../static/js/pad_editor.js"></script>
+  <script type="text/javascript" src="../../static/js/pad_editbar.js"></script>
+  <script type="text/javascript" src="../../static/js/pad_docbar.js"></script>
+  <script type="text/javascript" src="../../static/js/pad_modals.js"></script>
+  <script type="text/javascript" src="../../static/js/easysync2_client.js"></script>
+  <script type="text/javascript" src="../../static/js/domline_client.js"></script>
+  <script type="text/javascript" src="../../static/js/linestylefilter_client.js"></script>
+  <script type="text/javascript" src="../../static/js/cssmanager_client.js"></script>
+  <script type="text/javascript" src="../../static/js/broadcast.js"></script>
+  <script type="text/javascript" src="../../static/js/broadcast_slider.js"></script>
+  <script type="text/javascript" src="../../static/js/broadcast_revisions.js">
+</script>
+</head>
+
+<body id="padbody" class="timeslider limwidth nonpropad nonprouser">
+  <div id="padpage">
+    <div id="padtop">
+      <div class="topbar">
+        <div class="topbarleft">
+          <!-- -->
+        </div>
+
+        <div class="topbarright">
+          <!-- -->
+        </div>
+
+        <div class="topbarcenter">
+          <a href="/" class="topbarBrand">Etherpad v1.1</a> <a href="http://etherpad.org"
+          class="EtherpadLink">Etherpad is</a> <a href="../../static/LICENSE" class=
+          "Licensing">free software</a>
+
+          <div class="fullscreen" onclick="$('body').toggleClass('maximized');">
+            Full screen
+          </div><a href="javascript:void(0);" onclick=
+          "$('body').toggleClass('maximized');" class="topbarmaximize" title=
+          "Toggle maximization"></a>
+        </div>
+
+        <div class="specialkeyarea">
+          <!-- -->
+        </div>
+      </div>
+      <div id="alertbar">
+        <div id="servermsg">
+          <h3>Server Notice<span id="servermsgdate"><!-- --></span>:</h3><a id=
+          "hidetopmsg" href="javascript:%20void%20pad.hideServerMessage()" name=
+          "hidetopmsg">hide</a>
+
+          <p id="servermsgtext"><!-- --></p>
+        </div>
+      </div>
+
+      <div id="navigation"></div>
+      
+      <div id="docbar" class="menu docbar">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" id="docbartable"
+        class="docbartable">
+          <tr>
+            <td><img src="../../static/img/roundcorner_left.gif" /></td>
+
+            <td id="docbarpadtitle" class="docbarpadtitle" title=
+            "Public Pad: Public Pad"><span>Public Pad</span></td>
+
+            <td width="100%">&nbsp;</td>
+
+            <td><img src="../../static/img/roundcorner_right.gif" /></td>
+          </tr>
+        </table>
+      </div><!-- /docbar -->
+    </div>
+
+    <div id="timeslider-wrapper">
+      <div id="error" style="display: none">
+        It looks like you're having connection troubles. <a href=
+        "/ep/pad/view/test/latest">Reconnect now</a>.
+      </div>
+
+      <div id="timeslider" unselectable="on" style="display: none">
+        <div id="timeslider-left"></div>
+
+        <div id="timeslider-right"></div>
+
+        <div id="timer"></div>
+
+        <div id="timeslider-slider">
+          <div id="ui-slider-handle"></div>
+
+          <div id="ui-slider-bar"></div>
+        </div>
+
+        <div id="playpause_button">
+          <div id="playpause_button_icon" class=""></div>
+        </div>
+
+        <div id="steppers">
+          <div class="stepper" id="leftstar"></div>
+
+          <div class="stepper" id="rightstar"></div>
+
+          <div class="stepper" id="leftstep"></div>
+
+          <div class="stepper" id="rightstep"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!--<div id="rightbars" style="top: 95px;">
+      <div id="rightbar"><a href="/ep/pad/view/c6fg9GM51V/latest" id="viewlatest">Viewing latest content</a><br>
+      <a thref="/ep/pad/view/c6fg9GM51V/rev.%revision%" href="/ep/pad/view/c6fg9GM51V/rev.0" class="tlink">Link to this version</a>
+      <br><a thref="/ep/pad/view/ro.fw470Orpi4T/rev.%revision%" href="/ep/pad/view/ro.fw470Orpi4T/rev.0" class="tlink">Link to read-only page</a><br><a href="/c6fg9GM51V">Edit this pad</a>
+      <h2>Download as</h2>
+      <img src="../../static/img/may09/html.gif"><a thref="/ep/pad/export/c6fg9GM51V/rev.%revision%?format=html" href="/ep/pad/export/c6fg9GM51V/rev.0?format=html" class="tlink">HTML</a><br>
+      <img src="../../static/img/may09/txt.gif"><a thref="/ep/pad/export/c6fg9GM51V/rev.%revision%?format=txt" href="/ep/pad/export/c6fg9GM51V/rev.0?format=txt" class="tlink">Plain text</a><br>
+      <img src="../../static/img/may09/doc.gif"><a thref="/ep/pad/export/c6fg9GM51V/rev.%revision%?format=doc" href="/ep/pad/export/c6fg9GM51V/rev.0?format=doc" class="tlink">Microsoft Word</a><br>
+      <img src="../../static/img/may09/pdf.gif"><a thref="/ep/pad/export/c6fg9GM51V/rev.%revision%?format=pdf" href="/ep/pad/export/c6fg9GM51V/rev.0?format=pdf" class="tlink">PDF</a>
+
+
+      </div>
+      <div id="legend">
+      <h2>Authors</h2>
+      <table cellspacing="0" cellpadding="0" border="0" id="authorstable"><tbody><tr><td style="color:#999; padding-left: 10px" colspan="2">No Authors</td></tr></tbody></table>
+      </div>
+    </div>-->
+
+    <div id="padmain">
+      <div id="padeditor">
+        <div id="editbar" class="editbar disabledtoolbar">
+          <div id="editbarinner" class="editbarinner">
+            <div id="editbarleft" class="editbarleft">
+              <!-- -->
+            </div>
+
+            <div id="editbarright" class="editbarright">
+              <!-- termporary place holder--> 
+              <a id = "returnbutton">Return to pad</a>
+              <script>
+                $("#returnbutton").attr("href", document.location.href.substring(0,document.location.href.lastIndexOf('/timeslider')));
+              </script>
+            </div>
+
+            <div id="editbarinner" class="editbarinner">
+              <table cellpadding="0" cellspacing="0" border="0" id="editbartable" class=
+              "editbartable">
+                <tr>
+                  <td>
+                    <h1><span id="revision_label">Latest text of pad
+                    test</span> <span id="revision_date">Saved June 14, 2011</span></h1>
+                  </td>
+
+                  <td width="100%">&nbsp;</td>
+                </tr>
+              </table>
+
+              <table cellpadding="0" cellspacing="0" border="0" id="editbarsavetable"
+              class="editbarsavetable">
+                <tr>
+                  <td></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="editorcontainerbox">
+          <div id="padcontent">
+            
+          </div>
+        </div>
+      </div><!-- /padeditor -->
+    </div><!-- /padmain -->
+  </div><!-- /padpage -->
+
+  <div id="modaloverlay">
+    <div id="modaloverlay-inner">
+      <!-- -->
+    </div>
+  </div>
+
+  <div id="mainmodals"></div>
+</body>
+</html>
+
