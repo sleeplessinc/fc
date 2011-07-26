@@ -80,6 +80,8 @@ function handshake()
     resource: resource
   });
 
+  $('#bruml').attr('src', loc.protocol + '//' + loc.hostname + ':' + '8080' + '/');
+
   socket.once('connect', function()
   {
     var padId = document.URL.substring(document.URL.lastIndexOf("/") + 1);

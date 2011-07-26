@@ -109,9 +109,17 @@
     }
     $(document).ready(function(){
       // fill in holes;
-      setUserNameAndAffil();
-      $('.userName').text(userObj['userName']);
-      $('.userAffil').text(userObj['userAffil']);
+      //setUserNameAndAffil();
+      $('#loginForm').submit(function(e) {
+        e.preventDefault();
+	userObj.userName = $(this).find('#userName').val();
+	userObj.userAffil = $(this).find('#userAffiliation').val();
+	userObj.userID = 1234;
+	$('.userName').text(userObj['userName']);
+	$('.userAffil').text(userObj['userAffil']);
+	$(this).addClass('hidden');
+	$('#userBox').removeClass('hidden');
+      });
       // add event handlers;
       $('#backchatHeader input[type="button"]').click(function() {
         $('#backchatHeaderInstructions').toggle(500);
@@ -220,11 +228,16 @@ body {
   margin: 0;
   padding: 0;
 }
+.hidden {
+  display: none;
+}
+/*
 #container {
   margin: 2em;
   padding: 2em;
   border: 2px solid green;
 }
+*/
 /*========================*/
 #notesContainer {
   min-height: 30em;
@@ -246,8 +259,6 @@ body {
 /*========================*/
 #backchat {
   min-height: 30em;
-  margin-left: 30%;
-  border: 2px solid blue;
   background-color: wheat;
 }
 #backchatHeader {
@@ -277,6 +288,11 @@ body {
 }
 #userHeader {
 
+}
+#loginBox {
+  padding; 1.3em;
+  border-bottom: 3px solid black;
+  background-color: lavender;
 }
 #userHeader .userName { 
   font: bold 1.3em Palatino, "Times New Roman", Times, serif;
@@ -395,7 +411,7 @@ body {
 
 <body>
 <div id="container">
-<div id="notesContainer">
+<div id="notesContainer" class="hidden">
   <div id="notesHeader">
     <div class="courseTitle">The Human Mind</div>
     <div class="lectureDesc">Lecture #6: April 3, 2001: Evolution</div>
@@ -424,7 +440,17 @@ body {
   <p>Even if you don't have anything to say, you can <strong>vote posts up or down</strong> that you think are useful or problematic. Highly ranked and comments will be brought to the lecturer's attention.</p>
 </div><!-- headerInstructions -->
 
-<div id="userBox">
+<div id="loginBox">
+  <form id="loginForm">
+    <label for="name">Name: </label>
+    <input type="text" id="userName" name="userName" value="" size="20" />
+    <label for="affiliation">Affiliation: </label>
+    <input type="text" id="userAffiliation" name="userAffiliation" value="" size="20" />
+    <input type="submit" name="submit" value="Login" />
+  </form>
+</div>
+
+<div id="userBox" class="hidden">
   <div id="userHeader">
     <span class="userName"></span>
     <span class="userAffil"></span>
