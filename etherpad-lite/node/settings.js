@@ -28,11 +28,13 @@ exports.port = 9001;
 /*
  * The Type of the database
  */
-exports.dbType = "sqlite";
+//exports.dbType = "sqlite";
+exports.dbType = "mysql";
 /**
  * This setting is passed with dbType to ueberDB to set up the database
  */
-exports.dbSettings = { "filename" : "../var/sqlite.db" };
+//exports.dbSettings = { "filename" : "../var/sqlite.db" };
+exports.dbSettings = {"user":"root", host: "localhost", "password":"root", database: "store"}
 /**
  * A flag that shows if http requests should be loged to stdout
  */
