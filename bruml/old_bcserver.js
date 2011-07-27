@@ -32,7 +32,7 @@ var
   fs   = require('fs'),
   util = require('util'),
   // require.path.unshift('./lib');
-  io   = require('./lib/socket.io'),
+  io   = require('socket.io'),
   // path is used by paperboy;
   path     = require('path'),
   paperboy = require('./lib/paperboy'),
@@ -193,12 +193,12 @@ socket.on('connection', function(client){
   topPosts.forEach(function(el) {
     console.log(el.postid + ": " + el.posvotes + "/" + el.negvotes + " - " + el.created) 
   });
-  client.send( { "topPosts": topPosts } );
+  client.json.send( { posts: allPosts } );
 
   var recentPosts = allPosts.sort(sortPostsByCreatedDescending);
   console.log("Recent Posts:");
   recentPosts.forEach(function(el) { console.log(el.postid + " - " + el.posvotes + " - " + el.created) });
-  client.send( { "recentPosts": recentPosts } );
+  //client.send( { "recentPosts": recentPosts } );
 
   console.log("Sent " + topPosts.length + " accumulated topPosts.");
   console.log("Sent " + recentPosts.length + " accumulated recentPosts.");
@@ -206,13 +206,14 @@ socket.on('connection', function(client){
   client.broadcast({ "announcement": 'Hey! ' + client.sessionId + ' connected' });
   
   // create callbacks for this client;
-  client.on('message', function(message){
+  /*
+  client.on('message', function(message, fn){
     if ("post" in message) {
       message.post.postid = getNextUniquePostID();
       console.log("POST " + message.postid + " received from client: " + client.sessionId);
       allPosts.push(message.post);
       console.log("Now have " + allPosts.length + " posts in all");
-
+      fn(message.post.postid);
       var topPosts = allPosts.sort(sortPostsByVoteRankDescending);
       client.broadcast( { "topPosts": topPosts } );
       client.send(      { "topPosts": topPosts } );
@@ -236,6 +237,21 @@ socket.on('connection', function(client){
       console.log("UNKNOWN message type (" + message + "); client: " + client.sessionId);
     }
   });
+  */
+  client.on('post', function(msg) {
+    var post = msg.post;
+    post.postid = getNextUniquePostID();
+    console.log("POST " + post.postid + " received from client: " + client.sessionId);
+    allPosts.push(post);
+    console.log("Now have " + allPosts.length + " posts in all");
+    socket.emit('post', post);
+  });
+  client.on('vote', function(msg) {
+    console.log("VOTE received from client: " + client.sessionId);
+    console.log(message);
+    tallyVote(msg.vote.postid, msg.vote.direction);
+    socket.emit('vote', msg.vote);
+  })
   client.on('disconnect', function(){
     console.log("Client: " + client.sessionId + " disconnected");
     client.broadcast({ announcement: client.sessionId + ' disconnected' });
