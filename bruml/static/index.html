@@ -165,7 +165,10 @@
       //=====================================================================
       // create socket to server; note that we only permit websocket transport
       // for this demo;
-      socket = io.connect('http://localhost:8080');
+      var loc = document.location;
+      var port = loc.port == '' ? (loc.protocol == 'https:' ? 443 : 80) : loc.port;
+      var url = loc.protocol + '//' + loc.hostname + ':' + port;
+      socket = io.connect(url);
       // incoming messages are objects with one property whose value is the
       // type of message:
       //   { "posts":    [ <array of Post objects> ] }
