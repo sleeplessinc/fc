@@ -32,7 +32,7 @@
 
   TO DO: 1. Store postsVoted in local storage at end of session (onUnload);
          2. Get number-of-votes digit placed properly within rect;
-         3. On click of showTopPostsButton, replace button with current value
+         3. On click of showpostsButton, replace button with current value
             with button for previous value;
          4. If number of posts being displayed is fewer than the total, display
             the limit before "Highest";
@@ -45,22 +45,19 @@
   <link rel="shortcut icon" href="rumlfavicon.ico">
   <script src="http://code.jquery.com/jquery-1.6.min.js"></script>
   <script src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js"></script>
-  <script src="http://cdn.socket.io/stable/socket.io.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     var PORT = 8080;
     var currMeetingID = "888";
-    var max_top_posts_to_display = 6;
+    var MAXPOSTS = 10;
+    var posts = [];
+    var sortedBy = 'votes';
+    var socket;
     // note that this array applies only to this browser session!
     //  ==> could vote twice on same post during different sessions.
     // use local storage??
     var postsVoted = [];
     var userObj = { userID: null, userName: null, userAffil: null };
-    function setUserNameAndAffil() {
-      // add the real code to do this:
-      userObj.userID = "1234";
-      userObj.userName = "Andrew";
-      userObj.userAffil = "student";
-    }
     // the Post object is modelled on EtherPad:
     //  [the schoolid and courseid are implied in the meetingid];
     function assembleNewPostObj(msgBody) {
@@ -77,19 +74,14 @@
       postObj.body = msgBody;
       return postObj;
     }
-    // for testing; now used by Replace Top Posts button;
-    var dummyArrayOfPosts = [
-         assembleNewPostObj("First of the existing posts."),
-         assembleNewPostObj("Second of the existing posts."),
-         assembleNewPostObj("Third of the existing posts.")];
-         
-    function renderArrayOfTopPostsToScreen(arrayOfPosts) {
-      $('#topPosts .topPostContainer').remove();
-      $('#total_topPosts').text(arrayOfPosts.length);
+    function renderPosts() {
+      $('#posts .postContainer').remove();
+      //$('#total_posts').text(posts.length);
       // truncate long array of Posts;
-      arrayOfPostsToDisplay = arrayOfPosts.slice(0, max_top_posts_to_display - 1);
-      $("#topPostTemplate").tmpl(arrayOfPostsToDisplay).appendTo("#topPosts");
-      $('#topPosts .postVoteContainer').each(function(idx, container) {
+      var sortedPosts = sortedBy == 'created' ? posts.sort(createdDesc) : posts.sort(votesDesc);
+      var displayPosts = sortedPosts.slice(0, MAXPOSTS - 1);
+      $("#postTemplate").tmpl(displayPosts).appendTo("#posts");
+      $('#posts .postVoteContainer').each(function(idx, container) {
         var postid = $(container).attr("data-postid");
         if (postsVoted.indexOf(postid) != -1) {
           console.log("For " + postid + ": voted");
@@ -97,28 +89,34 @@
           console.log("For " + postid + ": NOT voted");
           $(container).addClass("unvoted");
         }
-      });      
+      });    
     }
-    // the display template needs work;
-    function renderArrayOfRecentPostsToScreen(arrayOfPosts) {
-      $('#recentPosts .recentPostContainer').remove();
-      $("#recentPostTemplate").tmpl(arrayOfPosts).appendTo("#recentPosts");      
-    }
+
     function assembleVoteObj(postid, upOrDown) {
-      return { "vote": { "objtype": "vote", "postid": postid, "direction": upOrDown } };
+      return { "objtype": "vote", "postid": postid, "direction": upOrDown };
+    }
+    function votesDesc(a, b) {
+      aRank = a.posvotes - (a.negvotes * 0.5);
+      bRank = b.posvotes - (b.negvotes * 0.5);
+      // for descending, reverse usual order; 
+      return bRank - aRank;
+    }
+    function createdDesc(a, b) {
+      // for descending, reverse usual order; 
+      return b.created - a.created;
     }
     $(document).ready(function(){
       // fill in holes;
       //setUserNameAndAffil();
       $('#loginForm').submit(function(e) {
         e.preventDefault();
-	userObj.userName = $(this).find('#userName').val();
-	userObj.userAffil = $(this).find('#userAffiliation').val();
-	userObj.userID = 1234;
-	$('.userName').text(userObj['userName']);
-	$('.userAffil').text(userObj['userAffil']);
-	$(this).addClass('hidden');
-	$('#userBox').removeClass('hidden');
+        userObj.userName = $(this).find('#userName').val();
+        userObj.userAffil = $(this).find('#userAffiliation').val();
+        userObj.userID = 1234;
+        $('.userName').text(userObj['userName']);
+        $('.userAffil').text(userObj['userAffil']);
+        $(this).addClass('hidden');
+        $('#userBox').removeClass('hidden');
       });
       // add event handlers;
       $('#backchatHeader input[type="button"]').click(function() {
@@ -136,11 +134,8 @@
         }
       });
       $('#submitPost').click(function() {
-        var newPostObj = assembleNewPostObj($('#enterPostTextarea').val());
-        // TODO: may have to substitute "<br />" for newlines;
-        $('#debugDisplay .newpost').remove();
-        $('#debugDisplay').append('<p class="newpost">NEW POST: ' + newPostObj.body + '</p>');
-        socket.send({ "post": newPostObj });
+        var newPost = assembleNewPostObj($('#enterPostTextarea').val());
+        socket.emit('post', newPost);
         $('#enterPostTextarea').val('');
       });
       $('.vote-tally-rect').live("click", function() {
@@ -156,69 +151,74 @@
         // unnecessary: $(this).parent().removeClass("unvoted");
         postsVoted.push(postid);
         var newVoteObj = assembleVoteObj(postid, direction);
-        socket.send(newVoteObj);
+        socket.emit('vote', newVoteObj);
       });
-      $('.showTopPostsButton').click(function(el) {
-        var maxToShow = $(this).attr("value");
-        max_top_posts_to_display = maxToShow;
-        console.log("Changed max topPosts to " + maxToShow);
+      $('#amountPosts').change(function() {
+        MAXPOSTS = $(this).val();
+        renderPosts();
       });
-      // this is just temporary for testing;
-      $('#replaceTopPosts').click(function() {
-        renderArrayOfTopPostsToScreen(dummyArrayOfPosts);
+      $('#sortPosts').change(function() {
+        var sort = $(this).val();
+        sortedBy = sortedBy !== sort ? sort : sortedBy;
+        renderPosts();
       });
       //=====================================================================
       // create socket to server; note that we only permit websocket transport
       // for this demo;
-      var socket = new io.Socket(null, {port: PORT,
-                                        transports: ['websocket'],
-                                        rememberTransport: false});
+      socket = io.connect('http://localhost:8080');
       // incoming messages are objects with one property whose value is the
       // type of message:
-      //   { "topPosts":    [ <array of Post objects> ] }
+      //   { "posts":    [ <array of Post objects> ] }
       //   { "recentPosts": [ <array of Post objects> ] }
       //   { "vote":        [ "postid": <string>, "direction": <"up"|"down"> ] }
       // Unresolved: whether to send vote messages for local change of display
       // or new arrays of posts with updated vote counts.  Vote message would not
-      // be adequate if it changed order of topPosts.  For now, send two new
+      // be adequate if it changed order of posts.  For now, send two new
       // arrays with updated vote counts and refrain from sending vote message.
       var messagesArrived = 0;
-      socket.on('message', function(obj) {
-        messagesArrived += 1;
-        console.log("Message " + messagesArrived + " has arrived.");
-        if ('topPosts' in obj){
-          $('#debugDisplay').append('<p>MESSAGE ' + messagesArrived + ' arrived: topPosts</p>');
-          console.log("These are the topPosts: ");
-          obj.topPosts.forEach(function(el) {
-            console.log(el.postid + ": " + el.posvotes + "/" + el.negvotes + " - " + el.created); 
-          });
-          renderArrayOfTopPostsToScreen(obj.topPosts)
-        } else if ('recentPosts' in obj) {
-          $('#debugDisplay').append('<p>MESSAGE ' + messagesArrived + ' arrived: recentPosts</p>');
-          console.log("These are the recentPosts: ");
-          obj.recentPosts.forEach(function(el) { console.log(el.postid + " - " + el.created); });
-          renderArrayOfRecentPostsToScreen(obj.recentPosts)
-        } else if ('vote' in obj) {
-          console.log("UNHANDLED vote message arrived.");
-        } else if ('announcement' in obj) {
-          $('#debugDisplay').append('<p>ANNOUNCEMENT: ' + messagesArrived + ': ' + 
-                  obj['announcement'] + '</p>');
-        } else {
-          $('#debugDisplay').append('<p>Unknown message type received on socket.</p>');
-        }
-      });
       socket.on('connect', function(){ 
         $('#debugDisplay').append('<p>SOCKET connected!</p>');
+       
       });
+       socket.on('message', function(obj) {
+          if ('posts' in obj) {
+            posts = obj.posts;
+            renderPosts();
+          }
+        });
+        socket.on('posts', function(posts) {
+          console.log(posts);
+        })
+        socket.on('post', function(post) {
+          posts.push(post);
+          renderPosts();
+        });
+        socket.on('vote', function(vote) {
+          posts = posts.map(function(post) {
+            if(post.postid === vote.postid) {
+              switch (vote.direction) {
+                case 'up': 
+                  post.posvotes++;
+                  break;
+                case 'down':
+                  post.negvotes++;
+                  break;
+              }
+            }
+            return post;
+          });
+          console.log(posts)
+          renderPosts();
+        })
+
       socket.on('disconnect', function(){ 
         $('#debugDisplay').append('<p>SOCKET disconnected!</p>');
       });
       // =============>  NB!! <==============
-      socket.connect();
 
       $('#enterPostTextarea').val("So this is the text of the first message " +
             "helpfully automatically placed in the textarea!");
-    }); // (document).ready();
+    });
   </script>
   <style>
 body {
@@ -326,41 +326,41 @@ body {
 }
 #enterUser { display: none; }
 #enterAdmin { display: none; }
-#topPosts {
+#posts {
   min-height: 6em;
   border-bottom: 3px solid black;
   padding: 1em 1.5em;
 }
-#topPostsHeader {
+#postsHeader {
   padding-bottom: 0.5em;
 }
 .postsHeaderTitle {
   font-size: 120%;
   font-weight: bold;
 }
-.showTopPostsButton {
+.showpostsButton {
   /* this doesn't work in Firefox; may be impossible on OS X */
   font-size: 70%;
 }
-#topPostsHeaderInstructions {
+#postsHeaderInstructions {
   background-color: #ffc3c3;
 }
 #recentPosts {
   min-height: 6em;
   padding: 1em 1.5em;
 }
-#topPosts .topPostContainer {
+#posts .postContainer {
   border-top: 2px solid #333;
   min-height: 5.3em;
   background-color: #EEE;
 }
-#topPosts .postVoteContainer {
+#posts .postVoteContainer {
   float: left;
 }
 .unvoted {
   background-color: #ffc3c3;
 }
-#topPosts .postVoteContainer .vote-tally-rect {
+#posts .postVoteContainer .vote-tally-rect {
 	width: 1.6em;
 	height: 1em;
 	border: 1px solid #444;
@@ -377,10 +377,10 @@ body {
 .postVoteContainer .vote-dn {
 	background: transparent url(/arrow_dn.png) no-repeat scroll 10% 50%;
 }
-#topPosts .postDisplayContainer {
+#posts .postDisplayContainer {
 	margin: 0.3em 0.3em 0.3em 4em;
 }
-#topPosts .postBody {
+#posts .postBody {
   min-height: 2.7em;
   border-left:  1px solid #D3CAEB;
   border-top:   1px solid #D3CAEB;
@@ -389,21 +389,21 @@ body {
   overflow: hidden;
   padding: 0.2em;
 }
-#topPosts .postFooter {
+#posts .postFooter {
   background-color: #D3CAEB;
   color: #111111;
   padding-left: 0.6em;
 }
-#topPosts .postFooter .postid {
+#posts .postFooter .postid {
   float: right;
   margin-right: 0.4em;
   font-size: 70%;
   color: #333;
 }
-#topPosts .userName {
+#posts .userName {
   font: bold 1em Helvetica, sans-serif;
 }
-#topPosts .userAffil {
+#posts .userAffil {
   font: italic 1em Helvetica, sans-serif;
 }
   </style>
@@ -424,7 +424,7 @@ body {
               padding: 0.8em; 
               border: 2px solid #ddd; 
               text-align: center;">
-    <input type="button" id="replaceTopPosts" value="Replace Top Posts" />
+    <input type="button" id="replaceposts" value="Replace Top Posts" />
   </div>
 
 </div><!-- notesContainer -->
@@ -501,68 +501,30 @@ body {
 
 </div><!-- userBox -->
 
-<div id="topPosts">
-  <div id="topPostsHeader">
-    <span class="postsHeaderTitle">Highest Rated Posts</span> (of <span id="total_topPosts">0</span>):
+<div id="posts">
+  <div id="postsHeader">
+    <span class="postsHeaderTitle">Posts</span> sorted by 
+    <select id="sortPosts">
+      <option value="votes">Votes</option>
+      <option value="created">Created</option>
+    </select>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     show:
-    <input type="button" class="showTopPostsButton" value="10" />
-    <input type="button" class="showTopPostsButton" value="15" />
-    <input type="button" class="showTopPostsButton" value="20" />
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <span id="topPostsHeaderInstructions">&nbsp; awaiting your vote &nbsp;</span>
+    <select id="amountPosts">
+      <option value="10">10</option>
+      <option value="15">15</option>
+      <option value="20">20</option>
+    </select>
   </div>
   
   
 </div>
-
-<div id="recentPosts">
-  <div id="recentPostsHeader">
-    <span id="maxRecentPosts">6</span> Most Recent Posts:
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <input type="button" id="chgRecentLimit" value="change number displayed" />
-  </div>
-  <!-- recentPostContainers will be added here -->
-</div>
-    
 </div> <!-- backchat -->
 </div> <!-- container -->
-<div id="hiddenTopPosts" style="display: none; ">
-  <!-- repeated for each top post; -->
-  <div class="topPostContainer">
-    <div class="postVoteContainer">
-      <div class="vote-tally-rect vote-up-rect">5</div>
-      <div class="vote-tally-rect vote-dn-rect">2</div>
-    </div>
-    <div class="postDisplayContainer">
-      <div class="postBody">The body of the post may ask a question?</div> 
-      <div class="postFooter">
-        <span class="userName">Sammy</span>&nbsp;&nbsp;&nbsp;
-        <span class="userAffil">student</span>
-      </div> 
-    </div>
-  </div><!-- topPostContainer -->
-  
-  <!-- repeated for each top post; -->
-  <div class="topPostContainer">
-    <div class="postVoteContainer">
-      <div class="vote-tally-rect vote-up-rect">5</div>
-      <div class="vote-tally-rect vote-dn-rect">2</div>
-    </div>
-    <div class="postDisplayContainer">
-      <div class="postBody">The body of the post may ask a very good question?</div> 
-      <div class="postFooter">
-        <span class="userName">George</span>&nbsp;&nbsp;&nbsp;
-        <span class="userAffil">student</span>
-      </div> 
-    </div>
-  </div><!-- topPostContainer -->
-</div>
 <!-- these templates are used to generate Top Posts from an array received from
      the server. The unknown mime type causes the browser to ignore it -->
-<script id="topPostTemplate" type="text/x-jQuery-tmpl">
-  <div class="topPostContainer" data-postid="${postid}">
+<script id="postTemplate" type="text/x-jQuery-tmpl">
+  <div class="postContainer" data-postid="${postid}">
     <div class="postVoteContainer" data-postid="${postid}">
       <div class="vote-tally-rect vote-up">${posvotes}</div>
       <div class="vote-tally-rect vote-dn">${negvotes}</div>
@@ -573,21 +535,6 @@ body {
         <span class="userName">${username}</span>
         <span class="userAffil">${useraffil}</span>
         <span class="postid">${postid}</span>
-      </div> 
-    </div>
-  </div>
-</script>
-<script id="recentPostTemplate" type="text/x-jQuery-tmpl">
-  <div class="recentPostContainer">
-    <div class="postVoteContainer" data-postid="${postid}">
-      <div class="vote-tally-rect vote-up">${posvotes}</div>
-      <div class="vote-tally-rect vote-dn">${negvotes}</div>
-    </div>
-    <div class="postDisplayContainer">
-      <div class="postBody">${body}</div> 
-      <div class="postFooter">
-        <span class="userName">${username}</span>&nbsp;&nbsp;&nbsp;
-        <span class="userAffil">${useraffil}</span>
       </div> 
     </div>
   </div>
