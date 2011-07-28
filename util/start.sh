@@ -4,11 +4,6 @@ cd ~
 
 export PATH="/usr/local/bin:$PATH"
 
-echo ok
-whoami
-set
-pwd
-
 
 cat > .ssh/id_rsa << FIN
 -----BEGIN RSA PRIVATE KEY-----
