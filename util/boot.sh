@@ -86,4 +86,12 @@ git checkout dev
 cd fc/etherpad-lite
 npm install
 
+cat > nothing.sql << FIN
+use mysql;
+create database fc;
+grant all on fc to "fc@%";
+flush priveleges;
+FIN
+
+
 
