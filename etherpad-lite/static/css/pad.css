@@ -133,13 +133,15 @@ a img
   z-index: 1;
 }
 
+
 #bruml {
-  width: 40%;
-  height: 100%;
-  top: 36px;
-  right: 0px;
-  border: 0;
-  border-left: 1px;
+	width: 30%;
+	height: 100%;
+	top: 36px;
+	right: 0px;
+	background: #eef;
+	border: 0;
+	border-left: solid 1px #aaa;
 }
 
 #editorcontainer iframe {

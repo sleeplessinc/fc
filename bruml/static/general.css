@@ -6,7 +6,6 @@ body {
 	display: none;
 }
 #container {
-	border: 1px solid #aaa;
 }
 /*========================*/
 #notesContainer {
@@ -66,11 +65,13 @@ margin-top: 0.2em;
 #userHeader .userName { 
 	font-weight: bold;
 	font-size: 110%;
+	width: 10em;
 }
 #userHeader .userAffil {
 	margin-left: 1.5em;
 	font-style: italic;
 	font-size: 110%;
+	width: 10em;
 }
 #userButtons {
 float: right;
