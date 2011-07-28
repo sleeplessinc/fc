@@ -5,13 +5,9 @@ body {
 .hidden {
 	display: none;
 }
-/*
 #container {
-margin: 2em;
-padding: 2em;
-border: 2px solid green;
+	border: 1px solid #aaa;
 }
-*/
 /*========================*/
 #notesContainer {
 min-height: 30em;
@@ -37,7 +33,7 @@ text-align: center;
 font-weight: bold;
 padding: 0.5em 0.8em;
 background-color: #DDD;
-border-bottom: 2px solid black;
+border-bottom: 2px solid #aaa;
 }
 #backchatHeader input { font-size: 0.7em; }
 #backchatHeaderInstructions {
@@ -54,7 +50,7 @@ margin-top: 0.2em;
 #userBox {
 	position: relative; /* allow position absolute for charsLeftMsg and submit btn */
 	padding: 1em 2em;
-	border-bottom: 1px solid black;
+	border-bottom: 1px solid #aaa;
 	background-color: #ddf;
 }
 #userHeader {
@@ -62,7 +58,7 @@ margin-top: 0.2em;
 }
 #loginBox {
 	padding: 0.5em 1em;
-	border-bottom: 1px solid black;
+	border-bottom: 1px solid #aaa;
 	background: #ddd;
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#ddf), to(#cce));
 	background-image: -moz-linear-gradient(#ddf, #cce)
