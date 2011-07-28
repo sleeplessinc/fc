@@ -5,6 +5,7 @@ cd ~
 export PATH="/usr/local/bin:$PATH"
 
 
+
 cat > .ssh/id_rsa << FIN
 -----BEGIN RSA PRIVATE KEY-----
 MIIEoQIBAAKCAQEArjSBiT01b3b3buA5bRS+LLmLz0BfEQd3tHmyjbKhSL3wCQgY
