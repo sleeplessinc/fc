@@ -219,197 +219,11 @@
       });
       // =============>  NB!! <==============
 
-      $('#enterPostTextarea').val("So this is the text of the first message " +
-            "helpfully automatically placed in the textarea!");
+      $('#enterPostTextarea').val("");
     });
   </script>
-  <style>
-body {
-  font: "ComicSans" sans-serif;
-  font-size: 100%;
-  background-color: #fff1c5;
-  margin: 0;
-  padding: 0;
-}
-.hidden {
-  display: none;
-}
-/*
-#container {
-  margin: 2em;
-  padding: 2em;
-  border: 2px solid green;
-}
-*/
-/*========================*/
-#notesContainer {
-  min-height: 30em;
-  float: left;
-  width: 25%;
-}
-#notesHeader { 
-  padding: 0.8em;
-  border: 2px solid #ddd;
-}
-.courseTitle { font: bold 1.6em Palatino, "Times New Roman", Times, serif; }
-.lectureDesc { font: bold 1.3em Palatino, "Times New Roman", Times, serif; }
-#notesComponent {
-  margin-top: 4em;
-  padding: 0.8em;
-  border: 2px solid #ddd;
-  text-align: center;
-}
-/*========================*/
-#backchat {
-  min-height: 30em;
-  background-color: wheat;
-}
-#backchatHeader {
-  font-weight: bold;
-  padding: 0.5em 0.8em;
-  background-color: #DDD;
-  border-bottom: 2px solid black;
-}
-#backchatHeader input { font-size: 0.7em; }
-#backchatHeaderInstructions {
-  display: none;
-  /* example combo: font:italic bold 12px/30px Georgia, serif; */
-  font: 1.2em "Times New Roman", Times, serif;
-  background-color: #EEE;
-  padding: 1em;
-}
-#backchatHeaderInstructions p {
-  text-indent: 1em;
-  margin-top: 0.2em;
-}
-/*========================*/
-#userBox {
-  position: relative; /* allow position absolute for charsLeftMsg and submit btn */
-  padding: 1.3em;
-  border-bottom: 3px solid black;
-  background-color: lavender;
-}
-#userHeader {
 
-}
-#loginBox {
-  padding; 1.3em;
-  border-bottom: 3px solid black;
-  background-color: lavender;
-}
-#userHeader .userName { 
-  font: bold 1.3em Palatino, "Times New Roman", Times, serif;
-}
-#userHeader .userAffil {
-  font: italic 1em Palatino, "Times New Roman", Times, serif;
-  margin-left: 1.5em;
-}
-#userButtons {
-  float: right;
-}
-#enterPostTextarea {
-  font-family: "frutiger linotype","lucida grande","verdana",sans-serif;
-  font-size: 100%;
-  border: 4px solid green; /*#D3CAEB; */
-  display: block;
-  width: 98%;
-  margin: 1.2em 0 2em 0;
-  padding: 0.3em 0.4em;
-}
-#charsLeftMsg {
-  position: absolute;
-  left: 3em;
-  bottom: 1.5em;
-  color: red; 
-}
-#submitPost {
-  position: absolute;
-  right: 1.5em;
-  bottom: 1.5em;
-}
-#enterUser { display: none; }
-#enterAdmin { display: none; }
-#posts {
-  min-height: 6em;
-  border-bottom: 3px solid black;
-  padding: 1em 1.5em;
-}
-#postsHeader {
-  padding-bottom: 0.5em;
-}
-.postsHeaderTitle {
-  font-size: 120%;
-  font-weight: bold;
-}
-.showpostsButton {
-  /* this doesn't work in Firefox; may be impossible on OS X */
-  font-size: 70%;
-}
-#postsHeaderInstructions {
-  background-color: #ffc3c3;
-}
-#recentPosts {
-  min-height: 6em;
-  padding: 1em 1.5em;
-}
-#posts .postContainer {
-  border-top: 2px solid #333;
-  min-height: 5.3em;
-  background-color: #EEE;
-}
-#posts .postVoteContainer {
-  float: left;
-}
-.unvoted {
-  background-color: #ffc3c3;
-}
-#posts .postVoteContainer .vote-tally-rect {
-	width: 1.6em;
-	height: 1em;
-	border: 1px solid #444;
-	-moz-border-radius: 6px;
-	margin: 0.3em;
-	padding: 0.2em;
-  background-color: #fff;
-	font-size: 1.3em;
-	text-align: right;
-}
-.postVoteContainer .vote-up {
-	background: transparent url(/arrow_up.png) no-repeat scroll 10% 50%;
-}
-.postVoteContainer .vote-dn {
-	background: transparent url(/arrow_dn.png) no-repeat scroll 10% 50%;
-}
-#posts .postDisplayContainer {
-	margin: 0.3em 0.3em 0.3em 4em;
-}
-#posts .postBody {
-  min-height: 2.7em;
-  border-left:  1px solid #D3CAEB;
-  border-top:   1px solid #D3CAEB;
-  border-right: 1px solid #D3CAEB;
-  font: 1em/1.2em Palatino, "Times New Roman", Times, serif;
-  overflow: hidden;
-  padding: 0.2em;
-}
-#posts .postFooter {
-  background-color: #D3CAEB;
-  color: #111111;
-  padding-left: 0.6em;
-}
-#posts .postFooter .postid {
-  float: right;
-  margin-right: 0.4em;
-  font-size: 70%;
-  color: #333;
-}
-#posts .userName {
-  font: bold 1em Helvetica, sans-serif;
-}
-#posts .userAffil {
-  font: italic 1em Helvetica, sans-serif;
-}
-  </style>
+	<link href="general.css" rel="stylesheet">
 </head>
 
 <body>
@@ -433,7 +247,7 @@ body {
 </div><!-- notesContainer -->
 
 <div id="backchat">
-<div id="backchatHeader">
+<!-- div id="backchatHeader">
   Share your reactions:&nbsp;&nbsp;
   <input type="button" value="show instructions" />
 </div>
@@ -441,7 +255,7 @@ body {
 <div id="backchatHeaderInstructions">
   <p>Use this section to react to the lecture: your posts will be seen by others <strong>immediately</strong>, and they can <strong>respond</strong> or <strong>vote your post up or down</strong>. Your post can be a <strong>question</strong>, <strong>comment</strong>, <strong>link to something related to the lecture</strong>, or whatever else you think other people might be interested in.</p>
   <p>Even if you don't have anything to say, you can <strong>vote posts up or down</strong> that you think are useful or problematic. Highly ranked and comments will be brought to the lecturer's attention.</p>
-</div><!-- headerInstructions -->
+</div -->
 
 <div id="loginBox">
   <form id="loginForm">
@@ -458,8 +272,10 @@ body {
     <span class="userName"></span>
     <span class="userAffil"></span>
     <div id="userButtons">
+    	<!--
       <input type="button" id="editUser" value="Edit User" />
       <input type="button" id="adminPassword" value="Admin" />
+      	-->
     </div>
   </div>
 
@@ -498,7 +314,7 @@ body {
               name="data[Post][meeting_id]"
               value="926" />
       <input type="button" id="submitPost"
-             name="submitPost" value="Submit Post" />
+             name="submitPost" value="Post Comment" />
     </form>
   </div><!-- enterPost -->
 
@@ -506,18 +322,19 @@ body {
 
 <div id="posts">
   <div id="postsHeader">
-    <span class="postsHeaderTitle">Posts</span> sorted by 
+    <span class="postsHeaderTitle">Posts</span>
     <select id="sortPosts">
-      <option value="votes">Votes</option>
-      <option value="created">Created</option>
+      <option value="votes">Sort by votes</option>
+      <option value="created">Sort by date/time</option>
     </select>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <!-- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     show:
     <select id="amountPosts">
       <option value="10">10</option>
       <option value="15">15</option>
       <option value="20">20</option>
     </select>
+	-->
   </div>
   
   
@@ -536,6 +353,7 @@ body {
       <div class="postBody">${body}</div> 
       <div class="postFooter">
         <span class="userName">${username}</span>
+	&mdash;
         <span class="userAffil">${useraffil}</span>
         <span class="postid">${postid}</span>
       </div> 
