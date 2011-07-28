@@ -263,17 +263,28 @@
 
 <div id="loginBox">
   <form id="loginForm">
-    <label for="name">Name:</label>
-    <input type="text" id="userName" name="userName" value="" size="20" /><br>
-    <label for="affiliation">Affiliation:</label>
-    <input type="text" id="userAffiliation" name="userAffiliation" value="" size="20" /><br>
-    <input type="submit" name="submit" value="Login" />
+  	<h1>Login to post comments</h1>
+  	<div>
+		<div class=label>Name</div>
+		<div class=data> <input type="text" id="userName" name="userName" value="" size="20" /><br> </div>
+  	</div>
+
+  	<div>
+		<div class="label">Affiliation</div>
+		<div class=data> <input type="text" id="userAffiliation" name="userAffiliation" value="" size="20" /><br> </div>
+  	</div>
+
+  	<div>
+		<div class="label"></div>
+		<div class=data> <input type="submit" name="submit" value="Login" /> </div>
+	</div>
   </form>
 </div>
 
 <div id="userBox" class="hidden">
   <div id="userHeader">
     <span class="userName"></span>
+	&mdash;
     <span class="userAffil"></span>
     <div id="userButtons">
     	<!--
