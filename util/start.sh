@@ -49,4 +49,10 @@ cd etherpad-lite
 npm install
 
 
+npm install socket.io
+
+# xxx run servers 
+
+
+
 
