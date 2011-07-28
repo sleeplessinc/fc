@@ -16,10 +16,10 @@
   // An Example of MySQL Configuration
    "dbType" : "mysql",
    "dbSettings" : {
-                    "user"    : "root", 
-                    "host"    : "localhost", 
-                    "password": "root", 
-                    "database": "store"
+                    "user"    : "fc", 
+                    "host"    : "gus.sleepless.com", 
+                    "password": "nyFs6sJyxj4ZKpds", 
+                    "database": "fc"
                   },
   
   //if true, every http request will be loged to stdout
