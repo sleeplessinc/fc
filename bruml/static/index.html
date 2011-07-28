@@ -62,11 +62,11 @@
     //  [the schoolid and courseid are implied in the meetingid];
     function assembleNewPostObj(msgBody) {
       // the postid is assigned at the server;
-      var postObj = { objtype: "post", postid: "notyetset",
+      var postObj = { objtype: "post", postid: null,
                       posvotes: 0, negvotes: 0,
                       // these are copied from EtherPad; use is unknown;
                       isdeleted: false, ispromoted: false, isdemoted: false };
-      postObj.meetingid = currMeetingID;
+      postObj.meetingid = null;
       postObj.userid    = userObj.userID;
       postObj.username  = userObj.userName;
       postObj.useraffil = userObj.userAffil;
@@ -179,9 +179,13 @@
       // be adequate if it changed order of posts.  For now, send two new
       // arrays with updated vote counts and refrain from sending vote message.
       var messagesArrived = 0;
-      socket.on('connect', function(){ 
-        $('#debugDisplay').append('<p>SOCKET connected!</p>');
-       
+      socket.on('connect', function(){
+        var hash = window.location.hash.substring(1);
+        socket.emit('lectureID', hash);
+        $(window).bind('hashchange', function() {
+          var hash = window.location.hash.substring(1);
+          socket.emit('lectureID', hash);
+        });
       });
        socket.on('message', function(obj) {
           if ('posts' in obj) {
@@ -198,7 +202,7 @@
         });
         socket.on('vote', function(vote) {
           posts = posts.map(function(post) {
-            if(post.postid === vote.postid) {
+            if(post.postid == vote.postid) {
               switch (vote.direction) {
                 case 'up': 
                   post.posvotes++;

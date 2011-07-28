@@ -80,7 +80,7 @@ function handshake()
     resource: resource
   });
 
-  $('#bruml').attr('src', loc.protocol + '//' + loc.hostname + ':' + '8080' + '/');
+  $('#bruml').attr('src', loc.protocol + '//' + loc.hostname + ':' + '8080' + '#' + document.URL.substring(document.URL.lastIndexOf("/") + 1));
 
   socket.once('connect', function()
   {

@@ -1,4 +1,5 @@
-var express = require('express')
+var express = require('express');
+var fs = require('fs');
 var app = express.createServer();
 var io = require('socket.io').listen(app);
 
@@ -7,61 +8,47 @@ app.configure(function() {
   app.use(express.errorHandler({dumpExceptions: true, showStack: true}));
 });
 
-var GLOBALS = { "meetingID": "888", "nextPostID": 1, "username": "notyetset" };
 
-var dummyPosts = [ { 
-  objtype: "post",
-  meetingid: GLOBALS["meetingID"],
-  userid: 12345,
-  username: "Andrew Magliozzi",
-  useraffil: "Finalsclub.org",
-  postid: getNextUniquePostID(),
-  body: "Welcome!",
-  posvotes: 1,
-  negvotes: 1,
-  isdeleted: false,
-  ispromoted: false,
-  isdemoted: false,
-  created: (new Date).getTime() 
-} ];
-
-var posts = dummyPosts;
-
-function getNextUniquePostID() {
-  var nextID = GLOBALS["nextPostID"];
-  GLOBALS["nextPostID"] += 1;
-  return GLOBALS["meetingID"] + "-" + nextID;
-}
+var posts = {};
 
 app.listen('8080');
 
 io.sockets.on('connection', function(socket) {
-  socket.json.send({posts: posts});
-
+  socket.on('lectureID', function(id) {
+    socket.set('lectureID', id);
+    if (!posts[id]) {
+      posts[id] = [];
+    }
+    socket.json.send({posts: posts[id]});
+  })
   socket.on('post', function(post) {
-    post.postid = getNextUniquePostID();
-    console.log("POST " + post.postid + " received from client: " + socket.id);
-    posts.push(post);
-    console.log("Now have " + posts.length + " posts in all");
-    io.sockets.emit('post', post);
+    socket.get('lectureID', function(err, id) {
+      post.postid = posts[id].length + 1;
+      post.meetingid = id;
+      console.log("POST " + post.postid + " received from client: " + socket.id);
+      posts[id].push(post);
+      console.log("Now have " + posts[id].length + " posts in all");
+      io.sockets.emit('post', post);
+    });
   });
 
   socket.on('vote', function(vote) {
-    console.log("VOTE received from client: " + socket.id);
-    console.log(vote);
-    posts = posts.map(function(post) {
-      if(post.postid === vote.postid) {
-        switch (vote.direction) {
-          case 'up': 
-            post.posvotes++;
-            break;
-          case 'down':
-            post.negvotes++;
-            break;
+    socket.get('lectureID', function(err, id) {
+      _posts = posts[id].map(function(post) {
+        if(post.postid == vote.postid) {
+          switch (vote.direction) {
+            case 'up': 
+              post.posvotes++;
+              break;
+            case 'down':
+              post.negvotes++;
+              break;
+          }
         }
-      }
-      return post;
-    });
-    io.sockets.emit('vote', vote);
+        return post;
+      });
+      posts[id] = _posts;
+      io.sockets.emit('vote', vote);
+    })
   })
 });
