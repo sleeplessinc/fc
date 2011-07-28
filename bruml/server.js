@@ -13,30 +13,16 @@ var dummyPosts = [ {
   objtype: "post",
   meetingid: GLOBALS["meetingID"],
   userid: 12345,
-  username: "Bill Jones",
-  useraffil: "student",
+  username: "Andrew Magliozzi",
+  useraffil: "Finalsclub.org",
   postid: getNextUniquePostID(),
-  body: "This is dummy post one: 1111111.",
+  body: "Welcome!",
   posvotes: 1,
   negvotes: 1,
   isdeleted: false,
   ispromoted: false,
   isdemoted: false,
   created: (new Date).getTime() 
-}, {
-  objtype: "post",
-  meetingid: GLOBALS["meetingID"],
-  userid: 12345,
-  username: "George Smith",
-  useraffil: "student",
-  postid: getNextUniquePostID(),
-  body: "This is dummy post two: 2222222.",
-  posvotes: 5,
-  negvotes: 2,
-  isdeleted: false,
-  ispromoted: false,
-  isdemoted: false,
-  created: (new Date).getTime() + 10000
 } ];
 
 var posts = dummyPosts;

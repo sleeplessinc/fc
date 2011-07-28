@@ -146,6 +146,7 @@ padding: 1em 1.5em;
 	background-color: #fff;
 	font-size: 120%;
 	text-align: right;
+	cursor: pointer; cursor: hand;
 }
 .postVoteContainer .vote-up {
 background: transparent url(/arrow_up.png) no-repeat scroll 10% 50%;
