@@ -44,10 +44,16 @@ git checkout dev
 cd etherpad-lite
 npm install
 
-
+cd ../bruml
 npm install socket.io
 
-# xxx run servers 
+
+cd
+ln -s fc/bruml/log.txt b.log
+ln -s fc/etherpad-lite/node/log.txt e.log
+
+./restart.sh
+
 
 
 
