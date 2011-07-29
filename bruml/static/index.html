@@ -45,7 +45,7 @@
       $("#postTemplate").tmpl(displayPosts).appendTo("#posts");
       $('#posts .postVoteContainer').each(function(idx, container) {
         var postid = $(container).attr("data-postid");
-        renderComments(displayPosts[postid - 1].comments, postid)
+        renderComments(postid)
         if (postsVoted.indexOf(postid) != -1) {
           //console.log("For " + postid + ": voted");
         } else {
@@ -55,14 +55,19 @@
       });    
     }
 
-    function renderComments(comments, id) {
-      console.log(loggedIn)
-      if (comments.length >= 1) {
-        $('#post-'+id+' .commentContainer').empty();
-        $('#post-'+id+' .commentAmt').text(comments.length);
-        $('#commentTemplate').tmpl(comments).appendTo('#post-'+id+' .commentContainer');
-        //console.log(loggedIn)
-      }
+    function renderComments(id) {
+      var comments = [];
+      $.each(posts, function(i, post) {
+        if (post.postid == id) {
+          comments = post.comments;
+          if (comments.length >= 1) {
+            $('#post-'+id+' .commentContainer').empty();
+            $('#post-'+id+' .commentAmt').text(comments.length);
+            $('#commentTemplate').tmpl(comments).appendTo('#post-'+id+' .commentContainer');
+            //console.log(loggedIn)
+          }
+        }
+      })
       if (loggedIn) {
         $('.commentForm [type=submit]').removeAttr('disabled');
         $('.commentForm textarea').removeAttr('disabled');
@@ -224,21 +229,17 @@
           }
         })
         socket.on('comment', function(comment, id) {
-          console.log(comment)
-          /*
-          posts = posts.map(function(post) {
-            if (post.postid == comment.postid) {
-              if (!post.comments) {
-                post.comments = [];
-              }
-              post.comments.push(comment);
-            }
-            return post;
-          });
-          */
           if (id == lectureID) {
-            posts[comment.postid - 1].comments.push(comment);
-            renderComments(posts[comment.postid - 1].comments, comment.postid);
+            posts = posts.map(function(post) {
+              if (post.postid == comment.postid) {
+                if (!post.comments) {
+                  post.comments = [];
+                }
+                post.comments.push(comment);
+              }
+              return post;
+            });
+            renderComments(comment.postid);
           }
         })
       socket.on('disconnect', function(){ 
