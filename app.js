@@ -153,7 +153,8 @@ app.get( '/', loggedIn, function( req, res ) {
 		async.forEach(
 			results,
 			function( school, callback ) {
-				Course.find( { 'school' : school._id, 'users' : userId }, function( err, courses ) {
+//				Course.find( { 'school' : school._id, 'users' : userId }, function( err, courses ) {
+					Course.find( { 'school' : school._id }, function( err, courses ) {
 					if( courses.length > 0 ) {
 						schools[ school.name ] = courses;
 					}
