@@ -1,0 +1,11 @@
+p Course View - #{ course.name }
+
+- if ( subscribed )
+	a( href = '/course/#{ course._id }/unsubscribe' ) Unsubscribe
+- else
+	a( href = '/course/#{ course._id }/subscribe' ) Subscribe
+
+ul
+	- each lecture in course.lectures
+		li
+			a( href = 'course/#{ course._id }/lecture/${ lecture._id }' ) #{ lecture.name }
