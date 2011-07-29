@@ -16,6 +16,7 @@
     // use local storage??
     var postsVoted = [];
     var userObj = { userID: null, userName: null, userAffil: null };
+    var loggedIn = false;
     // the Post object is modelled on EtherPad:
     //  [the schoolid and courseid are implied in the meetingid];
     function assembleNewPostObj(msgBody) {
@@ -44,22 +45,27 @@
       $("#postTemplate").tmpl(displayPosts).appendTo("#posts");
       $('#posts .postVoteContainer').each(function(idx, container) {
         var postid = $(container).attr("data-postid");
-        renderComments(displayPosts[postid - 1].comments)
+        renderComments(displayPosts[postid - 1].comments, postid)
         if (postsVoted.indexOf(postid) != -1) {
-          console.log("For " + postid + ": voted");
+          //console.log("For " + postid + ": voted");
         } else {
-          console.log("For " + postid + ": NOT voted");
+          //console.log("For " + postid + ": NOT voted");
           $(container).addClass("unvoted");
         }
       });    
     }
 
-    function renderComments(comments) {
+    function renderComments(comments, id) {
+      console.log(loggedIn)
       if (comments.length >= 1) {
-        $('#post-'+comments[0].postid+' .commentContainer').empty();
-        $('#post-'+comments[0].postid+' .commentAmt').text(comments.length);
-        $('#commentTemplate').tmpl(comments).appendTo('#post-'+comments[0].postid+' .commentContainer');
-
+        $('#post-'+id+' .commentContainer').empty();
+        $('#post-'+id+' .commentAmt').text(comments.length);
+        $('#commentTemplate').tmpl(comments).appendTo('#post-'+id+' .commentContainer');
+        //console.log(loggedIn)
+      }
+      if (loggedIn) {
+        $('.commentForm [type=submit]').removeAttr('disabled');
+        $('.commentForm textarea').removeAttr('disabled');
       }
     }
 
@@ -84,11 +90,13 @@
         userObj.userName = $(this).find('#userName').val();
         userObj.userAffil = $(this).find('#userAffiliation').val();
         userObj.userID = 1234;
+        loggedIn = true;
         $('#userHeader .userName').text(userObj['userName']);
         $('#userHeader .userAffil').text(userObj['userAffil']);
         $(this).addClass('hidden');
         $('#userBox').removeClass('hidden');
         $('.commentForm [type=submit]').removeAttr('disabled');
+        $('.commentForm textarea').removeAttr('disabled');
       });
       // add event handlers;
       $('#backchatHeader input[type="button"]').click(function() {
@@ -107,13 +115,13 @@
       });
       $('#submitPost').click(function() {
         var newPost = assembleNewPostObj($('#enterPostTextarea').val());
-        socket.emit('post', newPost);
+        socket.emit('post', newPost, lectureID);
         $('#enterPostTextarea').val('');
       });
       $('.vote-tally-rect').live("click", function() {
         var postid = $(this).parent().attr('data-postid');
         var direction = $(this).hasClass("vote-up") ? "up" : "down";
-        console.log("NEW VOTE: PostID is " + postid + "; Direction is " + direction);
+        //console.log("NEW VOTE: PostID is " + postid + "; Direction is " + direction);
         if (postsVoted.indexOf(postid) != -1) {
           // already voted on this post;
           console.log("You already voted on this post!");
@@ -123,7 +131,7 @@
         // unnecessary: $(this).parent().removeClass("unvoted");
         postsVoted.push(postid);
         var newVoteObj = assembleVoteObj(postid, direction);
-        socket.emit('vote', newVoteObj);
+        socket.emit('vote', newVoteObj, lectureID);
       });
       $('#amountPosts').change(function() {
         MAXPOSTS = $(this).val();
@@ -144,15 +152,18 @@
             body: body,
             postid: $(this).find('[name=postid]').val()
           }
-          socket.emit('comment', comment);
+          socket.emit('comment', comment, lectureID);
+          $(this).find('#commentText').val('');
         }
       })
+      /*
       $('.commentAmt').live('click', function(e) {
         e.preventDefault();
         var id = $(this).parent().parent().parent().attr('id').replace('post-', '');
         $('#post-'+id+' .commentContainer').toggleClass('hidden');
         $('#post-'+id+' .commentForm').toggleClass('hidden');
       })
+      */
       //=====================================================================
       // create socket to server; note that we only permit websocket transport
       // for this demo;
@@ -171,11 +182,11 @@
       // arrays with updated vote counts and refrain from sending vote message.
       var messagesArrived = 0;
       socket.on('connect', function(){
-        var hash = window.location.hash.substring(1);
-        socket.emit('lectureID', hash);
+        lectureID = window.location.hash.substring(1);
+        socket.emit('lectureID', lectureID);
         $(window).bind('hashchange', function() {
-          var hash = window.location.hash.substring(1);
-          socket.emit('lectureID', hash);
+          lectureID = window.location.hash.substring(1);
+          socket.emit('lectureID', lectureID);
         });
       });
        socket.on('message', function(obj) {
@@ -185,30 +196,35 @@
           }
         });
         socket.on('posts', function(posts) {
-          console.log(posts);
+          //console.log(posts);
         })
-        socket.on('post', function(post) {
-          posts.push(post);
-          renderPosts();
+        socket.on('post', function(post, id) {
+          if (id == lectureID) {
+            posts.push(post);
+            renderPosts();
+          }
         });
-        socket.on('vote', function(vote) {
-          posts = posts.map(function(post) {
-            if(post.postid == vote.postid) {
-              switch (vote.direction) {
-                case 'up': 
+        socket.on('vote', function(vote, id) {
+          if (id == lectureID) {
+            posts = posts.map(function(post) {
+              if(post.postid == vote.postid) {
+                switch (vote.direction) {
+                  case 'up': 
                   post.posvotes++;
                   break;
-                case 'down':
+                  case 'down':
                   post.negvotes++;
                   break;
+                }
               }
-            }
-            return post;
-          });
-          console.log(posts)
-          renderPosts();
+              return post;
+            });
+            //console.log(posts)
+            renderPosts();
+          }
         })
-        socket.on('comment', function(comment) {
+        socket.on('comment', function(comment, id) {
+          console.log(comment)
           /*
           posts = posts.map(function(post) {
             if (post.postid == comment.postid) {
@@ -220,14 +236,15 @@
             return post;
           });
           */
-          posts[comment.postid - 1].comments.push(comment);
-          renderComments(posts[comment.postid - 1].comments);
+          if (id == lectureID) {
+            posts[comment.postid - 1].comments.push(comment);
+            renderComments(posts[comment.postid - 1].comments, comment.postid);
+          }
         })
       socket.on('disconnect', function(){ 
         $('#debugDisplay').append('<p>SOCKET disconnected!</p>');
       });
-      // =============>  NB!! <==============
-
+      
       $('#enterPostTextarea').val("");
     });
   </script>
@@ -329,7 +346,7 @@
     <form id="enterPostForm">
       <!-- onkeyup for cut or copy&paste, onkeypress for hold key down -->
       <textarea id="enterPostTextarea" name="data[Post][body]"></textarea>
-      <div id="charsLeftMsg">&nbsp;</div>
+      <!-- div id="charsLeftMsg">&nbsp;</div -->
       <input type="hidden" id="hostMeetingId"
               name="data[Post][meeting_id]"
               value="926" />
@@ -379,11 +396,11 @@
         Comments: <span class="commentAmt">${comments.length}</span>
       </div>
     </div>
-    <div class="commentContainer hidden">
+    <div class="commentContainer">
     </div>
-    <form class="commentForm hidden">
+    <form class="commentForm">
       <input type="hidden" name="postid" value="${postid}" />
-      <textarea id="commentText" name="commentText"></textarea>
+      <textarea id="commentText" name="commentText" disabled="disabled"></textarea>
       <input type="submit" value="Post Comment" disabled="disabled">
     </form>
   </div>

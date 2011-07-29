@@ -154,8 +154,16 @@ margin: 0.3em 0.3em 0.3em 4em;
 }
 #posts .postBody {
 	min-height: 3.0em;
+	overflow: auto;
 }
 #posts .postFooter {
+	border-top: solid 1px #ccc;
+	color: #888;
+	padding: 0.2em 0em;
+	font-style: italic;
+	font-size: 90%;
+}
+#posts .commentFooter {
 	border-top: solid 1px #ccc;
 	color: #888;
 	padding: 0.2em 0em;
