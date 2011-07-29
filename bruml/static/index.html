@@ -64,6 +64,7 @@
       }
       if (loggedIn) {
         $('.commentForm [type=submit]').removeAttr('disabled');
+        $('.commentForm textarea').removeAttr('disabled');
       }
     }
 
@@ -94,6 +95,7 @@
         $(this).addClass('hidden');
         $('#userBox').removeClass('hidden');
         $('.commentForm [type=submit]').removeAttr('disabled');
+        $('.commentForm textarea').removeAttr('disabled');
       });
       // add event handlers;
       $('#backchatHeader input[type="button"]').click(function() {
@@ -396,7 +398,7 @@
     </div>
     <form class="commentForm">
       <input type="hidden" name="postid" value="${postid}" />
-      <textarea id="commentText" name="commentText"></textarea>
+      <textarea id="commentText" name="commentText" disabled="disabled"></textarea>
       <input type="submit" value="Post Comment" disabled="disabled">
     </form>
   </div>
