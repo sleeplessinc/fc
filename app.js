@@ -170,7 +170,7 @@ app.get( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) {
 	var lecture = {};
 
 	res.render( 'lecture/new', { 'lecture' : lecture } );
-}
+});
 
 app.post( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) {
 	var course	= req.course;
