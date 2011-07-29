@@ -1,0 +1,11 @@
+h1 Finals Club Home Page
+
+- if( user )
+	a( href='/logout' ) Logout
+
+- each courses, school in schools
+	p= school
+	ul
+		- each course in courses
+			li
+				a( href = 'course/#{ course._id }' ) #{ course.name }
