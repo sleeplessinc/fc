@@ -45,7 +45,7 @@
       $("#postTemplate").tmpl(displayPosts).appendTo("#posts");
       $('#posts .postVoteContainer').each(function(idx, container) {
         var postid = $(container).attr("data-postid");
-        renderComments(displayPosts[postid - 1].comments)
+        renderComments(displayPosts[postid - 1].comments, postid)
         if (postsVoted.indexOf(postid) != -1) {
           //console.log("For " + postid + ": voted");
         } else {
@@ -55,11 +55,12 @@
       });    
     }
 
-    function renderComments(comments) {
+    function renderComments(comments, id) {
+      console.log(loggedIn)
       if (comments.length >= 1) {
-        $('#post-'+comments[0].postid+' .commentContainer').empty();
-        $('#post-'+comments[0].postid+' .commentAmt').text(comments.length);
-        $('#commentTemplate').tmpl(comments).appendTo('#post-'+comments[0].postid+' .commentContainer');
+        $('#post-'+id+' .commentContainer').empty();
+        $('#post-'+id+' .commentAmt').text(comments.length);
+        $('#commentTemplate').tmpl(comments).appendTo('#post-'+id+' .commentContainer');
         //console.log(loggedIn)
       }
       if (loggedIn) {
@@ -223,6 +224,7 @@
           }
         })
         socket.on('comment', function(comment, id) {
+          console.log(comment)
           /*
           posts = posts.map(function(post) {
             if (post.postid == comment.postid) {
@@ -236,7 +238,7 @@
           */
           if (id == lectureID) {
             posts[comment.postid - 1].comments.push(comment);
-            renderComments(posts[comment.postid - 1].comments);
+            renderComments(posts[comment.postid - 1].comments, comment.postid);
           }
         })
       socket.on('disconnect', function(){ 
