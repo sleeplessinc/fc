@@ -25,13 +25,14 @@ app.configure(function(){
 app.configure( 'development', function() { 
 	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
 
-	mongoose.connect( 'mongodb://localhost/fc_dev' );
+	mongoose.connect( 'mongodb://fc:finalsclub@staff.mongohq.com:10048/fc' );
 });
 
 app.configure( 'production', function() {
 	app.use( express.errorHandler() ); 
 
-	mongoose.connect( 'mongodb://localhost/fc' );
+	//mongoose.connect( 'mongodb://localhost/fc' );
+	mongoose.connect( 'mongodb://fc:finalsclub@staff.mongohq.com:10048/fc' );
 });
 
 // Models
