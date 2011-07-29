@@ -15,25 +15,29 @@ app.listen('8080');
 
 io.sockets.on('connection', function(socket) {
   socket.on('lectureID', function(id) {
+    console.log('lectureID', id)
     socket.set('lectureID', id);
     if (!posts[id]) {
       posts[id] = [];
     }
     socket.json.send({posts: posts[id]});
   })
-  socket.on('post', function(post) {
+  socket.on('post', function(post, id) {
+    console.log(id)
     socket.get('lectureID', function(err, id) {
+      if (!posts[id]) posts[id] = [];
       post.postid = posts[id].length + 1;
       post.meetingid = id;
       post.comments = [];
       console.log("POST " + post.postid + " received from client: " + socket.id);
       posts[id].push(post);
       console.log("Now have " + posts[id].length + " posts in all");
-      io.sockets.emit('post', post);
+      console.log(id)
+      io.sockets.emit('post', post, id);
     });
   });
 
-  socket.on('vote', function(vote) {
+  socket.on('vote', function(vote, id) {
     socket.get('lectureID', function(err, id) {
       _posts = posts[id].map(function(post) {
         if(post.postid == vote.postid) {
@@ -49,11 +53,11 @@ io.sockets.on('connection', function(socket) {
         return post;
       });
       posts[id] = _posts;
-      io.sockets.emit('vote', vote);
+      io.sockets.emit('vote', vote, id);
     })
   })
 
-  socket.on('comment', function(comment) {
+  socket.on('comment', function(comment, id) {
     socket.get('lectureID', function(err, id) {
       _posts = posts[id].map(function(post) {
         if(post.postid == comment.postid) {
@@ -65,7 +69,7 @@ io.sockets.on('connection', function(socket) {
         return post;
       });
       posts[id] = _posts;
-      io.sockets.emit('comment', comment);
+      io.sockets.emit('comment', comment, id);
     })
   })
 });
