@@ -6,3 +6,34 @@ body {
 a {
   color: #00B7FF;
 }
+
+.neat {
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+}
+
+h1 {
+	margin: 0.5em 0;
+	text-align: center;
+}
+
+.content {
+	width: 50%;
+	background: #def;
+	margin: 0 auto;
+	padding: 1em;
+}
+
+#credentials .row .label {
+	width: 8em;
+	text-align: right;
+	display: table-cell;
+	padding: 0.8em 1em 0.8em 0em;
+}
+#credentials .row .field {
+	display: table-cell;
+	padding: 0.8em 0;
+}
+
