@@ -154,6 +154,7 @@ margin: 0.3em 0.3em 0.3em 4em;
 }
 #posts .postBody {
 	min-height: 3.0em;
+	overflow: auto;
 }
 #posts .postFooter {
 	border-top: solid 1px #ccc;
