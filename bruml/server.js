@@ -25,6 +25,7 @@ io.sockets.on('connection', function(socket) {
     socket.get('lectureID', function(err, id) {
       post.postid = posts[id].length + 1;
       post.meetingid = id;
+      post.comments = [];
       console.log("POST " + post.postid + " received from client: " + socket.id);
       posts[id].push(post);
       console.log("Now have " + posts[id].length + " posts in all");
@@ -49,6 +50,22 @@ io.sockets.on('connection', function(socket) {
       });
       posts[id] = _posts;
       io.sockets.emit('vote', vote);
+    })
+  })
+
+  socket.on('comment', function(comment) {
+    socket.get('lectureID', function(err, id) {
+      _posts = posts[id].map(function(post) {
+        if(post.postid == comment.postid) {
+          if (!post.comments) {
+            post.comments = [];
+          }
+          post.comments.push(comment);
+        }
+        return post;
+      });
+      posts[id] = _posts;
+      io.sockets.emit('comment', comment);
     })
   })
 });
