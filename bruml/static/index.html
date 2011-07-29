@@ -119,9 +119,12 @@
         }
       });
       $('#submitPost').click(function() {
-        var newPost = assembleNewPostObj($('#enterPostTextarea').val());
-        socket.emit('post', newPost, lectureID);
-        $('#enterPostTextarea').val('');
+        var body = $('#enterPostTextarea').val();
+        if (body !== '') {
+          var newPost = assembleNewPostObj($('#enterPostTextarea').val());
+          socket.emit('post', newPost, lectureID);
+          $('#enterPostTextarea').val('');
+        }
       });
       $('.vote-tally-rect').live("click", function() {
         var postid = $(this).parent().attr('data-postid');
