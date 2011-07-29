@@ -60,7 +60,7 @@ mongoose.model( 'School', School );
 
 // courses
 
-var Course		= new Schema( {
+var Course = new Schema( {
 	name				: String,
 	description	: String,
 
@@ -68,8 +68,6 @@ var Course		= new Schema( {
 	school			: ObjectId,
 
 	// XXX: room for additional resources
-
-	lectures		: [ Lectures ],
 
 	// many users may subscribe to a course
 	users				: Array
@@ -79,25 +77,27 @@ mongoose.model( 'Course', Course );
 
 // lectures
 
-var Lectures	= new Schema( {
+var Lecture	= new Schema( {
 	name					: String,
 	date					: Date,
 	live					: Boolean,
 
-	notes					: [ Notes ]
+	course				: ObjectId
 });
 
-// mongoose.model( 'Lecture', Lecture );
+mongoose.model( 'Lecture', Lecture );
 
 // notes
 
-var Notes			= new Schema( {
+var Note = new Schema( {
 	name					: String,
 	path					: String,
+
+	lecture				: ObjectId,
 
 	collaborators : Array
 });
 
-// mongoose.model( 'Notes', Notes );
+mongoose.model( 'Note', Note );
 
 module.exports.mongoose = mongoose;

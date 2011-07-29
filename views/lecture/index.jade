@@ -1,0 +1,10 @@
+p Lecture View - #{ lecture.name }
+
+p Notes
+
+ul
+	- each note in notes
+		li
+			a( href = '/note/#{ note._id }' ) #{ note.name }
+
+a( href = '/lecture/#{ lecture._id }/notes/new' ) New Notepad

@@ -39,6 +39,8 @@ app.configure( 'production', function() {
 var User		= mongoose.model( 'User' );
 var School	= mongoose.model( 'School' );
 var Course	= mongoose.model( 'Course' );
+var Lecture	= mongoose.model( 'Lecture' );
+var Note		= mongoose.model( 'Note' );
 
 // Middleware
 
@@ -64,6 +66,8 @@ function loadCourse( req, res, next ) {
 
 	Course.findById( courseId, function( err, course ) {
 		if( course ) {
+
+/*
 			var schoolId = course.school;
 
 			// verify that the user is a member of the correct network
@@ -78,10 +82,51 @@ function loadCourse( req, res, next ) {
 					res.redirect( '/' );
 				}
 			});
+*/
+
+			req.course = course;
+			next();
+
 		} else {
 			req.flash( 'error', 'Invalid course specified!' );
 
 			res.redirect( '/' );
+		}
+	});
+}
+
+function loadLecture( req, res, next ) {
+	/* XXX: AUTHENTICATION */
+
+	var lectureId	= req.params.id;
+
+	Lecture.findById( lectureId, function( err, lecture ) {
+		if( lecture ) {
+			req.lecture = lecture;
+
+			next();
+		} else {
+			req.flash( 'error', 'Invalid lecture specified!' );
+
+			res.redirect( '/' );
+		}
+	});
+}
+
+function loadNote( req, res, next ) {
+	/* XXX: AUTHENTICATION */
+
+	var noteId = req.params.id;
+
+	Note.findById( noteId, function( err, note ) {
+		if( note ) {
+			req.note = note;
+
+			next();
+		} else {
+			req.flash( 'error', 'Invalid note specified!' );
+
+			res.direct( '/' );
 		}
 	});
 }
@@ -102,7 +147,8 @@ app.get( '/', loggedIn, function( req, res ) {
 
 	var schools = {};
 
-	School.find( { 'users' : userId }, function( err, results ) {
+//	School.find( { 'users' : userId }, function( err, results ) {
+	School.find( {}, function( err, results ) {
 		async.forEach(
 			results,
 			function( school, callback ) {
@@ -128,7 +174,10 @@ app.get( '/course/:id', loggedIn, loadCourse, function( req, res ) {
 	// are we subscribed to this course?
 	var subscribed = ( course.users.indexOf( userId ) > -1 );
 
-	res.render( 'course/index', { 'course' : course, 'subscribed' : subscribed } );
+	// pull out our lectures
+	Lecture.find( { 'course' : course._id }, function( err, lectures ) {
+		res.render( 'course/index', { 'course' : course, 'subscribed' : subscribed, 'lectures' : lectures } );
+	});
 });
 
 // subscribe and unsubscribe to course networks
@@ -146,24 +195,10 @@ app.get( '/course/:id/unsubscribe', loggedIn, loadCourse, function( req, res ) {
 	var courseId = req.course._id;
 	var userId = req.user._id;
 
+	// mongoose issue #404
 	Course.collection.update( { '_id' : courseId }, { '$pull' : { 'users' : userId } }, function( err ) {
 		res.redirect( '/course/' + courseId );
 	});
-});
-
-// lecture
-
-app.get( '/course/:id/lecture/:lid/', loggedIn, loadCourse, function( req, res ) {
-	var course	= req.course;
-	var lecture	= req.lectures.id( req.params.lid );
-
-	if( lecture ) {
-		res.render( 'lecture/index', { 'lecture' : lecture } );
-	} else {
-		req.flash( 'error', 'Invalid lecture specified!' );
-
-		res.redirect( '/course/' + course._id );
-	}
 });
 
 app.get( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) {
@@ -174,15 +209,13 @@ app.get( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) {
 
 app.post( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) {
 	var course	= req.course;
+	var lecture = new Lecture;
 
-	var lecture = {
-		'name' : req.body.name,
-	  'date' : req.body.date
-	};
+	lecture.name		= req.body.name;
+	lecture.date		= req.body.date;
+	lecture.course	= course._id;
 
-	course.lectures.push( lecture );
-
-	course.save( function( err ) {
+	lecture.save( function( err ) {
 		if( err ) {
 			// XXX: better validation
 			req.flash( 'error', 'Invalid parameters!' );
@@ -194,7 +227,51 @@ app.post( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) 
 	});
 });
 
+// lecture
+
+app.get( '/lecture/:id', loggedIn, loadLecture, function( req, res ) {
+	var lecture	= req.lecture;
+
+	// pull out our notes
+	Note.find( { 'lecture' : lecture._id }, function( err, notes ) {
+		res.render( 'lecture/index', { 'lecture' : lecture, 'notes' : notes } );
+	});
+});
+
+app.get( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) {
+	var note = {};
+
+	res.render( 'notes/new', { 'note' : note } );
+});
+
+app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) {
+	var lecture = req.lecture;
+	var note		= new Note;
+
+	note.name			= req.body.name;
+	note.date			= req.body.date;
+	note.lecture	= lecture._id;
+
+	note.save( function( err ) {
+		if( err ) {
+			// XXX: better validation
+			req.flash( 'error', 'Invalid parameters!' );
+
+			res.render( 'notes/new', { 'note' : note } );
+		} else {
+			res.redirect( '/lecture/' + lecture._id );
+		}
+	});
+});
+
 // notes
+
+app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
+	var note = req.note;
+
+//	res.render( 'notes/index', { 'note' : note, 'layout' : false } );
+	res.redirect( 'http://fcdev.sleepless.com:9001/p/' + note._id );
+});
 
 // authentication
 
