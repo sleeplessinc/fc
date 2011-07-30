@@ -1,16 +1,26 @@
 #!/bin/bash
 
 
-
-killall -9 forever
-killall -9 node
-
 cd ~/fc/bruml
-forever server.js &> log.txt &
+kill -9 `cat pid`
 
 cd ~/fc/etherpad-lite/node
-forever server.js &> log.txt &
+kill -9 `cat pid`
 
 cd ~/fc
-forever app.js &> log.txt &
+kill -9 `cat pid`
+
+
+
+cd ~/fc/bruml
+node server.js &> log.txt &
+echo "$!" > pid
+
+cd ~/fc/etherpad-lite/node
+node server.js &> log.txt &
+echo "$!" > pid
+
+cd ~/fc
+node app.js &> log.txt &
+echo "$!" > pid
 
