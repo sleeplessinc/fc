@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PATH="/usr/local/bin:$PATH"
+
 
 cd ~/fc/bruml
 kill -9 `cat pid`
