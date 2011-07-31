@@ -25,15 +25,19 @@ app.configure(function(){
 app.configure( 'development', function() { 
 	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
 
-	mongoose.connect( 'mongodb://fc:finalsclub@staff.mongohq.com:10048/fc' );
+	app.set( 'dbUri', 'mongodb://fc:finalsclub@staff.mongohq.com:10048/fc' );
 });
 
 app.configure( 'production', function() {
 	app.use( express.errorHandler() ); 
 
-	//mongoose.connect( 'mongodb://localhost/fc' );
-	mongoose.connect( 'mongodb://fc:finalsclub@staff.mongohq.com:10048/fc' );
+	app.set( 'dbUri', 'mongodb://fc:finalsclub@staff.mongohq.com:10048/fc' );
 });
+
+// db connect
+
+mongoose.connect( app.set( 'dbUri' ) );
+mongoose.connection.db.serverConfig.connection.autoReconnect = true
 
 // Models
 
