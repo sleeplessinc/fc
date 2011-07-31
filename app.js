@@ -48,6 +48,8 @@ var Note		= mongoose.model( 'Note' );
 function loggedIn( req, res, next ) {
 	var sid = req.sessionID;
 
+	console.log( 'got request from session ID: %s', sid );
+
 	User.findOne( { session : sid }, function( err, user ) {
 		if( user ) {
 			req.user = user;
