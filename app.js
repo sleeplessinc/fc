@@ -25,13 +25,13 @@ app.configure(function(){
 app.configure( 'development', function() { 
 	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
 
-	app.set( 'dbUri', 'mongodb://fc:finalsclub@staff.mongohq.com:10048/fc' );
+	app.set( 'dbUri', 'mongodb://localhost/fc' );
 });
 
 app.configure( 'production', function() {
 	app.use( express.errorHandler() ); 
 
-	app.set( 'dbUri', 'mongodb://fc:finalsclub@staff.mongohq.com:10048/fc' );
+	app.set( 'dbUri', 'mongodb://localhost/fc' );
 });
 
 // db connect
