@@ -31,17 +31,14 @@ app.configure(function(){
 app.configure( 'development', function() { 
 	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
 
-	mongoose.connect( 'mongodb://fc:finalsclub@staff.mongohq.com:10048/fc' );
-	mongoose.connection.db.serverConfig.connection.autoReconnect = true
+	mongoose.connect( 'mongodb://localhost/fc' );
 });
 
 app.configure( 'production', function() {
 	//app.use( express.errorHandler() ); 
 	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
 
-	//mongoose.connect( 'mongodb://localhost/fc' );
-	mongoose.connect( 'mongodb://fc:finalsclub@staff.mongohq.com:10048/fc' );
-	mongoose.connection.db.serverConfig.connection.autoReconnect = true
+	mongoose.connect( 'mongodb://localhost/fc' );
 });
 
 // Models
