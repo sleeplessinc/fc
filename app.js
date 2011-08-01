@@ -4,6 +4,8 @@ var express		= require( 'express' );
 var mongoose	= require( './db.js' ).mongoose;
 var async			= require( 'async' );
 var sys				= require( 'sys' );
+require( './log.js' ); logLevel = 5;
+
 
 var app = module.exports = express.createServer();
 
@@ -15,7 +17,11 @@ app.configure(function(){
   app.use( express.bodyParser() );
 
 	app.use( express.cookieParser() );
-	app.use( express.session( { 'secret' : 'finalsclub' } ) );
+	app.use( express.session( {
+		'secret' : 'finalsclub',
+		'maxAge' : new Date(Date.now() + (60 * 60 * 24 * 30 * 1000))
+		//'maxAge' : new Date(Date.now())
+		} ) );
 
   app.use( express.methodOverride() );
   app.use( app.router );
@@ -26,13 +32,16 @@ app.configure( 'development', function() {
 	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
 
 	mongoose.connect( 'mongodb://fc:finalsclub@staff.mongohq.com:10048/fc' );
+	mongoose.connection.db.serverConfig.connection.autoReconnect = true
 });
 
 app.configure( 'production', function() {
-	app.use( express.errorHandler() ); 
+	//app.use( express.errorHandler() ); 
+	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
 
 	//mongoose.connect( 'mongodb://localhost/fc' );
 	mongoose.connect( 'mongodb://fc:finalsclub@staff.mongohq.com:10048/fc' );
+	mongoose.connection.db.serverConfig.connection.autoReconnect = true
 });
 
 // Models
@@ -47,15 +56,19 @@ var Note		= mongoose.model( 'Note' );
 
 function loggedIn( req, res, next ) {
 	var sid = req.sessionID;
+	log3("logged in ...")
 
 	User.findOne( { session : sid }, function( err, user ) {
+		log3(err);
+		log3(user);
 		if( user ) {
 			req.user = user;
 
-			console.log( 'authenticated user: %s / %s', user._id, user.email );
+			log3( 'authenticated user: '+user._id+' / '+user.email+'');
 
 			next();
 		} else {
+			log3("no user, redirect to login page");
 			res.redirect( '/login' );
 		}
 	});
@@ -147,6 +160,8 @@ app.get( '/', loggedIn, function( req, res ) {
 	var userId = req.user._id;
 
 	var schools = {};
+
+	log3("get / page");
 
 //	School.find( { 'users' : userId }, function( err, results ) {
 	School.find( {}, function( err, results ) {
@@ -278,23 +293,30 @@ app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 // authentication
 
 app.get( '/login', function( req, res ) {
+  log3("get login page")
 	res.render( 'login' );	
 });
 
 app.post( '/login', function( req, res ) {
 	var email		 = req.body.email;
 	var password = req.body.password;
+  log3("post login ...")
 
 	User.findOne( { 'email' : email }, function( err, user ) {
+		log3(err) 
+		log3(user) 
 		if( user && user.authenticate( password ) ) {
+			log3("pass ok") 
 			var sid = req.sessionID;
 
 			user.session = sid;
 
 			user.save( function() {
+			  log3("user.save() done") 
 				res.redirect( '/' );
 			});
 		} else {
+			log3("bad login")
 			req.flash( 'error', 'Invalid login!' );
 
 			res.render( 'login' );
@@ -303,6 +325,7 @@ app.post( '/login', function( req, res ) {
 });
 
 app.get( '/register', function( req, res ) {
+  log3("get reg page");
 	res.render( 'register' );
 });
 
@@ -310,19 +333,26 @@ app.post( '/register', function( req, res ) {
 	var sid = req.sessionId;
 
 	var user = new User;
+  log3("post reg ");
+	log3(user)
 
 	user.email		= req.body.email;
 	user.password	= req.body.password;
 	user.session	= sid;
+	log3('register '+user.email+"/"+user.password+" "+user.session) 
+	log3(user)
 
 	user.save( function( err ) {
 		var hostname = user.email.split( '@' ).pop();
+		log3('save '+user.email);
 
 		School.findOne( { 'hostnames' : hostname }, function( err, school ) {
 			if( school ) {
+				log3('school recognized '+school.name);
 				school.users.push( user._id );
 
 				school.save( function( err ) {
+				  log3('school.save() done');
 					req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network.' );
 				});
 			}
@@ -333,10 +363,11 @@ app.post( '/register', function( req, res ) {
 });
 
 app.get( '/logout', function( req, res ) {
+	log3('logout') 
 	req.session.destroy();
 
 	res.redirect( '/' );
 });
 
 app.listen( 3000 );
-console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
+log2( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
