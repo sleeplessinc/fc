@@ -60,8 +60,7 @@ function renderComments(id) {
     }
   })
   if (loggedIn) {
-    $('.commentForm [type=submit]').removeAttr('disabled');
-    $('.commentForm textarea').removeAttr('disabled');
+    $( '.commentForm :input' ).removeAttr( 'disabled' );
   }
 }
 
@@ -91,8 +90,8 @@ $(document).ready(function(){
     $('#userHeader .userAffil').text(userObj['userAffil']);
     $(this).addClass('hidden');
     $('#userBox').removeClass('hidden');
-    $('.commentForm [type=submit]').removeAttr('disabled');
-    $('.commentForm textarea').removeAttr('disabled');
+
+    $( '.commentForm :input' ).removeAttr( 'disabled' );
   });
   // add event handlers;
   $('#backchatHeader input[type="button"]').click(function() {
@@ -110,9 +109,17 @@ $(document).ready(function(){
     }
   });
   $('#submitPost').click(function() {
-    var body = $('#enterPostTextarea').val();
+		var form = $( this );
+
+    var body = form.find( '#enterPostTextarea' ).val();
+
     if (body !== '') {
       var newPost = assembleNewPostObj($('#enterPostTextarea').val());
+
+			var anonymous = $( this ).find( 'input[name=anonymous] :checked' ) ? true : false;
+
+			newPost.anonymous = anonymous;
+
       socket.emit('post', newPost, lectureID);
       $('#enterPostTextarea').val('');
     }
@@ -144,11 +151,15 @@ $(document).ready(function(){
   $('.commentForm').live('submit', function(e) {
     e.preventDefault();
     var body = $(this).find('#commentText').val();
+
+		var anonymous = $( this ).find( 'input[name=anonymous] :checked' ) ? true : false;
+
     if (body !== '') {
       var comment = {
         username: userObj.userName,
         useraffil: userObj.userAffil,
         body: body,
+				anonymous: anonymous,
         postid: $(this).find('[name=postid]').val()
       }
       socket.emit('comment', comment, lectureID);

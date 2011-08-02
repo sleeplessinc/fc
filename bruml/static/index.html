@@ -12,6 +12,7 @@
 
 <body>
 <div id="container">
+
 <div id="notesContainer" class="hidden">
   <div id="notesHeader">
     <div class="courseTitle">The Human Mind</div>
@@ -110,6 +111,7 @@
               value="926" />
       <input type="button" id="submitPost"
              name="submitPost" value="Post Comment" />
+			<input type='checkbox' name='anonymous' /> Post anonymously
     </form>
   </div><!-- enterPost -->
 
@@ -131,10 +133,9 @@
     </select>
 	-->
   </div>
-  
-  
 </div>
 </div> <!-- backchat -->
+
 </div> <!-- container -->
 <!-- these templates are used to generate Top Posts from an array received from
      the server. The unknown mime type causes the browser to ignore it -->
@@ -142,7 +143,6 @@
   <div class="postContainer" id="post-${postid}">
     <div class="postVoteContainer" data-postid="${postid}">
       <div class="vote-tally-rect vote-up">${posvotes}</div>
-      <div class="vote-tally-rect vote-dn">${negvotes}</div>
     </div>
     <div class="postDisplayContainer">
       <div class="postBody">${body}</div> 
@@ -160,6 +160,7 @@
       <input type="hidden" name="postid" value="${postid}" />
       <textarea id="commentText" name="commentText" disabled="disabled"></textarea>
       <input type="submit" value="Post Comment" disabled="disabled">
+			<input type='checkbox' name='anonymous' /> Post anonymously
     </form>
   </div>
 </script>

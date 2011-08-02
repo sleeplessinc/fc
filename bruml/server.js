@@ -36,7 +36,15 @@ io.sockets.on('connection', function(socket) {
     }
     socket.json.send({posts: posts[lecture]});
   })
+
   socket.on('post', function(post, id) {
+
+		if ( post.anonymous ) {
+			post.userid		= 0;
+			post.username	= 'Anonymous';
+			post.useraffil	= 'N/A';
+		}
+
     if (!posts[id]) posts[id] = [];
     post.postid = posts[id].length + 1;
     post.meetingid = id;
@@ -44,7 +52,7 @@ io.sockets.on('connection', function(socket) {
     posts[id].push(post);
     publish({post: post}, id);
     //io.sockets.emit('post', post, id);
-  });
+  })
 
   socket.on('vote', function(vote, id) {
     _posts = posts[id].map(function(post) {
@@ -66,6 +74,13 @@ io.sockets.on('connection', function(socket) {
   })
 
   socket.on('comment', function(comment, id) {
+
+		if ( comment.anonymous ) {
+			comment.userid		= 0;
+			comment.username	= 'Anonymous';
+			comment.useraffil	= 'N/A';
+		}
+
     _posts = posts[id].map(function(post) {
       if(post.postid == comment.postid) {
         if (!post.comments) {
