@@ -100,4 +100,21 @@ var Note = new Schema( {
 
 mongoose.model( 'Note', Note );
 
+// comments
+
+var Comment = new Schema({
+  date    : Date,
+  body    : String,
+  votes   : Number,
+
+  user    : ObjectId,
+
+  anon    : Boolean,
+  replies : Array,
+
+  lecture : String//ObjectId
+})
+
+mongoose.model( 'Comment', Comment );
+
 module.exports.mongoose = mongoose;

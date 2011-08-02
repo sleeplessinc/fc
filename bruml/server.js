@@ -1,82 +1,96 @@
-var express = require('express');
-var fs = require('fs');
-var app = express.createServer();
-var io = require('socket.io').listen(app);
+var express  = require('express');
+var fs       = require('fs');
+var app      = express.createServer();
+var io       = require('socket.io').listen(app);
+var mongoose = require('../db.js').mongoose;
 
 app.configure(function() {
   app.use(express.static(__dirname+'/static'));
   app.use(express.errorHandler({dumpExceptions: true, showStack: true}));
+  app.set('dbUri', 'mongodb://localhost/fc');
 });
+
+mongoose.connect(app.set('dbUri'));
+mongoose.connection.db.serverConfig.connection.autoReconnect = true;
+
+var Comment = mongoose.model('Comment');
 
 var clients = {};
 
-var posts = {};
+var comments = {};
 
 app.listen('8080');
 
 io.sockets.on('connection', function(socket) {
-  /*
-  socket.on('lectureID', function(id) {
-    console.log('lectureID', id)
-    socket.set('lectureID', id);
-    if (!posts[id]) {
-      posts[id] = [];
-    }
-    socket.json.send({posts: posts[id]});
-  })
-  */
   socket.on('subscribe', function(lecture) {
     var id = socket.id;
     clients[id] = {
       socket: socket,
       lecture: lecture
     }
-    if (!posts[lecture]) {
-      posts[lecture] = [];
-    }
-    socket.json.send({posts: posts[lecture]});
+    Comment.find({'lecture': lecture}, function(err, res) {
+      console.log(res)
+      comments[lecture] = res ? res : [];
+      socket.json.send({comments: res});
+    })
   })
-  socket.on('post', function(post, id) {
-    if (!posts[id]) posts[id] = [];
-    post.postid = posts[id].length + 1;
-    post.meetingid = id;
-    post.comments = [];
-    posts[id].push(post);
-    publish({post: post}, id);
-    //io.sockets.emit('post', post, id);
+  socket.on('comment', function(res) {
+    var comment = new Comment;
+    var _comment = res.comment;
+    var lecture = res.lecture;
+    console.log(comment, _comment, lecture)
+    comment.lecture = lecture;
+    comment.userName = _comment.userName;
+    comment.userAffil = _comment.userAffil;
+    comment.date = new Date();
+    comment.body = _comment.body;
+    comment.votes = 0;
+    comment.save(function(err) {
+      if (err) {
+        // XXX some error handling
+        console.log(err)
+      } else {
+        comments[lecture].push(comment);
+        publish({comment: comment}, lecture);
+      }
+    })
   });
 
-  socket.on('vote', function(vote, id) {
-    _posts = posts[id].map(function(post) {
-      if(post.postid == vote.postid) {
-        switch (vote.direction) {
-          case 'up': 
-            post.posvotes++;
-            break;
-          case 'down':
-            post.negvotes++;
-            break;
-        }
+  socket.on('vote', function(res) {
+    var vote = res.vote;
+    var lecture = res.lecture;
+    comments[lecture] = comments[lecture].map(function(comment) {
+      if(comment._id == vote.parentid) {
+        comment.votes++;
+        comment.save(function(err) {
+          if (err) {
+            // XXX error handling
+          } else {
+            publish({vote: vote}, lecture);
+          }
+        })
       }
-      return post;
+      return comment;
     });
-    posts[id] = _posts;
-    publish({vote: vote}, id);
-    //io.sockets.emit('vote', vote, id);
   })
 
-  socket.on('comment', function(comment, id) {
-    _posts = posts[id].map(function(post) {
-      if(post.postid == comment.postid) {
-        if (!post.comments) {
-          post.comments = [];
-        }
-        post.comments.push(comment);
+  socket.on('reply', function(res) {
+    console.log(comments)
+    var reply = res.reply;
+    var lecture = res.lecture;
+    comments[lecture] = comments[lecture].map(function(comment) {
+      if(comment._id == reply.parentid) {
+        comment.replies.push(reply);
+        comment.save(function(err) {
+          if (err) {
+            console.log(err)
+          } else {
+            publish({reply: reply}, lecture);
+          }
+        })
       }
-      return post;
+      return comment;
     });
-    posts[id] = _posts;
-    publish({comment: comment}, id);
   })
   
   socket.on('disconnect', function() {

@@ -12,28 +12,21 @@ var loggedIn = false;
 //  [the schoolid and courseid are implied in the meetingid];
 function assembleNewPostObj(msgBody) {
   // the postid is assigned at the server;
-  var postObj = { objtype: "post", 
-    postid: null, 
-    posvotes: 0, 
-    negvotes: 0, 
-    isdeleted: false, 
-    ispromoted: false, 
-    isdemoted: false };
-    postObj.meetingid = null;
-    postObj.userid    = userObj.userID;
-    postObj.username  = userObj.userName;
-    postObj.useraffil = userObj.userAffil;
-    postObj.created = (new Date).getTime();
-    postObj.body = msgBody;
-    return postObj;
+  var postObj = {};
+  postObj.userid    = userObj.userID;
+  postObj.username  = userObj.userName;
+  postObj.useraffil = userObj.userAffil;
+  postObj.body = msgBody;
+  return postObj;
 }
-function renderPosts() {
-  $('#posts .postContainer').remove();
+function renderPosts(fresh) {
+  //$('#posts .postContainer').remove();
   //$('#total_posts').text(posts.length);
   // truncate long array of Posts;
   var sortedPosts = sortedBy == 'created' ? posts.sort(createdDesc) : posts.sort(votesDesc);
   var displayPosts = sortedPosts.slice(0, MAXPOSTS - 1);
-  $("#postTemplate").tmpl(displayPosts).appendTo("#posts");
+  if (fresh) $("#postTemplate").tmpl(displayPosts).appendTo("#posts");
+  else $('#posts').reOrder(displayPosts, 'post-')
   $('#posts .postVoteContainer').each(function(idx, container) {
     var postid = $(container).attr("data-postid");
     renderComments(postid)
@@ -47,14 +40,14 @@ function renderPosts() {
 }
 
 function renderComments(id) {
-  var comments = [];
+  var replies = [];
   $.each(posts, function(i, post) {
-    if (post.postid == id) {
-      comments = post.comments;
-      if (comments.length >= 1) {
+    if (post._id == id) {
+      replies = post.replies;
+      if (replies.length >= 1) {
         $('#post-'+id+' .commentContainer').empty();
-        $('#post-'+id+' .commentAmt').text(comments.length);
-        $('#commentTemplate').tmpl(comments).appendTo('#post-'+id+' .commentContainer');
+        $('#post-'+id+' .commentAmt').text(replies.length);
+        $('#commentTemplate').tmpl(replies).appendTo('#post-'+id+' .commentContainer');
         //console.log(loggedIn)
       }
     }
@@ -65,18 +58,36 @@ function renderComments(id) {
   }
 }
 
+$.fn.reOrder = function(array, prefix) {
+  return this.each(function() {
+    prefix = prefix || "";
+    
+    if (array) {    
+      for(var i=0; i < array.length; i++) {
+        var sel = '#' + prefix + array[i]._id;
+        array[i] = $(sel);
+      }
+      $(this).find('.postContainer').remove();  
+    
+      for(var i=0; i < array.length; i++) {
+        $(this).append(array[i]);
+      }
+    }
+  });    
+}
+
 function assembleVoteObj(postid, upOrDown) {
-  return { "objtype": "vote", "postid": postid, "direction": upOrDown };
+  return { "parentid": postid, "direction": upOrDown };
 }
 function votesDesc(a, b) {
-  aRank = a.posvotes - (a.negvotes * 0.5);
-  bRank = b.posvotes - (b.negvotes * 0.5);
+  //aRank = a.posvotes - (a.negvotes * 0.5);
+  //bRank = b.posvotes - (b.negvotes * 0.5);
   // for descending, reverse usual order; 
-  return bRank - aRank;
+  return b.votes - a.votes;
 }
 function createdDesc(a, b) {
   // for descending, reverse usual order; 
-  return b.created - a.created;
+  return new Date(b.date).valueOf() - new Date(a.date).valueOf();
 }
 $(document).ready(function(){
   // fill in holes;
@@ -113,7 +124,7 @@ $(document).ready(function(){
     var body = $('#enterPostTextarea').val();
     if (body !== '') {
       var newPost = assembleNewPostObj($('#enterPostTextarea').val());
-      socket.emit('post', newPost, lectureID);
+      socket.emit('comment', {comment: newPost, lecture: lectureID});
       $('#enterPostTextarea').val('');
     }
   });
@@ -130,7 +141,7 @@ $(document).ready(function(){
     // unnecessary: $(this).parent().removeClass("unvoted");
     postsVoted.push(postid);
     var newVoteObj = assembleVoteObj(postid, direction);
-    socket.emit('vote', newVoteObj, lectureID);
+    socket.emit('vote', {vote: newVoteObj, lecture: lectureID});
   });
   $('#amountPosts').change(function() {
     MAXPOSTS = $(this).val();
@@ -149,20 +160,20 @@ $(document).ready(function(){
         username: userObj.userName,
         useraffil: userObj.userAffil,
         body: body,
-        postid: $(this).find('[name=postid]').val()
+        parentid: $(this).find('[name=postid]').val()
       }
-      socket.emit('comment', comment, lectureID);
+      socket.emit('reply', {reply: comment, lecture: lectureID});
       $(this).find('#commentText').val('');
     }
   })
-/*
-$('.commentAmt').live('click', function(e) {
-e.preventDefault();
-var id = $(this).parent().parent().parent().attr('id').replace('post-', '');
-$('#post-'+id+' .commentContainer').toggleClass('hidden');
-$('#post-'+id+' .commentForm').toggleClass('hidden');
-})
-*/
+
+  $('.commentAmt').live('click', function(e) {
+    e.preventDefault();
+    var id = $(this).parent().parent().parent().attr('id').replace('post-', '');
+    $('#post-'+id+' .commentContainer').toggleClass('hidden');
+    $('#post-'+id+' .commentForm').toggleClass('hidden');
+  })
+
   //=====================================================================
   // create socket to server; note that we only permit websocket transport
   // for this demo;
@@ -189,61 +200,39 @@ $('#post-'+id+' .commentForm').toggleClass('hidden');
     });
   });
   socket.on('message', function(obj) {
-    if ('posts' in obj) {
-      posts = obj.posts;
-      renderPosts();
-    } else if ('post' in obj) {
-      var post = obj.post;
+    if ('comments' in obj) {
+      posts = obj.comments;
+      renderPosts(true);
+    } else if ('comment' in obj) {
+      var post = obj.comment;
       posts.push(post);
       renderPosts();
     } else if ('vote' in obj) {
       var vote = obj.vote;
       posts = posts.map(function(post) {
-        if(post.postid == vote.postid) {
-          switch (vote.direction) {
-            case 'up': 
-              post.posvotes++;
-            break;
-            case 'down':
-              post.negvotes++;
-            break;
-          }
+        if(post._id == vote.parentid) {
+          post.votes++;
+          $('#post-'+vote.parentid).find('.vote-tally-rect').text(post.votes);
         }
         return post;
       });
-      //console.log(posts)
       renderPosts();
-    } else if ('comment' in obj) {
-      var comment = obj.comment;
+    } else if ('reply' in obj) {
+      var reply = obj.reply;
       posts = posts.map(function(post) {
-        if (post.postid == comment.postid) {
-          if (!post.comments) {
-            post.comments = [];
+        if (post._id == reply.parentid) {
+          if (!post.replies) {
+            post.replies = [];
           }
-          post.comments.push(comment);
+          post.replies.push(reply);
         }
         return post;
       });
-      renderComments(comment.postid);
+      renderComments(reply.parentid);
     }
   });
-/*
-socket.on('posts', function(posts) {
-//console.log(posts);
-})
-socket.on('post', function(post, id) {
-});
-socket.on('vote', function(vote, id) {
-if (id == lectureID) {
-}
-})
-socket.on('comment', function(comment, id) {
-if (id == lectureID) {
-}
-})
-*/
   socket.on('disconnect', function(){ 
-    $('#debugDisplay').append('<p>SOCKET disconnected!</p>');
+    // XXX something here
   });
 
   $('#enterPostTextarea').val("");
