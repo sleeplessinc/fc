@@ -2,25 +2,25 @@
 
 
 cd ~/fc/bruml
-kill -9 `cat pid`
+kill -9 `cat /tmp/bruml.pid`
 
 cd ~/fc/etherpad-lite/node
-kill -9 `cat pid`
+kill -9 `cat /tmp/epl.pid`
 
 cd ~/fc
-kill -9 `cat pid`
+kill -9 `cat /tmp/shell.pid`
 
 
 
 cd ~/fc/bruml
 node server.js &> log.txt &
-echo "$!" > pid
+echo "$!" > /tmp/bruml.pid
 
 cd ~/fc/etherpad-lite/node
 node server.js &> log.txt &
-echo "$!" > pid
+echo "$!" > /tmp/epl.pid
 
 cd ~/fc
 node app.js &> log.txt &
-echo "$!" > pid
+echo "$!" > /tmp/shell.pid
 
