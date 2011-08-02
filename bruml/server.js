@@ -90,6 +90,7 @@ io.sockets.on('connection', function(socket) {
     posts[lecture] = posts[lecture].map(function(post) {
       if(post._id == comment.parentid) {
         post.comments.push(comment);
+        post.date = new Date();
         post.save(function(err) {
           if (err) {
             console.log(err)

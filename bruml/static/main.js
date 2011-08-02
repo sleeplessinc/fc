@@ -49,7 +49,6 @@ function renderComments(id) {
         $('#post-'+id+' .commentContainer').empty();
         $('#post-'+id+' .commentAmt').text(comments.length);
         $('#commentTemplate').tmpl(comments).appendTo('#post-'+id+' .commentContainer');
-        //console.log(loggedIn)
       }
     }
   })
@@ -124,13 +123,11 @@ $(document).ready(function(){
     var form = $( this );
 
     var body = $('#enterPostTextarea').val();
-    console.log('body', body)
     if (body !== '') {
       var newPost = assembleNewPostObj(body);
 
       var anonymous = $('#enterPostForm').find( 'input[name=anonymous]' ).is(':checked') ? true : false;
       newPost.anonymous = anonymous;
-      console.log(newPost)
       socket.emit('post', {post: newPost, lecture: lectureID});
       $('#enterPostTextarea').val('');
     }
@@ -233,9 +230,11 @@ $(document).ready(function(){
             post.comments = [];
           }
           post.comments.push(comment);
+          post.date = new Date();
         }
         return post;
       });
+      if (sortedBy == 'created') renderPosts();
       renderComments(comment.parentid);
     }
   });
