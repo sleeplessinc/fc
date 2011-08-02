@@ -14,17 +14,18 @@ function assembleNewPostObj(msgBody) {
   // the postid is assigned at the server;
   var postObj = {};
   postObj.userid    = userObj.userID;
-  postObj.username  = userObj.userName;
-  postObj.useraffil = userObj.userAffil;
+  postObj.userName  = userObj.userName;
+  postObj.userAffil = userObj.userAffil;
   postObj.body = msgBody;
   return postObj;
 }
-function renderPosts(fresh) {
-  //$('#posts .postContainer').remove();
+function renderPosts(fresh, post) {
+  if (fresh) $('#posts .postContainer').remove();
   //$('#total_posts').text(posts.length);
   // truncate long array of Posts;
   var sortedPosts = sortedBy == 'created' ? posts.sort(createdDesc) : posts.sort(votesDesc);
   var displayPosts = sortedPosts.slice(0, MAXPOSTS - 1);
+  if (post) $("#postTemplate").tmpl(post).appendTo("#posts");
   if (fresh) $("#postTemplate").tmpl(displayPosts).appendTo("#posts");
   else $('#posts').reOrder(displayPosts, 'post-')
   $('#posts .postVoteContainer').each(function(idx, container) {
@@ -40,21 +41,20 @@ function renderPosts(fresh) {
 }
 
 function renderComments(id) {
-  var replies = [];
+  var comments = [];
   $.each(posts, function(i, post) {
     if (post._id == id) {
-      replies = post.replies;
-      if (replies.length >= 1) {
+      comments = post.comments;
+      if (comments.length >= 1) {
         $('#post-'+id+' .commentContainer').empty();
-        $('#post-'+id+' .commentAmt').text(replies.length);
-        $('#commentTemplate').tmpl(replies).appendTo('#post-'+id+' .commentContainer');
+        $('#post-'+id+' .commentAmt').text(comments.length);
+        $('#commentTemplate').tmpl(comments).appendTo('#post-'+id+' .commentContainer');
         //console.log(loggedIn)
       }
     }
   })
   if (loggedIn) {
-    $('.commentForm [type=submit]').removeAttr('disabled');
-    $('.commentForm textarea').removeAttr('disabled');
+    $( '.commentForm :input' ).removeAttr( 'disabled' );
   }
 }
 
@@ -102,8 +102,8 @@ $(document).ready(function(){
     $('#userHeader .userAffil').text(userObj['userAffil']);
     $(this).addClass('hidden');
     $('#userBox').removeClass('hidden');
-    $('.commentForm [type=submit]').removeAttr('disabled');
-    $('.commentForm textarea').removeAttr('disabled');
+
+    $( '.commentForm :input' ).removeAttr( 'disabled' );
   });
   // add event handlers;
   $('#backchatHeader input[type="button"]').click(function() {
@@ -121,26 +121,30 @@ $(document).ready(function(){
     }
   });
   $('#submitPost').click(function() {
+    var form = $( this );
+
     var body = $('#enterPostTextarea').val();
+    console.log('body', body)
     if (body !== '') {
-      var newPost = assembleNewPostObj($('#enterPostTextarea').val());
-      socket.emit('comment', {comment: newPost, lecture: lectureID});
+      var newPost = assembleNewPostObj(body);
+
+      var anonymous = $('#enterPostForm').find( 'input[name=anonymous]' ).is(':checked') ? true : false;
+      newPost.anonymous = anonymous;
+      console.log(newPost)
+      socket.emit('post', {post: newPost, lecture: lectureID});
       $('#enterPostTextarea').val('');
     }
   });
   $('.vote-tally-rect').live("click", function() {
     var postid = $(this).parent().attr('data-postid');
-    var direction = $(this).hasClass("vote-up") ? "up" : "down";
-    //console.log("NEW VOTE: PostID is " + postid + "; Direction is " + direction);
     if (postsVoted.indexOf(postid) != -1) {
       // already voted on this post;
       console.log("You already voted on this post!");
       // allow for now;
       // eventually: show dialog for 2 seconds; return;
     }
-    // unnecessary: $(this).parent().removeClass("unvoted");
     postsVoted.push(postid);
-    var newVoteObj = assembleVoteObj(postid, direction);
+    var newVoteObj = {parentid: postid};
     socket.emit('vote', {vote: newVoteObj, lecture: lectureID});
   });
   $('#amountPosts').change(function() {
@@ -155,14 +159,18 @@ $(document).ready(function(){
   $('.commentForm').live('submit', function(e) {
     e.preventDefault();
     var body = $(this).find('#commentText').val();
+
+		var anonymous = $( this ).find( 'input[name=anonymous]' ).is(':checked') ? true : false;
+
     if (body !== '') {
       var comment = {
-        username: userObj.userName,
-        useraffil: userObj.userAffil,
+        userName: userObj.userName,
+        userAffil: userObj.userAffil,
         body: body,
+        anonymous: anonymous,
         parentid: $(this).find('[name=postid]').val()
       }
-      socket.emit('reply', {reply: comment, lecture: lectureID});
+      socket.emit('comment', {comment: comment, lecture: lectureID});
       $(this).find('#commentText').val('');
     }
   })
@@ -200,13 +208,13 @@ $(document).ready(function(){
     });
   });
   socket.on('message', function(obj) {
-    if ('comments' in obj) {
-      posts = obj.comments;
+    if ('posts' in obj) {
+      posts = obj.posts;
       renderPosts(true);
-    } else if ('comment' in obj) {
-      var post = obj.comment;
+    } else if ('post' in obj) {
+      var post = obj.post;
       posts.push(post);
-      renderPosts();
+      renderPosts(false, post);
     } else if ('vote' in obj) {
       var vote = obj.vote;
       posts = posts.map(function(post) {
@@ -217,18 +225,18 @@ $(document).ready(function(){
         return post;
       });
       renderPosts();
-    } else if ('reply' in obj) {
-      var reply = obj.reply;
+    } else if ('comment' in obj) {
+      var comment = obj.comment;
       posts = posts.map(function(post) {
-        if (post._id == reply.parentid) {
-          if (!post.replies) {
-            post.replies = [];
+        if (post._id == comment.parentid) {
+          if (!post.comments) {
+            post.comments = [];
           }
-          post.replies.push(reply);
+          post.comments.push(comment);
         }
         return post;
       });
-      renderComments(reply.parentid);
+      renderComments(comment.parentid);
     }
   });
   socket.on('disconnect', function(){ 

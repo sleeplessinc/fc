@@ -102,19 +102,20 @@ mongoose.model( 'Note', Note );
 
 // comments
 
-var Comment = new Schema({
-  date    : Date,
-  body    : String,
-  votes   : Number,
+var Post = new Schema({
+  date      : Date,
+  body      : String,
+  votes     : Number,
 
-  user    : ObjectId,
+  userid    : String,//ObjectId,
+  userName  : String,
+  userAffil : String,
 
-  anon    : Boolean,
-  replies : Array,
+  comments   : Array,
 
-  lecture : String//ObjectId
+  lecture   : String//ObjectId
 })
 
-mongoose.model( 'Comment', Comment );
+mongoose.model( 'Post', Post );
 
 module.exports.mongoose = mongoose;

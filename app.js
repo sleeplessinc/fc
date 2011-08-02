@@ -278,7 +278,7 @@ app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 	var note = req.note;
 
 //	res.render( 'notes/index', { 'note' : note, 'layout' : false } );
-	res.redirect( 'http://fcdev.sleepless.com:9001/p/' + note._id );
+	res.redirect( 'http://cider.blkcat.net:9001/p/' + note._id );
 });
 
 // authentication

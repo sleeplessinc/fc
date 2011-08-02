@@ -13,11 +13,11 @@ app.configure(function() {
 mongoose.connect(app.set('dbUri'));
 mongoose.connection.db.serverConfig.connection.autoReconnect = true;
 
-var Comment = mongoose.model('Comment');
+var Post = mongoose.model('Post');
 
 var clients = {};
 
-var comments = {};
+var posts = {};
 
 app.listen('8080');
 
@@ -28,30 +28,34 @@ io.sockets.on('connection', function(socket) {
       socket: socket,
       lecture: lecture
     }
-    Comment.find({'lecture': lecture}, function(err, res) {
-      console.log(res)
-      comments[lecture] = res ? res : [];
-      socket.json.send({comments: res});
+    Post.find({'lecture': lecture}, function(err, res) {
+      posts[lecture] = res ? res : [];
+      socket.json.send({posts: res});
     })
   })
-  socket.on('comment', function(res) {
-    var comment = new Comment;
-    var _comment = res.comment;
+  socket.on('post', function(res) {
+    var post = new Post;
+    var _post = res.post;
     var lecture = res.lecture;
-    console.log(comment, _comment, lecture)
-    comment.lecture = lecture;
-    comment.userName = _comment.userName;
-    comment.userAffil = _comment.userAffil;
-    comment.date = new Date();
-    comment.body = _comment.body;
-    comment.votes = 0;
-    comment.save(function(err) {
+    post.lecture = lecture;
+    if ( _post.anonymous ) {
+      post.userid    = 0;
+      post.userName  = 'Anonymous';
+      post.userAffil = 'N/A';
+    } else {
+      post.userName = _post.userName;
+      post.userAffil = _post.userAffil;
+    }
+    post.date = new Date();
+    post.body = _post.body;
+    post.votes = 0;
+    post.save(function(err) {
       if (err) {
         // XXX some error handling
         console.log(err)
       } else {
-        comments[lecture].push(comment);
-        publish({comment: comment}, lecture);
+        posts[lecture].push(post);
+        publish({post: post}, lecture);
       }
     })
   });
@@ -59,10 +63,10 @@ io.sockets.on('connection', function(socket) {
   socket.on('vote', function(res) {
     var vote = res.vote;
     var lecture = res.lecture;
-    comments[lecture] = comments[lecture].map(function(comment) {
-      if(comment._id == vote.parentid) {
-        comment.votes++;
-        comment.save(function(err) {
+    posts[lecture] = posts[lecture].map(function(post) {
+      if(post._id == vote.parentid) {
+        post.votes++;
+        post.save(function(err) {
           if (err) {
             // XXX error handling
           } else {
@@ -70,26 +74,31 @@ io.sockets.on('connection', function(socket) {
           }
         })
       }
-      return comment;
+      return post;
     });
   })
 
-  socket.on('reply', function(res) {
-    console.log(comments)
-    var reply = res.reply;
+  socket.on('comment', function(res) {
+    var comment = res.comment;
     var lecture = res.lecture;
-    comments[lecture] = comments[lecture].map(function(comment) {
-      if(comment._id == reply.parentid) {
-        comment.replies.push(reply);
-        comment.save(function(err) {
+    console.log('anon', comment.anonymous)
+    if ( comment.anonymous ) {
+      comment.userid    = 0;
+      comment.userName  = 'Anonymous';
+      comment.userAffil = 'N/A';
+    }
+    posts[lecture] = posts[lecture].map(function(post) {
+      if(post._id == comment.parentid) {
+        post.comments.push(comment);
+        post.save(function(err) {
           if (err) {
             console.log(err)
           } else {
-            publish({reply: reply}, lecture);
+            publish({comment: comment}, lecture);
           }
         })
       }
-      return comment;
+      return post;
     });
   })
   
