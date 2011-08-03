@@ -1,3 +1,4 @@
+script var lectureID = '#{lecture._id}';
 div#wrapper
 	div#sidebar
 		div#container
@@ -31,7 +32,8 @@ div#wrapper
 						textarea#enterPostTextarea( name = 'data[Post][body]' )
 
 						input#submitPost( type = 'button', name = 'submitPost', value = 'Post Comment' )
-						input( type = 'checkbox', name = 'anonymous' ) Post anonymously
+						input( type = 'checkbox', name = 'anonymous' )
+						| Post anonymously
 
 			div#posts
 				div#postsHeader
@@ -59,7 +61,7 @@ div#wrapper
 						span.userName ${ userName }
 						&mdash;
 						span.userAffil ${ userAffil }
-						Comments:
+						| Comments:
 						span.commentAmt ${ comments.length }
 
 				div.commentContainer.hidden
@@ -68,7 +70,8 @@ div#wrapper
 					input( type = 'hidden', name = 'postid', value = '${_id}' )
 					textarea#commentText( name = 'commentText', disabled = 'disabled' )
 					input( type = 'submit', value = 'Post Comment', disabled = 'disabled' )
-					input( type = 'checkbox', name = 'anonymous' ) Post anonymously
+					input( type = 'checkbox', name = 'anonymous' )
+					| Post anonymously
 
 		script#commentTemplate( type = 'text/x-jQuery-tmpl', src = '/javascripts/templates/comment.js' )
 			div.commentBody ${ body }

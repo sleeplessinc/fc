@@ -197,12 +197,12 @@ $(document).ready(function(){
   // arrays with updated vote counts and refrain from sending vote message.
   var messagesArrived = 0;
   socket.on('connect', function(){
-    lectureID = window.location.hash.substring(1);
+    //lectureID = window.location.hash.substring(1);
     socket.emit('subscribe', lectureID);
-    $(window).bind('hashchange', function() {
+    /*$(window).bind('hashchange', function() {
       lectureID = window.location.hash.substring(1);
       socket.emit('subscribe', lectureID);
-    });
+    });*/
   });
   socket.on('message', function(obj) {
     if ('posts' in obj) {
