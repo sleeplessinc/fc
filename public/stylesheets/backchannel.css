@@ -165,10 +165,7 @@ padding: 1em 1.5em;
 	cursor: pointer; cursor: hand;
 }
 .postVoteContainer .vote-up {
-background: transparent url(/arrow_up.png) no-repeat scroll 10% 50%;
-}
-.postVoteContainer .vote-dn {
-background: transparent url(/arrow_dn.png) no-repeat scroll 10% 50%;
+background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 }
 #posts .postDisplayContainer {
 margin: 0.3em 0.3em 0.3em 4em;
