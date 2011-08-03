@@ -1,6 +1,6 @@
 * {
 	margin:0;
-	padding:0
+	padding:0;
 }
 
 body {
@@ -46,10 +46,10 @@ h1 {
 }
 h2 {
 	margin: 0.5em 0;
-	clear:both
+	clear:both;
 }
 ul{
-	margin:8px 15px
+	margin:8px 15px;
 }
 
 .content {

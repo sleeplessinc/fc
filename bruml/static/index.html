@@ -111,7 +111,7 @@
               value="926" />
       <input type="button" id="submitPost"
              name="submitPost" value="Post Comment" />
-			<input type='checkbox' name='anonymous' /> Post anonymously
+      <input type='checkbox' name='anonymous' /> Post anonymously
     </form>
   </div><!-- enterPost -->
 
@@ -140,36 +140,37 @@
 <!-- these templates are used to generate Top Posts from an array received from
      the server. The unknown mime type causes the browser to ignore it -->
 <script id="postTemplate" type="text/x-jQuery-tmpl">
-  <div class="postContainer" id="post-${postid}">
-    <div class="postVoteContainer" data-postid="${postid}">
-      <div class="vote-tally-rect vote-up">${posvotes}</div>
+  <div class="postContainer" id="post-${_id}">
+    <div class="postVoteContainer" data-postid="${_id}">
+      <div class="vote-tally-rect vote-up">${votes}</div>
+      <!--<div class="vote-tally-rect vote-dn">${negvotes}</div>-->
     </div>
     <div class="postDisplayContainer">
       <div class="postBody">${body}</div> 
       <div class="postFooter">
-        <span class="userName">${username}</span>
+        <span class="userName">${userName}</span>
 	        &mdash;
-        <span class="userAffil">${useraffil}</span>
-        <!-- <span class="postid">${postid}</span> -->
+        <span class="userAffil">${userAffil}</span>
+        <!-- <span class="postid">${_id}</span> -->
         Comments: <span class="commentAmt">${comments.length}</span>
       </div>
     </div>
-    <div class="commentContainer">
+    <div class="commentContainer hidden">
     </div>
-    <form class="commentForm">
-      <input type="hidden" name="postid" value="${postid}" />
+    <form class="commentForm hidden">
+      <input type="hidden" name="postid" value="${_id}" />
       <textarea id="commentText" name="commentText" disabled="disabled"></textarea>
       <input type="submit" value="Post Comment" disabled="disabled">
-			<input type='checkbox' name='anonymous' /> Post anonymously
+      <input type='checkbox' name='anonymous' /> Post anonymously
     </form>
   </div>
 </script>
 <script id="commentTemplate" type="text/x-jQuery-tmpl">
   <div class="commentBody">${body}</div>
   <div class="commentFooter">
-    <span class="userName">${username}</span>
+    <span class="userName">${userName}</span>
     &mdash;
-    <span class="userAffil">${useraffil}</span>
+    <span class="userAffil">${userAffil}</span>
   </div>
 </script>
 </body>
