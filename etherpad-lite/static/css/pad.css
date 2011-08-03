@@ -121,24 +121,20 @@ a img
 
 #editorcontainer 
 {
+  position: absolute;
+  
+  width: 100%;
+  
+  top: 36px;
+  left: 0px;  
+  bottom: 0px;
+
   z-index: 1;
-}
-
-#bruml {
-	width: 30%;
-	height: 100%;
-
-	background: #eef;
-	border: 0;
-	border-left: solid 1px #aaa;
-
-	position: relative;
-	float: left;
 }
 
 #editorcontainer iframe {
   height: 100%;
-  width: 70%; 
+  width: 100%; 
   padding: 0; 
   margin: 0; 
 }
@@ -147,8 +143,10 @@ a img
    text-align: center; position: absolute; width: 100%; height: 30px; z-index: 100; }
 
 #editorcontainerbox{
-	float: right;
-	width: 70%;
+  position:absolute;
+  bottom:0;
+  top:0;
+  width:100%;
 }
 
 
