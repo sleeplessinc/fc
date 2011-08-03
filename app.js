@@ -1,9 +1,11 @@
 /* vim: set ts=2: */
 
+var sys				= require( 'sys' );
+var os				= require( 'os' );
+
 var express		= require( 'express' );
 var mongoose	= require( './db.js' ).mongoose;
 var async			= require( 'async' );
-var sys				= require( 'sys' );
 
 var app = module.exports = express.createServer();
 
@@ -14,9 +16,9 @@ var serverHost = process.env.SERVER_HOST;
 if( serverHost ) {
 	console.log( 'Using server hostname defined in environment: %s', serverHost );
 } else {
-	serverHost = 'localhost';
+	serverHost = os.hostname();
 
-	console.log( 'NO SERVER HOSTNAME SET, defaulting to localhost...' );
+	console.log( 'No hostname defined, defaulting to os.hostname(): %s', serverHost );
 }
 
 app.configure(function(){
