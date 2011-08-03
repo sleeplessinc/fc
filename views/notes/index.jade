@@ -47,12 +47,13 @@ div#wrapper
 						option( value = 'votes' ) Sort by votes
 						option( value = 'created' ) Sort by time</option>
 
-					| show:
+					//
+						| show:
 
-					select#amountPosts
-						option( value = '10' ) 10
-						option( value = '15' ) 15
-						option( value = '20' ) 20
+						select#amountPosts
+							option( value = '10' ) 10
+							option( value = '15' ) 15
+							option( value = '20' ) 20
 
 		script#postTemplate( type = 'text/x-jQuery-tmpl', src = '/javascripts/templates/post.js' )
 			div.postContainer( id = 'post-${_id}' )
