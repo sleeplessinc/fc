@@ -1,4 +1,7 @@
-script var lectureID = '#{lecture._id}';
+script
+	var lectureID = '#{lecture._id}';
+	var userName  = '#{user.email}';
+
 div#wrapper
 	div#title Lecture: #{lecture.name} Note: #{note.name}
 	div#sidebar

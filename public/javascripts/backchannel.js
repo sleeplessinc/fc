@@ -91,6 +91,7 @@ function createdDesc(a, b) {
 $(document).ready(function(){
   // fill in holes;
   //setUserNameAndAffil();
+/*
   $('#loginForm').submit(function(e) {
     e.preventDefault();
     userObj.userName = $(this).find('#userName').val();
@@ -100,10 +101,18 @@ $(document).ready(function(){
     $('#userHeader .userName').text(userObj['userName']);
     $('#userHeader .userAffil').text(userObj['userAffil']);
     $(this).addClass('hidden');
-    $('#userBox').removeClass('hidden');
-
-    $( '.commentForm :input' ).removeAttr( 'disabled' );
   });
+*/
+
+  userObj.userName  = userName;
+  userObj.userAffil = 'N/A';
+
+  loggedIn = true;
+
+  $('#userBox').removeClass('hidden');
+
+  $( '.commentForm :input' ).removeAttr( 'disabled' );
+
   // add event handlers;
   $('#backchatHeader input[type="button"]').click(function() {
     $('#backchatHeaderInstructions').toggle();
