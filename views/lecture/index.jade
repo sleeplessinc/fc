@@ -1,10 +1,11 @@
-h1 Lecture View - #{ lecture.name }
+div(class='header')
+	h1 Lecture View - #{ lecture.name }
+div(class='content ylw rnd')
+	p Existing Note taking sessions
 
-p Existing Note taking sessions
+	ul
+		- each note in notes
+			li
+				a( href = '/note/#{ note._id }' ) #{ note.name }
 
-ul
-	- each note in notes
-		li
-			a( href = '/note/#{ note._id }' ) #{ note.name }
-
-a( href = '/lecture/#{ lecture._id }/notes/new' ) Create new note taking session
+	a( href = '/lecture/#{ lecture._id }/notes/new' ) Create new note taking session

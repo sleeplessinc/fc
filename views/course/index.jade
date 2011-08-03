@@ -1,10 +1,12 @@
-h1 Course View - #{ course.name }
+div(class='header')
+	h1 Course View - #{ course.name }
 
-p Lectures
+div(class='content ylw rnd')
+	p Lectures
 
-ul
-	- each lecture in lectures
-		li
-			a( href = '/lecture/#{ lecture._id }' ) #{ lecture.name }
+	ul
+		- each lecture in lectures
+			li
+				a( href = '/lecture/#{ lecture._id }' ) #{ lecture.name }
 
-a( href = '/course/#{ course._id }/lecture/new' ) Create New Lecture
+	a( href = '/course/#{ course._id }/lecture/new' ) Create New Lecture

@@ -1,11 +1,14 @@
-h1 Finals Club Home Page
+div(class='header')
+	h1() Finals Club Home Page
 
-- if( user )
-	a( href='/logout' ) Logout
+div(class='content ylw rnd')
+	- if( user )
+		span(class='sub_menu')
+			a( href='/logout' ) Logout
 
-- each courses, school in schools
-	p= school
-	ul
-		- each course in courses
-			li
-				a( href = 'course/#{ course._id }' ) #{ course.name }
+	- each courses, school in schools
+		h2= school
+		ul
+			- each course in courses
+				li
+					a( href = 'course/#{ course._id }' ) #{ course.name }
