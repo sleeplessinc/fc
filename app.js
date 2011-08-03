@@ -9,6 +9,16 @@ var app = module.exports = express.createServer();
 
 // Configuration
 
+var serverHost = process.env.SERVER_HOST;
+
+if( serverHost ) {
+	console.log( 'Using server hostname defined in environment: %s', serverHost );
+} else {
+	serverHost = 'localhost';
+
+	console.log( 'NO SERVER HOSTNAME SET, defaulting to localhost...' );
+}
+
 app.configure(function(){
   app.set( 'views', __dirname + '/views' );
   app.set( 'view engine', 'jade' );
@@ -25,6 +35,7 @@ app.configure(function(){
 app.configure( 'development', function() { 
 	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
 
+	// still using local mongo instances for now; this may change
 	app.set( 'dbUri', 'mongodb://localhost/fc' );
 });
 
@@ -290,6 +301,7 @@ app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 		}
 
 		res.render( 'notes/index', {
+			'host'				: serverHost,
 			'note'				: note,
 			'lecture'			: lecture,
 			'stylesheets' : [ 'backchannel.css' ],
