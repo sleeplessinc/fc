@@ -1,29 +1,79 @@
+* {
+	margin:0;
+	padding:0
+}
+
 body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+	background:#eee url(../images/bg.png) repeat-x;
+	font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+.header{
+	    margin: 0 0 30px;
+
+}
+
+.page a {
+	color:#917139;
 }
 
 a {
-  color: #00B7FF;
+  color:#3a5b8d;
+}
+span.sub_menu{
+	float:right;
+	background-color:#917139;
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	padding:2px 10px;
+	color:#fff	
+}
+span.sub_menu a{
+	color:#fff;
+	text-decoration:none;
+}
+span.sub_menu a:hover {
+	color:#fff;
+	text-decoration:underline;
 }
 
-.neat {
+
+h1 {
+	margin: 0.3em 0;
+	text-align: center;
+	color:#fff;
+	text-shadow: black 0 0 0.2em;
+}
+h2 {
+	margin: 0.5em 0;
+	clear:both
+}
+ul{
+	margin:8px 15px
+}
+
+.content {
+	margin: 15px;
+	padding: 1em;
+}
+
+.rnd {
 	-moz-border-radius: 0.3em;
 	-webkit-border-radius: 0.3em;
 	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 }
 
-h1 {
-	margin: 0.5em 0;
-	text-align: center;
+.ylw{
+	background:#F7F4CE;
 }
 
-.content {
-	width: 50%;
+.blu{
 	background: #def;
-	margin: 0 auto;
-	padding: 1em;
+}
+.frm_login{
+	width:275px;
+	margin:0 auto;
 }
 
 #credentials .row .label {
