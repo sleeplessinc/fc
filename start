@@ -5,8 +5,11 @@ cd ~/fc/bruml
 node server.js &> log.txt &
 echo "$!" > /tmp/bruml.pid
 
-cd ~/fc/etherpad-lite/node
-node server.js &> log.txt &
+#cd ~/fc/etherpad-lite/node
+#node server.js &> log.txt &
+#echo "$!" > /tmp/epl.pid
+cd ~/fc/etherpad-lite
+./bin/run.sh &> log.txt &
 echo "$!" > /tmp/epl.pid
 
 cd ~/fc
