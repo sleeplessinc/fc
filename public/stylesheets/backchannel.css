@@ -22,6 +22,12 @@ body {
 	height: 100%;
 }
 
+#title {
+  padding: 5px;
+  font-size: 120%;
+  color: #fff;
+}
+
 /*========================*/
 #notesContainer {
 min-height: 30em;
