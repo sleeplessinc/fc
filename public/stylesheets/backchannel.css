@@ -235,3 +235,25 @@ margin: 0.3em 0.3em 0.3em 4em;
 #posts .flagged {
   background: #ff0000;
 }
+
+/*.button {
+
+	background: #fff;
+	color: black;
+
+	-moz-border-radius: 0.2em;
+	-webkit-border-radius: 0.2em;
+
+	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .2);
+	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .2);
+
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#edc), to(#dcb));
+	background-image: -moz-linear-gradient(#edc, #dcb)
+
+	padding: 0.1em 1em;
+	font-size: 80%;
+	display: table-cell;
+	margin: 0.5em 1em;
+	cursor: pointer; cursor: hand;
+} */
+
