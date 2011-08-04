@@ -5,6 +5,7 @@ body {
 .hidden {
 	display: none;
 }
+
 #container {
 }
 
@@ -16,7 +17,7 @@ body {
 }
 
 #editor {
-	float: right;
+	float: left;
 
 	width: 70%;
 	height: 100%;
@@ -27,6 +28,14 @@ body {
   font-size: 120%;
   color: #fff;
   background: #000;
+}
+
+#title .buttons {
+  float: right;
+}
+
+#title .buttons a {
+  margin-left: 10px;
 }
 
 /*========================*/

@@ -3,31 +3,13 @@ script
 	var userName  = '#{user.email}';
 
 div#wrapper
-	div#title Lecture: #{lecture.name} Note: #{note.name}
+	div#title
+		span#breadcrumb Lecture: #{lecture.name} Note: #{note.name}
+		div.buttons
+			a#toggleBC Hide Discussion
+			a#togglePad Hide Editor
 	div#sidebar
 		div#container
-			//
-				div#loginBox
-					form#loginForm
-						h1 Login to post comments
-
-						div
-							div#label Name
-							div#data
-								input#userName( type = 'text', name = 'userName', value = '', 'size' = '20' )
-								br
-
-						div
-							div#label Affiliaton
-							div#data
-								input#userAffiliation( type = 'text', name = 'userAffiliation', value = '', 'size' = '20' )
-								br
-
-						div
-							div#label
-							div#data
-								input( type = 'submit', name = 'submit', value = 'Login', 'size' = '20' )
-
 			div#userBox
 				div#enterPost
 					form#enterPostForm
