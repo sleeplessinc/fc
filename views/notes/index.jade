@@ -50,8 +50,10 @@ div#wrapper
 						span.userName ${ userName }
 						&mdash;
 						span.userAffil ${ userAffil }
-						| Comments:
-						span.commentAmt ${ comments.length }
+						div
+								a( href='#', id='post-${_id}' ).comments
+									span.commentAmt ${ comments.length } 
+									| Comments
 
 				div.commentContainer.hidden
 
