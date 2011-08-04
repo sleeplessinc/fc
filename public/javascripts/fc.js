@@ -6,50 +6,46 @@ $( document ).ready( function() {
 	var editor	= $( '#editor' );
 	var bc			= $( '#sidebar' );
 
-	$( '#togglePad' ).click( function() {
+	$( '#toggleBC' ).click( function() {
 		if( padVisible ) {
 			// hide pad and, if bc is visible, grow it
 			editor.toggle();
 
-			if( bcVisible ) {
-				bc.css( 'width', '100%' );
-			}
+      bc.css( 'width', '100%' );
+      
+      $('#togglePad').attr('disabled', true);
 
 			padVisible = false;
 		} else {
 			editor.toggle();
 
-			if( bcVisible ) {
-				bc.css( 'width', '30%' );
+      $('#togglePad').removeAttr('disabled');
 
-				editor.css( 'width', '70%' );
-			} else {
-				editor.css( 'width', '100%' );
-			}
+      bc.css( 'width', '30%' );
 
+      editor.css( 'width', '70%' );
+      
 			padVisible = true;
 		}
 	});
 
-	$( '#toggleBC' ).click( function() {
+	$( '#togglePad' ).click( function() {
 		if( bcVisible ) {
 			bc.toggle();
 
-			if( padVisible ) {
-				editor.css( 'width', '100%' );
-			}
+      editor.css( 'width', '100%' );
+
+      $('#toggleBC').attr('disabled', true);
 
 			bcVisible = false;
 		} else {
 			bc.toggle();
 
-			if( padVisible ) {
-				editor.css( 'width', '70%' );
+      $('#toggleBC').removeAttr('disabled');
 
-				bc.css( 'width', '30%' );
-			} else {
-				bc.css( 'width', '100%' );
-			}
+      editor.css( 'width', '70%' );
+
+      bc.css( 'width', '30%' );
 
 			bcVisible = true;
 		}
