@@ -3,19 +3,18 @@ script
 	var userName  = '#{user.email}';
 
 div#wrapper
-	div#title
-		span#breadcrumb Lecture: #{lecture.name} Note: #{note.name}
+	div.header Lecture: #{lecture.name} Note: #{note.name}
 		div.buttons
 			button#toggleBC Discussion
 			button#togglePad Editor
 	div#sidebar
-		div#container
-			div#userBox
+		div.container
+			div.userBox
 				div#enterPost
 					form#enterPostForm
 						input#hostMeetingId( type = 'hidden', name = 'data[Post][meeting_id]', value='926' )
 
-						textarea#enterPostTextarea( name = 'data[Post][body]' )
+						textarea#enterPostTextarea( name = 'data[Post][body]', rows='3' )
 
 						input#submitPost( type = 'button', name = 'submitPost', value = 'Post Comment' )
 						input( type = 'checkbox', name = 'anonymous' )
