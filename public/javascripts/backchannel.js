@@ -71,7 +71,6 @@ $.fn.reOrder = function(array, prefix) {
     if (array) {    
       for(var i=0; i < array.length; i++) {
         var sel = '#' + prefix + array[i]._id;
-        console.log($(sel), $("#postTemplate").tmpl(array[i]))
         if ($(sel).length === 0)
           array[i] = $("#postTemplate").tmpl(array[i])
         else
