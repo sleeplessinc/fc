@@ -349,9 +349,11 @@ app.post( '/register', function( req, res ) {
 
 	var user = new User;
 
-	user.email		= req.body.email;
-	user.password	= req.body.password;
-	user.session	= sid;
+	user.email    = req.body.email;
+	user.password = req.body.password;
+	user.session  = sid;
+  user.name     = req.body.name;
+  user.affil    = req.body.affil;
 
 	user.save( function( err ) {
 		var hostname = user.email.split( '@' ).pop();

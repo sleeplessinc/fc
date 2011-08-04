@@ -4,7 +4,7 @@ div.content
 		form#credentials( action = '/register', method = 'POST' )
 			div( class = 'row')
 				div( class = 'label')
-					label( for = 'email' ) Username
+					label( for = 'email' ) Email
 				div( class = 'field')
 					input( type = 'text', name = 'email' )
 
@@ -13,6 +13,18 @@ div.content
 					label( for = 'password' ) Password
 				div( class = 'field')
 					input( type = 'password', name = 'password' )
+
+			div( class = 'row')
+				div( class = 'label')
+					label( for = 'name' ) Name
+				div( class = 'field')
+					input( type = 'text', name = 'name' )
+
+			div( class = 'row')
+				div( class = 'label')
+					label( for = 'affil' ) Affiliation
+				div( class = 'field')
+					input( type = 'text', name = 'affil' )
 
 			div( class = 'row')
 				div( class = 'label')

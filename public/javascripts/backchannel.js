@@ -126,7 +126,7 @@ $(document).ready(function(){
 */
 
   userObj.userName  = userName;
-  userObj.userAffil = 'N/A';
+  userObj.userAffil = userAffil;
 
   loggedIn = true;
 
