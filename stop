@@ -1,12 +1,10 @@
 #!/bin/bash
 
-
-cd ~/fc/bruml
-kill -9 `cat /tmp/bruml.pid`
-
-cd ~/fc/etherpad-lite/node
-kill -9 `cat /tmp/epl.pid`
-
-cd ~/fc
+#cd ~/fc
 kill -9 `cat /tmp/shell.pid`
 
+#cd ~/fc/bruml
+#kill -9 `cat /tmp/bruml.pid`
+
+#cd etherpad-lite/node
+kill -9 `cat /tmp/epl.pid`

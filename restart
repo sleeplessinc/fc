@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ~/fc
+#cd ~/fc
 ./stop
 sleep 1
 ./start
