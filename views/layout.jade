@@ -1,7 +1,7 @@
 !!!
 html
   head
-    title Finals Club
+    title FinalsClub.org
 
     link(rel='stylesheet', href='/stylesheets/style.css')
 
@@ -18,7 +18,12 @@ html
         - each javascript in javascripts
             script( type = 'text/javascript', src = '/javascripts/#{ javascript }' )
 
+    meta(name="viewport", content="width=device-width,user-scalable=no,minimum-scale=1.0,maximum-scale=1.0,initial-scale=1.0")
+    meta(name="apple-touch-icon", href="")
+    meta(name="icon", href="")
+
   body
+
     != messages()
 
     != body
