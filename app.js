@@ -411,6 +411,7 @@ io.sockets.on('connection', function(socket) {
 		post.date = new Date();
 		post.body = _post.body;
 		post.votes = 0;
+    post.reports = 0;
 		post.save(function(err) {
 			if (err) {
 				// XXX some error handling
@@ -433,6 +434,24 @@ io.sockets.on('connection', function(socket) {
 						// XXX error handling
 					} else {
 						publish({vote: vote}, lecture);
+					}
+				});
+			}
+			return post;
+		});
+	});
+
+	socket.on('report', function(res) {
+		var report = res.report;
+		var lecture = res.lecture;
+		posts[lecture] = posts[lecture].map(function(post) {
+			if(post._id == report.parentid) {
+				post.reports++;
+				post.save(function(err) {
+					if (err) {
+						// XXX error handling
+					} else {
+						publish({report: report}, lecture);
 					}
 				});
 			}

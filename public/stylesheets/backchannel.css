@@ -167,6 +167,9 @@ padding: 1em 1.5em;
 .postVoteContainer .vote-up {
 background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 }
+.postVoteContainer .voteFlag {
+	cursor: pointer; cursor: hand;
+}
 #posts .postDisplayContainer {
 margin: 0.3em 0.3em 0.3em 4em;
 }
@@ -218,4 +221,7 @@ margin: 0.3em 0.3em 0.3em 4em;
 
 #commentText {
 	width: 100%;
+}
+#posts .flagged {
+  background: #ff0000;
 }
