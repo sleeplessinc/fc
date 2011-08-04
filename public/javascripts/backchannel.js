@@ -85,7 +85,6 @@ function assembleVoteObj(postid, upOrDown) {
   return { "parentid": postid, "direction": upOrDown };
 }
 function votesDesc(a, b) {
-  console.log(a.reports, b.reports)
   if (a.reports >= 2) {
     return 1;
   } else if (b.reports >= 2) {
