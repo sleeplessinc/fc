@@ -1,0 +1,366 @@
+body {
+	background: #874;
+}
+body, td {
+	font-family: Helvetica, sans-serif;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+}
+
+.header {
+	background: #fff;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#444), to(#222));
+	background-image: -moz-linear-gradient(#444, #222)
+	text-shadow: black 0 0 0.2em;
+	border-bottom: solid 1px #888;
+	font-size: 150%;
+	color: white;
+	font-weight: bold;
+	text-align: center;
+	padding: 0.5em 1em;
+	margin: 0;
+}
+
+
+div.content {
+	padding: 1em 2em;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#653), to(#874));
+	background-image: -moz-linear-gradient(#653, #874)
+}
+
+div.container1 {
+	background:#F7F4CE;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#e7e4ae), to(#f7f4ce));
+	background-image: -moz-linear-gradient(#e7e4ae, #f7f4ce)
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+	padding: 1em 2em;
+}
+
+.hidden {
+	display: none;
+}
+
+#sidebar {
+	float: left;
+
+	width: 30%;
+	height: 100%;
+}
+
+#editor {
+	float: left;
+
+	width: 70%;
+	height: 100%;
+}
+
+#title {
+  zpadding: 5px;
+  font-size: 120%;
+  color: #fff;
+  background: #000;
+}
+
+#title .buttons {
+  float: right;
+}
+
+#title .buttons a {
+  zmargin-left: 10px;
+}
+
+/*========================*/
+#notesContainer {
+min-height: 30em;
+float: left;
+width: 25%;
+}
+#notesHeader { 
+zpadding: 0.8em;
+border: 2px solid #ddd;
+}
+#notesComponent {
+zmargin-top: 4em;
+zpadding: 0.8em;
+border: 2px solid #ddd;
+text-align: center;
+}
+
+#backchat {
+	height: 100%;
+	background: #eef;
+}
+#backchatHeader {
+font-weight: bold;
+zpadding: 0.5em 0.8em;
+background-color: #DDD;
+border-bottom: 2px solid #aaa;
+}
+#backchatHeader input { font-size: 0.7em; }
+#backchatHeaderInstructions {
+display: none;
+
+background-color: #EEE;
+zpadding: 1em;
+}
+#backchatHeaderInstructions p {
+text-indent: 1em;
+zmargin-top: 0.2em;
+}
+
+#userBox {
+	position: relative; /* allow position absolute for charsLeftMsg and submit btn */
+	zpadding: 1em 2em;
+	border-bottom: 1px solid #aaa;
+	background-color: #ddf;
+}
+#userHeader {
+	zmargin: 0 0 0.5em 0;
+}
+#loginBox {
+	zpadding: 0.5em 1em;
+	border-bottom: 1px solid #aaa;
+	background: #ddd;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#ddf), to(#cce));
+	background-image: -moz-linear-gradient(#ddf, #cce)
+}
+#userHeader .userName { 
+	font-weight: bold;
+	font-size: 110%;
+	width: 10em;
+}
+#userHeader .userAffil {
+	font-style: italic;
+}
+#userButtons {
+float: right;
+}
+#enterPostTextarea {
+	width: 98%;
+	zpadding: 0.3em 0.4em;
+}
+#charsLeftMsg {
+position: absolute;
+left: 3em;
+bottom: 1.5em;
+color: red; 
+}
+#submitPost {
+	/*position: absolute;
+	right: 1.5em;
+	bottom: 1.5em;*/
+}
+#enterUser { display: none; }
+#enterAdmin { display: none; }
+#posts {
+	background: #eef;
+	min-height: 6em;
+	zpadding: 1em 1.5em;
+}
+#postsHeader {
+zpadding-bottom: 0.5em;
+}
+.postsHeaderTitle {
+font-weight: bold;
+}
+.showpostsButton {
+/* this doesn't work in Firefox; may be impossible on OS X */
+font-size: 70%;
+}
+#postsHeaderInstructions {
+background-color: #ffc3c3;
+}
+#recentPosts {
+min-height: 6em;
+zpadding: 1em 1.5em;
+}
+#posts .postContainer {
+	min-height: 5.3em;
+
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+
+	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+
+	zmargin: 0.8em 0;
+	zpadding: 0.5em 1em;
+	background: #fff;
+}
+#posts .postVoteContainer {
+	float: left;
+}
+.unvoted {
+	background-color: #afa;
+}
+#posts .postVoteContainer .vote-tally-rect {
+	width: 1.6em;
+	height: 1em;
+	border: 1px solid #444;
+	-moz-border-radius: 6px;
+	zmargin: 0.3em;
+	zpadding: 0.2em;
+	background-color: #fff;
+	font-size: 120%;
+	text-align: right;
+	cursor: pointer; cursor: hand;
+}
+.postVoteContainer .vote-up {
+background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
+}
+.postVoteContainer .voteFlag {
+	cursor: pointer; cursor: hand;
+}
+#posts .postDisplayContainer {
+zmargin: 0.3em 0.3em 0.3em 4em;
+}
+#posts .postBody {
+	min-height: 3.0em;
+	overflow: auto;
+}
+#posts .postFooter {
+	border-top: solid 1px #ccc;
+	color: #888;
+	zpadding: 0.2em 0em;
+	font-style: italic;
+	font-size: 90%;
+}
+#posts .commentFooter {
+	border-top: solid 1px #ccc;
+	color: #888;
+	zpadding: 0.2em 0em;
+	font-style: italic;
+	font-size: 90%;
+}
+#posts .postFooter .postid {
+	float: right;
+	font-size: 70%;
+	color: #ccc;
+}
+#posts .userName {
+}
+#posts .userAffil {
+}
+
+#posts .commentAmt {
+  cursor: pointer; cursor: hand;
+}
+
+#loginForm .label {
+	width: 5em;
+	text-align: right;
+	display: table-cell;
+}
+#loginForm .data {
+	display: table-cell;
+}
+#loginBox h1 {
+	font-size: 105%;
+	zmargin: 0 0 0.5em 0;
+	zpadding: 0;
+}
+
+#commentText {
+	width: 100%;
+}
+#posts .flagged {
+  background: #ff0000;
+}
+
+/*.button {
+
+	background: #fff;
+	color: black;
+
+	-moz-border-radius: 0.2em;
+	-webkit-border-radius: 0.2em;
+
+	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .2);
+	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .2);
+
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#edc), to(#dcb));
+	background-image: -moz-linear-gradient(#edc, #dcb)
+
+	zpadding: 0.1em 1em;
+	font-size: 80%;
+	display: table-cell;
+	zmargin: 0.5em 1em;
+	cursor: pointer; cursor: hand;
+} */
+
+
+.page a {
+	color:#917139;
+}
+
+a {
+  color:#3a5b8d;
+}
+span.sub_menu{
+	float:right;
+	background-color:#917139;
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	zpadding:2px 10px;
+	color:#fff;
+}
+span.sub_menu a{
+	color:#fff;
+	text-decoration:none;
+}
+span.sub_menu a:hover {
+	color:#fff;
+	text-decoration:underline;
+}
+
+
+h1 {
+	zmargin: 0.3em 0;
+	text-align: center;
+	color:#fff;
+	text-shadow: black 0 0 0.2em;
+}
+h2 {
+	zmargin: 0.5em 0;
+	clear:both;
+}
+ul{
+	zmargin:8px 15px;
+}
+
+.rnd {
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+}
+
+.ylw{
+	background:#F7F4CE;
+}
+
+.blu{
+	background: #def;
+}
+.frm_login{
+	width:275px;
+	zmargin:0 auto;
+}
+
+#credentials .row .label {
+	width: 8em;
+	text-align: right;
+	display: table-cell;
+	zpadding: 0.8em 1em 0.8em 0em;
+}
+#credentials .row .field {
+	display: table-cell;
+	zpadding: 0.8em 0;
+}
+
