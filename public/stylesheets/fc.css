@@ -10,7 +10,7 @@ body {
 	padding: 0;
 }
 
-.header {
+div.header {
 	background: #fff;
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#444), to(#222));
 	background-image: -moz-linear-gradient(#444, #222)
@@ -22,6 +22,14 @@ body {
 	text-align: center;
 	padding: 0.5em 1em;
 	margin: 0;
+}
+
+div#wrapper div.header {
+	font-size: 120%;
+	text-align: left;
+}
+div#wrapper div.header div.buttons {
+  float: right;
 }
 
 
@@ -42,15 +50,23 @@ div.container1 {
 	padding: 1em 2em;
 }
 
-.hidden {
-	display: none;
-}
-
 #sidebar {
 	float: left;
-
 	width: 30%;
 	height: 100%;
+	background: #fff;
+}
+
+#sidebar div.container {
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+	height: 100%;
+}
+
+.hidden {
+	display: none;
 }
 
 #editor {
@@ -114,9 +130,9 @@ text-indent: 1em;
 zmargin-top: 0.2em;
 }
 
-#userBox {
+#sidebar div.container .userBox {
 	position: relative; /* allow position absolute for charsLeftMsg and submit btn */
-	zpadding: 1em 2em;
+	padding: 0.5em 1em;
 	border-bottom: 1px solid #aaa;
 	background-color: #ddf;
 }
@@ -161,10 +177,10 @@ color: red;
 #posts {
 	background: #eef;
 	min-height: 6em;
-	zpadding: 1em 1.5em;
+	padding: 1em 1.5em;
 }
 #postsHeader {
-zpadding-bottom: 0.5em;
+padding-bottom: 0.5em;
 }
 .postsHeaderTitle {
 font-weight: bold;
@@ -178,7 +194,7 @@ background-color: #ffc3c3;
 }
 #recentPosts {
 min-height: 6em;
-zpadding: 1em 1.5em;
+ padding: 1em 1.5em;
 }
 #posts .postContainer {
 	min-height: 5.3em;
@@ -189,8 +205,8 @@ zpadding: 1em 1.5em;
 	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 
-	zmargin: 0.8em 0;
-	zpadding: 0.5em 1em;
+	margin: 0.8em 0;
+	padding: 0.5em 1em;
 	background: #fff;
 }
 #posts .postVoteContainer {
@@ -205,7 +221,7 @@ zpadding: 1em 1.5em;
 	border: 1px solid #444;
 	-moz-border-radius: 6px;
 	zmargin: 0.3em;
-	zpadding: 0.2em;
+	padding: 0.2em;
 	background-color: #fff;
 	font-size: 120%;
 	text-align: right;
@@ -218,7 +234,7 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 	cursor: pointer; cursor: hand;
 }
 #posts .postDisplayContainer {
-zmargin: 0.3em 0.3em 0.3em 4em;
+ margin: 0.3em 0.3em 0.3em 4em;
 }
 #posts .postBody {
 	min-height: 3.0em;
@@ -227,14 +243,15 @@ zmargin: 0.3em 0.3em 0.3em 4em;
 #posts .postFooter {
 	border-top: solid 1px #ccc;
 	color: #888;
-	zpadding: 0.2em 0em;
+	padding: 0.2em 0em;
 	font-style: italic;
 	font-size: 90%;
+	text-align:right;
 }
 #posts .commentFooter {
 	border-top: solid 1px #ccc;
 	color: #888;
-	zpadding: 0.2em 0em;
+	padding: 0.2em 0em;
 	font-style: italic;
 	font-size: 90%;
 }
@@ -357,10 +374,14 @@ ul{
 	width: 8em;
 	text-align: right;
 	display: table-cell;
-	zpadding: 0.8em 1em 0.8em 0em;
+	padding: 0.8em 1em 0.8em 0em;
 }
 #credentials .row .field {
 	display: table-cell;
-	zpadding: 0.8em 0;
+	padding: 0.8em 0;
 }
 
+.commentContainer {
+	background: #eee;
+	padding: 0.5em;
+}
