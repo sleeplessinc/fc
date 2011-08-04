@@ -307,7 +307,7 @@ app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 			'host'				: serverHost,
 			'note'				: note,
 			'lecture'			: lecture,
-			'stylesheets' : [ 'backchannel.css' ],
+			'stylesheets' : [ 'fc.css' ],
 			'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
 		});
 	});
