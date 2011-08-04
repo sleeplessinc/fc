@@ -6,6 +6,13 @@ $( document ).ready( function() {
 	var editor	= $( '#editor' );
 	var bc			= $( '#sidebar' );
 
+  if (mobile) {
+    editor.toggle();
+    bc.css( 'width', '100%' );
+    $('#togglePad').hide();
+    $('#toggleBC').hide();
+  }
+
 	$( '#toggleBC' ).click( function() {
 		if( padVisible ) {
 			// hide pad and, if bc is visible, grow it
