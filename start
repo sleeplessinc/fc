@@ -11,6 +11,8 @@ echo "$!" > /tmp/shell.pid
 cd etherpad-lite/node
 node server.js &> log.txt &
 echo "$!" > /tmp/epl.pid
+cd ../..
+
 #cd ~/fc/etherpad-lite
 #./bin/run.sh &> log.txt &
 #echo "$!" > /tmp/epl.pid
