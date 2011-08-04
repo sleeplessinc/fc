@@ -263,6 +263,7 @@ $(document).ready(function(){
       var report = obj.report;
       posts = posts.map(function(post) {
         if(post._id == report.parentid) {
+          if (!post.reports) post.reports = 0;
           post.reports++;
           if (post.reports >= 2) {
             $('#post-'+post._id).addClass('flagged');

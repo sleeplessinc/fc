@@ -446,6 +446,7 @@ io.sockets.on('connection', function(socket) {
 		var lecture = res.lecture;
 		posts[lecture] = posts[lecture].map(function(post) {
 			if(post._id == report.parentid) {
+        if (!post.reports) post.reports = 0;
 				post.reports++;
 				post.save(function(err) {
 					if (err) {
