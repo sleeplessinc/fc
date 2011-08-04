@@ -2,6 +2,7 @@ var MAXPOSTS = 10;
 var posts = [];
 var sortedBy = 'votes';
 var socket;
+var mobile = (/iphone|ipad|ipod|android|blackberry|mini|windows\sce|palm/i.test(navigator.userAgent.toLowerCase()));
 // note that this array applies only to this browser session!
 //  ==> could vote twice on same post during different sessions.
 // use local storage??
