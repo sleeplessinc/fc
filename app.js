@@ -303,6 +303,7 @@ app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 		}
 
 		res.render( 'notes/index', {
+      'layout'      : 'noteLayout',
 			'host'				: serverHost,
 			'note'				: note,
 			'lecture'			: lecture,
