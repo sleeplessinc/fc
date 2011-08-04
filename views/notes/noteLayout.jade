@@ -1,0 +1,23 @@
+!!!
+html
+  head
+    title Finals Club
+    //link(rel='stylesheet', href='/stylesheets/style.css')
+
+    script(type='text/javascript', src='https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js')
+    //script(type='text/javascript', src='/javascripts/fc.js')
+
+    script(type='text/javascript', src='/socket.io/socket.io.js')
+
+    - if ( 'undefined' !== typeof stylesheets )
+        - each stylesheet in stylesheets
+            link( rel = 'stylesheet', href = '/stylesheets/#{ stylesheet }' )
+
+    - if ( 'undefined' !== typeof javascripts )
+        - each javascript in javascripts
+            script( type = 'text/javascript', src = '/javascripts/#{ javascript }' )
+
+  body
+    != messages()
+
+    != body
