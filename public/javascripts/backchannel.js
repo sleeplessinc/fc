@@ -2,6 +2,7 @@ var MAXPOSTS = 10;
 var posts = [];
 var sortedBy = 'votes';
 var socket;
+var mobile = (/iphone|ipad|ipod|android|blackberry|mini|windows\sce|palm/i.test(navigator.userAgent.toLowerCase()));
 // note that this array applies only to this browser session!
 //  ==> could vote twice on same post during different sessions.
 // use local storage??
@@ -53,7 +54,7 @@ function renderComments(id) {
       comments = post.comments;
       if (comments.length >= 1) {
         $('#post-'+id+' .commentContainer').empty();
-        $('#post-'+id+' .commentAmt').text(comments.length);
+        $('#post-'+id+' .commentAmt').text(comments.length+' ');
         $('#commentTemplate').tmpl(comments).appendTo('#post-'+id+' .commentContainer');
       }
     }
@@ -125,7 +126,7 @@ $(document).ready(function(){
 */
 
   userObj.userName  = userName;
-  userObj.userAffil = 'N/A';
+  userObj.userAffil = userAffil;
 
   loggedIn = true;
 
@@ -201,9 +202,10 @@ $(document).ready(function(){
     }
   })
 
-  $('.commentAmt').live('click', function(e) {
+  $('.comments').live('click', function(e) {
     e.preventDefault();
-    var id = $(this).parent().parent().parent().attr('id').replace('post-', '');
+    var id = $(this).attr('id').replace('post-', '');
+    console.log(id)
     $('#post-'+id+' .commentContainer').toggleClass('hidden');
     $('#post-'+id+' .commentForm').toggleClass('hidden');
   })

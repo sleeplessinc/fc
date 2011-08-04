@@ -303,10 +303,11 @@ app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 		}
 
 		res.render( 'notes/index', {
+      'layout'      : 'noteLayout',
 			'host'				: serverHost,
 			'note'				: note,
 			'lecture'			: lecture,
-			'stylesheets' : [ 'backchannel.css' ],
+			'stylesheets' : [ 'fc.css' ],
 			'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
 		});
 	});
@@ -348,9 +349,11 @@ app.post( '/register', function( req, res ) {
 
 	var user = new User;
 
-	user.email		= req.body.email;
-	user.password	= req.body.password;
-	user.session	= sid;
+	user.email    = req.body.email;
+	user.password = req.body.password;
+	user.session  = sid;
+  user.name     = req.body.name;
+  user.affil    = req.body.affil;
 
 	user.save( function( err ) {
 		var hostname = user.email.split( '@' ).pop();

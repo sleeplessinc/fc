@@ -2,13 +2,12 @@
 html
   head
     title FinalsClub.org
-
-    link(rel='stylesheet', href='/stylesheets/fc.css')
+    //link(rel='stylesheet', href='/stylesheets/style.css')
 
     script(type='text/javascript', src='https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js')
     script(type='text/javascript', src='/javascripts/fc.js')
 
-    //script(type='text/javascript', src='/socket.io/socket.io.js')
+    script(type='text/javascript', src='/socket.io/socket.io.js')
 
     - if ( 'undefined' !== typeof stylesheets )
         - each stylesheet in stylesheets
@@ -16,14 +15,13 @@ html
 
     - if ( 'undefined' !== typeof javascripts )
         - each javascript in javascripts
-            script( type = 'text/javascript', src = '/javascripts/#{ javascript }' )
+          script( type = 'text/javascript', src = '/javascripts/#{ javascript }' )
 
     meta(name="viewport", content="width=device-width,user-scalable=no,minimum-scale=1.0,maximum-scale=1.0,initial-scale=1.0")
     meta(name="apple-touch-icon", href="")
     meta(name="icon", href="")
 
   body
-
     != messages()
 
     != body

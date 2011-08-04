@@ -1,39 +1,21 @@
 script
 	var lectureID = '#{lecture._id}';
-	var userName  = '#{user.email}';
+	var userName  = '#{user.name}';
+	var userAffil = '#{user.affil}';
 
 div#wrapper
-	div#title Lecture: #{lecture.name} Note: #{note.name}
+	div.header Lecture: #{lecture.name} Note: #{note.name}
+		div.buttons
+			button#toggleBC Discussion
+			button#togglePad Editor
 	div#sidebar
-		div#container
-			//
-				div#loginBox
-					form#loginForm
-						h1 Login to post comments
-
-						div
-							div#label Name
-							div#data
-								input#userName( type = 'text', name = 'userName', value = '', 'size' = '20' )
-								br
-
-						div
-							div#label Affiliaton
-							div#data
-								input#userAffiliation( type = 'text', name = 'userAffiliation', value = '', 'size' = '20' )
-								br
-
-						div
-							div#label
-							div#data
-								input( type = 'submit', name = 'submit', value = 'Login', 'size' = '20' )
-
-			div#userBox
+		div.container
+			div.userBox
 				div#enterPost
 					form#enterPostForm
 						input#hostMeetingId( type = 'hidden', name = 'data[Post][meeting_id]', value='926' )
 
-						textarea#enterPostTextarea( name = 'data[Post][body]' )
+						textarea#enterPostTextarea( name = 'data[Post][body]', rows='3' )
 
 						input#submitPost( type = 'button', name = 'submitPost', value = 'Post Comment' )
 						input( type = 'checkbox', name = 'anonymous' )
@@ -66,8 +48,10 @@ div#wrapper
 						span.userName ${ userName }
 						&mdash;
 						span.userAffil ${ userAffil }
-						| Comments:
-						span.commentAmt ${ comments.length }
+						div
+								a( href='#', id='post-${_id}' ).comments
+									span.commentAmt ${ comments.length } 
+									| Comments
 
 				div.commentContainer.hidden
 

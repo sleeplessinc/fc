@@ -21,6 +21,8 @@ function salt() {
 
 var User = new Schema( {
 	email					: { type : String, index : { unique : true } },
+  name          : String,
+  affil         : String,
 	hashed				: String,
 	salt					: String,
 	session				: String

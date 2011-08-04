@@ -1,19 +1,72 @@
 body {
-	font-family: helvetica;
-	margin: 0;
+	background: #874;
 }
-.hidden {
-	display: none;
+body, td {
+	font-family: Helvetica, sans-serif;
 }
 
-#container {
+body {
+	margin: 0;
+	padding: 0;
+}
+
+div.header {
+	background: #fff;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#444), to(#222));
+	background-image: -moz-linear-gradient(#444, #222)
+	text-shadow: black 0 0 0.2em;
+	border-bottom: solid 1px #888;
+	font-size: 150%;
+	color: white;
+	font-weight: bold;
+	text-align: center;
+	padding: 0.5em 1em;
+	margin: 0;
+}
+
+div#wrapper div.header {
+	font-size: 120%;
+	text-align: left;
+}
+div#wrapper div.header div.buttons {
+  float: right;
+}
+
+
+div.content {
+	padding: 1em 2em;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#653), to(#874));
+	background-image: -moz-linear-gradient(#653, #874)
+}
+
+div.container1 {
+	background:#F7F4CE;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#e7e4ae), to(#f7f4ce));
+	background-image: -moz-linear-gradient(#e7e4ae, #f7f4ce)
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+	padding: 1em 2em;
 }
 
 #sidebar {
 	float: left;
-
 	width: 30%;
 	height: 100%;
+	background: #fff;
+}
+
+#sidebar div.container {
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+	height: 100%;
+}
+
+.hidden {
+	display: none;
 }
 
 #editor {
@@ -24,7 +77,7 @@ body {
 }
 
 #title {
-  padding: 5px;
+  zpadding: 5px;
   font-size: 120%;
   color: #fff;
   background: #000;
@@ -35,7 +88,7 @@ body {
 }
 
 #title .buttons a {
-  margin-left: 10px;
+  zmargin-left: 10px;
 }
 
 /*========================*/
@@ -45,23 +98,23 @@ float: left;
 width: 25%;
 }
 #notesHeader { 
-padding: 0.8em;
+zpadding: 0.8em;
 border: 2px solid #ddd;
 }
 #notesComponent {
-margin-top: 4em;
-padding: 0.8em;
+zmargin-top: 4em;
+zpadding: 0.8em;
 border: 2px solid #ddd;
 text-align: center;
 }
-/*========================*/
+
 #backchat {
 	height: 100%;
 	background: #eef;
 }
 #backchatHeader {
 font-weight: bold;
-padding: 0.5em 0.8em;
+zpadding: 0.5em 0.8em;
 background-color: #DDD;
 border-bottom: 2px solid #aaa;
 }
@@ -70,24 +123,24 @@ border-bottom: 2px solid #aaa;
 display: none;
 
 background-color: #EEE;
-padding: 1em;
+zpadding: 1em;
 }
 #backchatHeaderInstructions p {
 text-indent: 1em;
-margin-top: 0.2em;
+zmargin-top: 0.2em;
 }
-/*========================*/
-#userBox {
+
+#sidebar div.container .userBox {
 	position: relative; /* allow position absolute for charsLeftMsg and submit btn */
-	padding: 1em 2em;
+	padding: 0.5em 1em;
 	border-bottom: 1px solid #aaa;
 	background-color: #ddf;
 }
 #userHeader {
-	margin: 0 0 0.5em 0;
+	zmargin: 0 0 0.5em 0;
 }
 #loginBox {
-	padding: 0.5em 1em;
+	zpadding: 0.5em 1em;
 	border-bottom: 1px solid #aaa;
 	background: #ddd;
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#ddf), to(#cce));
@@ -106,7 +159,7 @@ float: right;
 }
 #enterPostTextarea {
 	width: 98%;
-	padding: 0.3em 0.4em;
+	zpadding: 0.3em 0.4em;
 }
 #charsLeftMsg {
 position: absolute;
@@ -141,7 +194,7 @@ background-color: #ffc3c3;
 }
 #recentPosts {
 min-height: 6em;
-padding: 1em 1.5em;
+ padding: 1em 1.5em;
 }
 #posts .postContainer {
 	min-height: 5.3em;
@@ -167,7 +220,7 @@ padding: 1em 1.5em;
 	height: 1em;
 	border: 1px solid #444;
 	-moz-border-radius: 6px;
-	margin: 0.3em;
+	zmargin: 0.3em;
 	padding: 0.2em;
 	background-color: #fff;
 	font-size: 120%;
@@ -181,7 +234,7 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 	cursor: pointer; cursor: hand;
 }
 #posts .postDisplayContainer {
-margin: 0.3em 0.3em 0.3em 4em;
+ margin: 0.3em 0.3em 0.3em 4em;
 }
 #posts .postBody {
 	min-height: 3.0em;
@@ -193,6 +246,7 @@ margin: 0.3em 0.3em 0.3em 4em;
 	padding: 0.2em 0em;
 	font-style: italic;
 	font-size: 90%;
+	text-align:right;
 }
 #posts .commentFooter {
 	border-top: solid 1px #ccc;
@@ -211,7 +265,7 @@ margin: 0.3em 0.3em 0.3em 4em;
 #posts .userAffil {
 }
 
-#posts .comments {
+#posts .commentAmt {
   cursor: pointer; cursor: hand;
 }
 
@@ -225,8 +279,8 @@ margin: 0.3em 0.3em 0.3em 4em;
 }
 #loginBox h1 {
 	font-size: 105%;
-	margin: 0 0 0.5em 0;
-	padding: 0;
+	zmargin: 0 0 0.5em 0;
+	zpadding: 0;
 }
 
 #commentText {
@@ -250,10 +304,84 @@ margin: 0.3em 0.3em 0.3em 4em;
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#edc), to(#dcb));
 	background-image: -moz-linear-gradient(#edc, #dcb)
 
-	padding: 0.1em 1em;
+	zpadding: 0.1em 1em;
 	font-size: 80%;
 	display: table-cell;
-	margin: 0.5em 1em;
+	zmargin: 0.5em 1em;
 	cursor: pointer; cursor: hand;
 } */
 
+
+.page a {
+	color:#917139;
+}
+
+a {
+  color:#3a5b8d;
+}
+span.sub_menu{
+	float:right;
+	background-color:#917139;
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	zpadding:2px 10px;
+	color:#fff;
+}
+span.sub_menu a{
+	color:#fff;
+	text-decoration:none;
+}
+span.sub_menu a:hover {
+	color:#fff;
+	text-decoration:underline;
+}
+
+
+h1 {
+	zmargin: 0.3em 0;
+	text-align: center;
+	color:#fff;
+	text-shadow: black 0 0 0.2em;
+}
+h2 {
+	zmargin: 0.5em 0;
+	clear:both;
+}
+ul{
+	zmargin:8px 15px;
+}
+
+.rnd {
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
+}
+
+.ylw{
+	background:#F7F4CE;
+}
+
+.blu{
+	background: #def;
+}
+.frm_login{
+	width:275px;
+	zmargin:0 auto;
+}
+
+#credentials .row .label {
+	width: 8em;
+	text-align: right;
+	display: table-cell;
+	padding: 0.8em 1em 0.8em 0em;
+}
+#credentials .row .field {
+	display: table-cell;
+	padding: 0.8em 0;
+}
+
+.commentContainer {
+	background: #eee;
+	padding: 0.5em;
+}
