@@ -4,9 +4,6 @@
 node app.js &> log.txt &
 echo "$!" > /tmp/shell.pid
 
-#cd ~/fc/bruml
-#node server.js &> log.txt &
-#echo "$!" > /tmp/bruml.pid
 
 cd etherpad-lite/node
 node server.js &> log.txt &
@@ -16,3 +13,4 @@ cd ../..
 #cd ~/fc/etherpad-lite
 #./bin/run.sh &> log.txt &
 #echo "$!" > /tmp/epl.pid
+
