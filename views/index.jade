@@ -1,13 +1,15 @@
 div.header FinalsClub.org
 div.content
-	div.container1
+	div.menubar
 		- if( user )
 			span(class='sub_menu')
 				a( href='/logout' ) Logout
 
+	div.container1
 		- each courses, school in schools
-			h2= school
-			ul
-				- each course in courses
-					li
-						a( href = 'course/#{ course._id }' ) #{ course.name }
+			div(class='school')
+				h2= school
+				ul
+					- each course in courses
+						li
+							a( href = 'course/#{ course._id }' ) #{ course.name }
