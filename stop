@@ -1,5 +1,8 @@
 #!/bin/bash
 
+ps waux | grep node | grep -v grep
+
+echo "stopping ..."
 #cd ~/fc
 kill -9 `cat /tmp/shell.pid`
 
@@ -8,3 +11,6 @@ kill -9 `cat /tmp/shell.pid`
 
 #cd etherpad-lite/node
 kill -9 `cat /tmp/epl.pid`
+
+sleep 3
+ps waux | grep node | grep -v grep
