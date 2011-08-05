@@ -16,7 +16,7 @@ div.header {
 	background-image: -moz-linear-gradient(#444, #222)
 	text-shadow: black 0 0 0.2em;
 	border-bottom: solid 1px #888;
-	font-size: 150%;
+	font-size: 130%;
 	color: white;
 	font-weight: bold;
 	text-align: center;
@@ -34,20 +34,20 @@ div#wrapper div.header div.buttons {
 
 
 div.content {
-	padding: 1em 2em;
+	padding: 1em 3%;
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#653), to(#874));
 	background-image: -moz-linear-gradient(#653, #874)
 }
 
 div.container1 {
-	background:#F7F4CE;
+	background:#fed;
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#e7e4ae), to(#f7f4ce));
 	background-image: -moz-linear-gradient(#e7e4ae, #f7f4ce)
 	-moz-border-radius: 0.3em;
 	-webkit-border-radius: 0.3em;
 	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
-	padding: 1em 2em;
+	padding: 0.8em 3% 2em 3%;
 	margin: 0.5em 0;
 }
 
@@ -64,6 +64,7 @@ div.container1 {
 	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 	height: 100%;
+	border-right: solid 1px #888;
 }
 
 .hidden {
@@ -135,7 +136,7 @@ zmargin-top: 0.2em;
 	position: relative; /* allow position absolute for charsLeftMsg and submit btn */
 	padding: 0.5em 1em;
 	border-bottom: 1px solid #aaa;
-	background-color: #ddf;
+	background-color: #ddb;
 }
 #userHeader {
 	zmargin: 0 0 0.5em 0;
@@ -176,7 +177,7 @@ color: red;
 #enterUser { display: none; }
 #enterAdmin { display: none; }
 #posts {
-	background: #eef;
+	background: #eec;
 	min-height: 6em;
 	padding: 1em 1.5em;
 }
@@ -219,26 +220,39 @@ min-height: 6em;
 #posts .postVoteContainer .vote-tally-rect {
 	width: 1.6em;
 	height: 1em;
-	border: 1px solid #444;
-	-moz-border-radius: 6px;
-	zmargin: 0.3em;
+	border: 1px solid #aaa;
+	-moz-border-radius: 0.2em;
+	-webkit-border-radius: 0.2em;
 	padding: 0.2em;
 	background-color: #fff;
-	font-size: 120%;
 	text-align: right;
 	cursor: pointer; cursor: hand;
+	font-size: 120%;
+	font-weight: bold;
+	margin: 0.2em;
+	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
 }
 .postVoteContainer .vote-up {
 background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 }
 .postVoteContainer .voteFlag {
 	cursor: pointer; cursor: hand;
+	font-size: 80%;
+	color: #fff;
+	background: #f00;
+	font-weight: bold;
+	text-align: center;
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
 }
 #posts .postDisplayContainer {
  margin: 0.3em 0.3em 0.3em 4em;
 }
 #posts .postBody {
-	min-height: 3.0em;
+	min-height: 4.0em;
 	overflow: auto;
 }
 #posts .postFooter {
@@ -251,10 +265,10 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 }
 #posts .commentFooter {
 	border-top: solid 1px #ccc;
-	color: #888;
+	color: #666;
 	padding: 0.2em 0em;
 	font-style: italic;
-	font-size: 90%;
+	font-size: 80%;
 }
 #posts .postFooter .postid {
 	float: right;
@@ -271,7 +285,7 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 }
 
 #loginForm .label {
-	width: 5em;
+	width: 50%;
 	text-align: right;
 	display: table-cell;
 }
@@ -288,7 +302,8 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 	width: 100%;
 }
 #posts .flagged {
-  background: #ff0000;
+  opacity: 0.3;
+  background: #eca;
 }
 
 /*.button {
@@ -348,15 +363,26 @@ h1 {
 	text-align: center;
 	color:#fff;
 	text-shadow: black 0 0 0.2em;
+	font-size: 120%;
 }
 h2 {
 	zmargin: 0.5em 0;
 	clear:both;
+	font-size: 110%;
+}
+
+h3 {
+	font-size: 105%;
 }
 ul{
 	zmargin:8px 15px;
 }
 
+
+#sidebar h3 {
+	margin: 0;
+	font-size: 105%;
+}
 .rnd {
 	-moz-border-radius: 0.3em;
 	-webkit-border-radius: 0.3em;
@@ -376,15 +402,21 @@ ul{
 	zmargin:0 auto;
 }
 
+#credentials .row {
+	display: table-row;
+}
 #credentials .row .label {
-	width: 8em;
+	width: 40%;
 	text-align: right;
 	display: table-cell;
-	padding: 0.8em 1em 0.8em 0em;
+	padding: 0.8em 3% 0.8em 0%;
 }
 #credentials .row .field {
 	display: table-cell;
-	padding: 0.8em 0;
+	padding: 0.2em 0;
+}
+#credentials .row .field input {
+	width: 90%;
 }
 
 .commentContainer {
@@ -399,4 +431,15 @@ div.school {
 }
 div.menubar {
 	text-align: right;
+}
+
+#messages {
+	background: #900;
+	padding: 0.5em;
+}
+.error {
+	color: #fff;
+}
+.anonpost {
+	font-size: 70%;
 }

@@ -4,22 +4,23 @@ script
 	var userAffil = '#{user.affil}';
 
 div#wrapper
-	div.header Lecture: #{lecture.name} Note: #{note.name}
+	div.header #{lecture.name} &mdash; #{note.name}
 		div.buttons
 			button#toggleBC Discussion
 			button#togglePad Editor
 	div#sidebar
 		div.container
 			div.userBox
+				h3 Post Your Own Question
 				div#enterPost
 					form#enterPostForm
 						input#hostMeetingId( type = 'hidden', name = 'data[Post][meeting_id]', value='926' )
 
 						textarea#enterPostTextarea( name = 'data[Post][body]', rows='3' )
 
-						input#submitPost( type = 'button', name = 'submitPost', value = 'Post Comment' )
+						input#submitPost( type = 'button', name = 'submitPost', value = 'Submit Post' )
 						input( type = 'checkbox', name = 'anonymous' )
-						| Post anonymously
+						span(class='anonpost') Anonymously
 
 			div#posts
 				div#postsHeader
@@ -41,7 +42,7 @@ div#wrapper
 			div.postContainer( id = 'post-${_id}' )
 				div.postVoteContainer( data-postid = '${_id}' )
 					div.vote-tally-rect.vote-up ${ votes }
-					div.voteFlag Flag
+					div.voteFlag FLAG
 				div.postDisplayContainer
 					div.postBody ${ body }
 					div.postFooter
@@ -58,9 +59,9 @@ div#wrapper
 				form.commentForm.hidden
 					input( type = 'hidden', name = 'postid', value = '${_id}' )
 					textarea#commentText( name = 'commentText', disabled = 'disabled' )
-					input( type = 'submit', value = 'Post Comment', disabled = 'disabled' )
+					input( type = 'submit', value = 'Submit Comment', disabled = 'disabled' )
 					input( type = 'checkbox', name = 'anonymous' )
-					| Post anonymously
+					span(class='anonpost') Anonymously
 
 		script#commentTemplate( type = 'text/x-jQuery-tmpl', src = '/javascripts/templates/comment.js' )
 			div.commentBody ${ body }
