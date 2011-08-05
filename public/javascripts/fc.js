@@ -11,6 +11,7 @@ $( document ).ready( function() {
     bc.css( 'width', '100%' );
     $('#togglePad').hide();
     $('#toggleBC').hide();
+    $('#epliframe').remove();
   }
 
 	$( '#toggleBC' ).click( function() {
