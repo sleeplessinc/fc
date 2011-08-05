@@ -1,3 +1,0 @@
-[submodule "etherpad-lite"]
-	path = etherpad-lite
-	url = git://github.com/Pita/etherpad-lite.git
