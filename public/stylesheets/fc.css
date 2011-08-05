@@ -11,7 +11,7 @@ body {
 }
 
 div.header {
-	background: #fff;
+	background: #333;
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#444), to(#222));
 	background-image: -moz-linear-gradient(#444, #222)
 	text-shadow: black 0 0 0.2em;
@@ -40,7 +40,7 @@ div.content {
 }
 
 div.container1 {
-	background:#fed;
+	background: #f7f4ce;
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#e7e4ae), to(#f7f4ce));
 	background-image: -moz-linear-gradient(#e7e4ae, #f7f4ce)
 	-moz-border-radius: 0.3em;
@@ -425,7 +425,7 @@ ul{
 }
 
 div.school {
-	border:  solid 1px #eeb;
+	zborder:  solid 1px #eeb;
 	-moz-border-radius: 0.2em;
 	-webkit-border-radius: 0.2em;
 }
@@ -442,4 +442,8 @@ div.menubar {
 }
 .anonpost {
 	font-size: 70%;
+}
+
+li {
+	padding: 0.2em 0; 
 }
