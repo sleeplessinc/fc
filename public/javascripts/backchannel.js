@@ -45,6 +45,11 @@ function renderPosts(fresh, post) {
         $post.find('.vote-tally-rect').die()
         $post.find('.vote-tally-rect').css('cursor', 'default')
       }
+
+      if (post.reports.indexOf(userID) !== -1) {
+        $post.find('.voteFlag').css('cursor', 'default')
+        $post.find('.voteFlag').css('background', '#888')
+      } 
     }
   })
   /*
@@ -193,7 +198,7 @@ $(document).ready(function(){
           var newVoteObj = {parentid: postid, userid: userID};
           socket.emit('vote', {vote: newVoteObj, lecture: lectureID});
           $(that).die()
-          $(that).css({cursor: 'pointer'})
+          $(that).css('cursor', 'default')
           $(that).parent().removeClass('unvoted');
         } 
       }
@@ -236,14 +241,20 @@ $(document).ready(function(){
   })
 
   $('.voteFlag').live('click', function() {
+    var that = this;
     var id = $(this).parent().parent().attr('id').replace('post-', '');
-    if(confirm('By flagging a comment, you are identifying it as a violation of the FinalsClub Code of Conduct: Keep it academic.')) {
-      $.each(posts, function(i, post){
-        if (post._id == id) {
-          socket.emit('report', {report: {parentid: id}, lecture: lectureID});
-        }
-      })
-    }
+    $.each(posts, function(i, post){
+      if (post._id == id) {
+        if (post.reports.indexOf(userID) == -1) {
+          if(confirm('By flagging a comment, you are identifying it as a violation of the FinalsClub Code of Conduct: Keep it academic.')) {
+            socket.emit('report', {report: {parentid: id, userid: userID}, lecture: lectureID});
+            $(that).die()
+            $(that).css('cursor', 'default')
+            $(that).css('background', '#888')
+          }
+        } 
+      }
+    })
   })
 
   //=====================================================================
@@ -293,9 +304,8 @@ $(document).ready(function(){
       var report = obj.report;
       posts = posts.map(function(post) {
         if(post._id == report.parentid) {
-          if (!post.reports) post.reports = 0;
-          post.reports++;
-          if (post.reports >= 2) {
+          post.reports.push(report.userid);
+          if (post.reports.length >= 2) {
             $('#post-'+post._id).addClass('flagged');
           }
         }

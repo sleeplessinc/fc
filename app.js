@@ -414,7 +414,7 @@ io.sockets.on('connection', function(socket) {
 		post.date = new Date();
 		post.body = _post.body;
 		post.votes = [];
-    post.reports = 0;
+    post.reports = [];
 		post.save(function(err) {
 			if (err) {
 				// XXX some error handling
@@ -451,15 +451,16 @@ io.sockets.on('connection', function(socket) {
 		var lecture = res.lecture;
 		posts[lecture] = posts[lecture].map(function(post) {
 			if(post._id == report.parentid) {
-        if (!post.reports) post.reports = 0;
-				post.reports++;
-				post.save(function(err) {
-					if (err) {
-						// XXX error handling
-					} else {
-						publish({report: report}, lecture);
-					}
-				});
+        if (post.reports.indexOf(report.userid) == -1) {
+          post.reports.push(report.userid);
+          post.save(function(err) {
+            if (err) {
+              // XXX error handling
+            } else {
+              publish({report: report}, lecture);
+            }
+          });
+        }
 			}
 			return post;
 		});
