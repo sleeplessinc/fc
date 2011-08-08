@@ -12,6 +12,15 @@ kill -9 `cat pid`
 cd ~/fc
 kill -9 `cat pid`
 
+cd ~/fc/bruml
+kill -9 `cat pid`
+
+cd ~/fc/etherpad-lite/node
+kill -9 `cat pid`
+
+cd ~/fc
+kill -9 `cat pid`
+
 
 
 cd ~/fc/bruml
