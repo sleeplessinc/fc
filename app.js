@@ -440,7 +440,7 @@ io.sockets.on('connection', function(socket) {
 		}
 		post.date = new Date();
 		post.body = _post.body;
-		post.votes = 0;
+		post.votes = [];
     post.reports = 0;
 		post.save(function(err) {
 			if (err) {
@@ -458,14 +458,16 @@ io.sockets.on('connection', function(socket) {
 		var lecture = res.lecture;
 		posts[lecture] = posts[lecture].map(function(post) {
 			if(post._id == vote.parentid) {
-				post.votes++;
-				post.save(function(err) {
-					if (err) {
-						// XXX error handling
-					} else {
-						publish({vote: vote}, lecture);
-					}
-				});
+        if (post.votes.indexOf(vote.userid) == -1) {
+          post.votes.push(vote.userid);
+          post.save(function(err) {
+            if (err) {
+              // XXX error handling
+            } else {
+              publish({vote: vote}, lecture);
+            }
+          });
+        }
 			}
 			return post;
 		});

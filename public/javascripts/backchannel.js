@@ -34,17 +34,39 @@ function renderPosts(fresh, post) {
     if (post.reports >= 2) {
       $('#post-'+post._id).addClass('flagged');
     }
+  });
+  posts.forEach(function(post) {
+    renderComments(post._id)
+    var $post = $('#post-'+post._id);
+    if ($post !== []) {
+      if (post.votes.indexOf(userID) == -1) {
+        $post.find('.postVoteContainer').addClass('unvoted')
+      } else {
+        $post.find('.vote-tally-rect').die()
+        $post.find('.vote-tally-rect').css('cursor', 'default')
+      }
+    }
   })
+  /*
   $('#posts .postVoteContainer').each(function(idx, container) {
     var postid = $(container).attr("data-postid");
     renderComments(postid)
+    if (post.votes.indexOf(userID) == -1) {
+      var newVoteObj = {parentid: postid, userid: userID};
+      socket.emit('vote', {vote: newVoteObj, lecture: lectureID});
+      $('.vote-tally-rect').die()
+      $('.vote-tally-rect').css({cursor: 'pointer'})
+    } else {
+      alert('You have already voted')
+    }
     if (postsVoted.indexOf(postid) != -1) {
       //console.log("For " + postid + ": voted");
     } else {
       //console.log("For " + postid + ": NOT voted");
       $(container).addClass("unvoted");
     }
-  });    
+  });
+  */
 }
 
 function renderComments(id) {
@@ -95,7 +117,7 @@ function votesDesc(a, b) {
     return -1;
   } else {
   // for descending, reverse usual order; 
-  return b.votes - a.votes;
+  return b.votes.length - a.votes.length;
   }
 }
 function createdDesc(a, b) {
@@ -126,6 +148,7 @@ $(document).ready(function(){
 
   userObj.userName  = userName;
   userObj.userAffil = userAffil;
+  userObj.userID    = userID;
 
   loggedIn = true;
 
@@ -162,16 +185,19 @@ $(document).ready(function(){
     }
   });
   $('.vote-tally-rect').live("click", function() {
+    var that = this;
     var postid = $(this).parent().attr('data-postid');
-    if (postsVoted.indexOf(postid) != -1) {
-      // already voted on this post;
-      console.log("You already voted on this post!");
-      // allow for now;
-      // eventually: show dialog for 2 seconds; return;
-    }
-    postsVoted.push(postid);
-    var newVoteObj = {parentid: postid};
-    socket.emit('vote', {vote: newVoteObj, lecture: lectureID});
+    posts.forEach(function(post) {
+      if (post._id === postid) {
+        if (post.votes.indexOf(userID) == -1) {
+          var newVoteObj = {parentid: postid, userid: userID};
+          socket.emit('vote', {vote: newVoteObj, lecture: lectureID});
+          $(that).die()
+          $(that).css({cursor: 'pointer'})
+          $(that).parent().removeClass('unvoted');
+        } 
+      }
+    })
   });
   $('#amountPosts').change(function() {
     MAXPOSTS = $(this).val();
@@ -257,8 +283,8 @@ $(document).ready(function(){
       var vote = obj.vote;
       posts = posts.map(function(post) {
         if(post._id == vote.parentid) {
-          post.votes++;
-          $('#post-'+vote.parentid).find('.vote-tally-rect').text(post.votes);
+          post.votes.push(vote.userid);
+          $('#post-'+vote.parentid).find('.vote-tally-rect').text(post.votes.length);
         }
         return post;
       });

@@ -1,6 +1,7 @@
 script
 	var lectureID = '#{lecture._id}';
 	var userName  = '#{user.name}';
+	var userID    = '#{user._id}';
 	var userAffil = '#{user.affil}';
 
 div#wrapper
@@ -41,7 +42,7 @@ div#wrapper
 		script#postTemplate( type = 'text/x-jQuery-tmpl', src = '/javascripts/templates/post.js' )
 			div.postContainer( id = 'post-${_id}' )
 				div.postVoteContainer( data-postid = '${_id}' )
-					div.vote-tally-rect.vote-up ${ votes }
+					div.vote-tally-rect.vote-up ${ votes.length }
 					div.voteFlag FLAG
 				div.postDisplayContainer
 					div.postBody ${ body }
