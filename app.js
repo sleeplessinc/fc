@@ -531,4 +531,4 @@ function publish(data, lecture) {
 }
 
 app.listen( 3000 );
-log2( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
+console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
