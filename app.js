@@ -7,6 +7,9 @@ var express		= require( 'express' );
 var mongoose	= require( './db.js' ).mongoose;
 var async			= require( 'async' );
 
+
+var log3 = function() {}
+
 var app = module.exports = express.createServer();
 
 // Configuration
