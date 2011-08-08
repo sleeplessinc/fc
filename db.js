@@ -21,6 +21,8 @@ function salt() {
 
 var User = new Schema( {
 	email					: { type : String, index : { unique : true } },
+  name          : String,
+  affil         : String,
 	hashed				: String,
 	salt					: String,
 	session				: String
@@ -99,5 +101,24 @@ var Note = new Schema( {
 });
 
 mongoose.model( 'Note', Note );
+
+// comments
+
+var Post = new Schema({
+  date      : Date,
+  body      : String,
+  votes     : Number,
+  reports   : Number,
+
+  userid    : String,//ObjectId,
+  userName  : String,
+  userAffil : String,
+
+  comments   : Array,
+
+  lecture   : String//ObjectId
+})
+
+mongoose.model( 'Post', Post );
 
 module.exports.mongoose = mongoose;

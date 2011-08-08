@@ -5,7 +5,6 @@ cd ~
 export PATH="/usr/local/bin:$PATH"
 
 
-
 cat > .ssh/id_rsa << FIN
 -----BEGIN RSA PRIVATE KEY-----
 MIIEoQIBAAKCAQEArjSBiT01b3b3buA5bRS+LLmLz0BfEQd3tHmyjbKhSL3wCQgY
@@ -37,15 +36,23 @@ HcAEf39Y3DFUBJFAt/Lr+VZJyuI4HYzwcKyPvEivNUgggivHRaDOsL2YT7vQbJ5t
 FIN
 chmod 700 .ssh/id_rsa
 
+
+
 rm -rf fc
 git clone git@github.com:sleeplessinc/fc.git
 cd fc
 git checkout dev
+npm install
 cd etherpad-lite
 npm install
+cd ..
+cp settings.json etherpad-lite
 
 cd ../bruml
 npm install socket.io
+
+
+mongorestore -d fc ./dump/fc_dev
 
 
 cd

@@ -1,15 +1,25 @@
 /* vim: set ts=2: */
 
+var sys				= require( 'sys' );
+var os				= require( 'os' );
+
 var express		= require( 'express' );
 var mongoose	= require( './db.js' ).mongoose;
 var async			= require( 'async' );
-var sys				= require( 'sys' );
-require( './log.js' ); logLevel = 5;
-
 
 var app = module.exports = express.createServer();
 
 // Configuration
+
+var serverHost = process.env.SERVER_HOST;
+
+if( serverHost ) {
+	console.log( 'Using server hostname defined in environment: %s', serverHost );
+} else {
+	serverHost = os.hostname();
+
+	console.log( 'No hostname defined, defaulting to os.hostname(): %s', serverHost );
+}
 
 app.configure(function(){
   app.set( 'views', __dirname + '/views' );
@@ -31,15 +41,21 @@ app.configure(function(){
 app.configure( 'development', function() { 
 	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
 
-	mongoose.connect( 'mongodb://localhost/fc' );
+	// still using local mongo instances for now; this may change
+	app.set( 'dbUri', 'mongodb://localhost/fc' );
 });
 
 app.configure( 'production', function() {
 	//app.use( express.errorHandler() ); 
 	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
 
-	mongoose.connect( 'mongodb://localhost/fc' );
+	app.set( 'dbUri', 'mongodb://localhost/fc' );
 });
+
+// db connect
+
+mongoose.connect( app.set( 'dbUri' ) );
+mongoose.connection.db.serverConfig.connection.autoReconnect = true
 
 // Models
 
@@ -54,6 +70,8 @@ var Note		= mongoose.model( 'Note' );
 function loggedIn( req, res, next ) {
 	var sid = req.sessionID;
 	log3("logged in ...")
+
+	console.log( 'got request from session ID: %s', sid );
 
 	User.findOne( { session : sid }, function( err, user ) {
 		log3(err);
@@ -248,7 +266,10 @@ app.get( '/lecture/:id', loggedIn, loadLecture, function( req, res ) {
 
 	// pull out our notes
 	Note.find( { 'lecture' : lecture._id }, function( err, notes ) {
-		res.render( 'lecture/index', { 'lecture' : lecture, 'notes' : notes } );
+		res.render( 'lecture/index', {
+			'lecture'			: lecture,
+			'notes'				: notes
+		});
 	});
 });
 
@@ -283,8 +304,24 @@ app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) 
 app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 	var note = req.note;
 
-//	res.render( 'notes/index', { 'note' : note, 'layout' : false } );
-	res.redirect( 'http://fc.sleepless.com:9001/p/' + note._id );
+	var lectureId = note.lecture;
+
+	Lecture.findById( lectureId, function( err, lecture ) {
+		if( ! lecture ) {
+			req.flash( 'error', 'That notes page is orphaned!' );
+
+			res.redirect( '/' );
+		}
+
+		res.render( 'notes/index', {
+      'layout'      : 'noteLayout',
+			'host'				: serverHost,
+			'note'				: note,
+			'lecture'			: lecture,
+			'stylesheets' : [ 'fc.css' ],
+			'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
+		});
+	});
 });
 
 // authentication
@@ -333,9 +370,11 @@ app.post( '/register', function( req, res ) {
   log3("post reg ");
 	log3(user)
 
-	user.email		= req.body.email;
-	user.password	= req.body.password;
-	user.session	= sid;
+	user.email    = req.body.email;
+	user.password = req.body.password;
+	user.session  = sid;
+  user.name     = req.body.name;
+  user.affil    = req.body.affil;
 	log3('register '+user.email+"/"+user.password+" "+user.session) 
 	log3(user)
 
@@ -365,6 +404,129 @@ app.get( '/logout', function( req, res ) {
 
 	res.redirect( '/' );
 });
+
+// socket.io server
+
+var io = require( 'socket.io' ).listen( app );
+
+var Post = mongoose.model( 'Post' );
+
+var clients = posts = {};
+
+io.sockets.on('connection', function(socket) {
+	socket.on('subscribe', function(lecture) {
+		var id = socket.id;
+		clients[id] = {
+			socket: socket,
+			lecture: lecture
+		}
+		Post.find({'lecture': lecture}, function(err, res) {
+			posts[lecture] = res ? res : [];
+			socket.json.send({posts: res});
+		});
+	});
+	socket.on('post', function(res) {
+		var post = new Post;
+		var _post = res.post;
+		var lecture = res.lecture;
+		post.lecture = lecture;
+		if ( _post.anonymous ) {
+			post.userid		= 0;
+			post.userName	= 'Anonymous';
+			post.userAffil = 'N/A';
+		} else {
+			post.userName = _post.userName;
+			post.userAffil = _post.userAffil;
+		}
+		post.date = new Date();
+		post.body = _post.body;
+		post.votes = 0;
+    post.reports = 0;
+		post.save(function(err) {
+			if (err) {
+				// XXX some error handling
+				console.log(err);
+			} else {
+				posts[lecture].push(post);
+				publish({post: post}, lecture);
+			}
+		});
+	});
+
+	socket.on('vote', function(res) {
+		var vote = res.vote;
+		var lecture = res.lecture;
+		posts[lecture] = posts[lecture].map(function(post) {
+			if(post._id == vote.parentid) {
+				post.votes++;
+				post.save(function(err) {
+					if (err) {
+						// XXX error handling
+					} else {
+						publish({vote: vote}, lecture);
+					}
+				});
+			}
+			return post;
+		});
+	});
+
+	socket.on('report', function(res) {
+		var report = res.report;
+		var lecture = res.lecture;
+		posts[lecture] = posts[lecture].map(function(post) {
+			if(post._id == report.parentid) {
+        if (!post.reports) post.reports = 0;
+				post.reports++;
+				post.save(function(err) {
+					if (err) {
+						// XXX error handling
+					} else {
+						publish({report: report}, lecture);
+					}
+				});
+			}
+			return post;
+		});
+	});
+
+	socket.on('comment', function(res) {
+		var comment = res.comment;
+		var lecture = res.lecture;
+		console.log('anon', comment.anonymous);
+		if ( comment.anonymous ) {
+			comment.userid		= 0;
+			comment.userName	= 'Anonymous';
+			comment.userAffil = 'N/A';
+		}
+		posts[lecture] = posts[lecture].map(function(post) {
+			if(post._id == comment.parentid) {
+				post.comments.push(comment);
+				post.date = new Date();
+				post.save(function(err) {
+					if (err) {
+						console.log(err);
+					} else {
+						publish({comment: comment}, lecture);
+					}
+				})
+			}
+			return post;
+		});
+	});
+	
+	socket.on('disconnect', function() {
+		delete clients[socket.id];
+	});
+});
+
+function publish(data, lecture) {
+	Object.getOwnPropertyNames(clients).forEach(function(id) {
+		if (clients[id].lecture === lecture) {
+			clients[id].socket.json.send(data)
+		}
+	});
+}
 
 app.listen( 3000 );
 log2( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );

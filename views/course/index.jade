@@ -1,10 +1,17 @@
-h1 Course View - #{ course.name }
+div.header Course View - #{ course.name }
+div.content
+	div.menubar
+		- if( user )
+			span(class='sub_menu')
+				a( href='/logout' ) Logout
 
-p Lectures
+	div.container1
+		h2 Existing Lectures
+		ul
+			- each lecture in lectures
+				li
+					a( href = '/lecture/#{ lecture._id }' ) #{ lecture.name }
 
-ul
-	- each lecture in lectures
-		li
-			a( href = '/lecture/#{ lecture._id }' ) #{ lecture.name }
-
-a( href = '/course/#{ course._id }/lecture/new' ) Create New Lecture
+		div
+			span(class='sub_menu')
+				a( href = '/course/#{ course._id }/lecture/new' ) New Lecture

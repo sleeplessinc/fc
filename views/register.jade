@@ -1,20 +1,33 @@
-div(class='content neat')
-	h1() Register
-	form#credentials( action = '/register', method = 'POST' )
-		div( class = 'row')
-			div( class = 'label')
-				label( for = 'email' ) Username
-			div( class = 'field')
-				input( type = 'text', name = 'email' )
+div.header Register
+div.content
+	div.container1
+		form#credentials( action = '/register', method = 'POST' )
+			div( class = 'row')
+				div( class = 'label')
+					label( for = 'email' ) Email
+				div( class = 'field')
+					input( type = 'text', name = 'email' )
 
-		div( class = 'row')
-			div( class = 'label')
-				label( for = 'password' ) Password
-			div( class = 'field')
-				input( type = 'password', name = 'password' )
+			div( class = 'row')
+				div( class = 'label')
+					label( for = 'password' ) Password
+				div( class = 'field')
+					input( type = 'password', name = 'password' )
 
-		div( class = 'row')
-			div( class = 'label')
-				&nbsp;
-			div( class = 'field')
-				button Submit
+			div( class = 'row')
+				div( class = 'label')
+					label( for = 'name' ) Name
+				div( class = 'field')
+					input( type = 'text', name = 'name' )
+
+			div( class = 'row')
+				div( class = 'label')
+					label( for = 'affil' ) Affiliation
+				div( class = 'field')
+					input( type = 'text', name = 'affil' )
+
+			div( class = 'row')
+				div( class = 'label')
+					&nbsp;
+				div( class = 'field')
+					button Submit

@@ -1,23 +1,24 @@
-div(class='content neat')
-	h1() Finals Club 
-	form#credentials( action = '/login', method = 'POST' )
-		div( class = 'row')
-			div( class = 'label')
-				label( for = 'email' ) Username
-			div( class = 'field')
-				input( type = 'text', name = 'email' )
+div.header Login
+div.content
+	div.container1
+		form#credentials( action = '/login', method = 'POST' )
+			div( class = 'row')
+				div( class = 'label')
+					label( for = 'email' ) Email
+				div( class = 'field')
+					input( type = 'text', name = 'email', size='15')
 
-		div( class = 'row')
-			div( class = 'label')
-				label( for = 'password' ) Password
-			div( class = 'field')
-				input( type = 'password', name = 'password' )
+			div( class = 'row')
+				div( class = 'label')
+					label( for = 'password' ) Password
+				div( class = 'field')
+					input( type = 'password', name = 'password', size='15')
 
-		div( class = 'row')
-			div( class = 'label')
-				&nbsp;
-			div( class = 'field')
-				button Submit
-				&nbsp;
-				&nbsp;
-				a( href = '/register' ) Register
+			div( class = 'row')
+				div( class = 'label')
+					&nbsp;
+				div( class = 'field')
+					button Submit
+					&nbsp;
+					&nbsp;
+					a( href = '/register' ) Register
