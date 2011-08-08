@@ -107,7 +107,7 @@ mongoose.model( 'Note', Note );
 var Post = new Schema({
   date      : Date,
   body      : String,
-  votes     : Number,
+  votes     : Array,
   reports   : Number,
 
   userid    : String,//ObjectId,
