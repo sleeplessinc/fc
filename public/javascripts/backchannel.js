@@ -26,19 +26,28 @@ function renderPosts(fresh, post) {
   //$('#total_posts').text(posts.length);
   // truncate long array of Posts;
   var sortedPosts = sortedBy == 'created' ? posts.sort(createdDesc) : posts.sort(votesDesc);
-  var displayPosts = sortedPosts.slice(0, MAXPOSTS - 1);
+  var displayPosts = sortedPosts//.slice(0, MAXPOSTS - 1);
   if (post) $("#postTemplate").tmpl(post).appendTo("#posts");
   if (fresh) $("#postTemplate").tmpl(displayPosts).appendTo("#posts");
   else $('#posts').reOrder(displayPosts, 'post-')
   $.each(posts, function(i, post) {
-    if (post.reports >= 2) {
-      $('#post-'+post._id).addClass('flagged');
+    if (post.reports.length >= 2) {
     }
   });
   posts.forEach(function(post) {
     renderComments(post._id)
     var $post = $('#post-'+post._id);
     if ($post !== []) {
+      if (post.reports.length >= 2) {
+        if ($('#reportedContainer').length === 0) {
+          $('#posts').append('<div id="reportedContainer">Flagged Posts<div class="reportedPosts hidden"></div></div>')
+          $('#reportedContainer').click(function() {
+            $(this).find('.reportedPosts').toggleClass('hidden')
+          })
+        }
+        $post.addClass('flagged');
+        $('#reportedContainer .reportedPosts').append($post)
+      }
       if (post.votes.indexOf(userID) == -1) {
         $post.find('.postVoteContainer').addClass('unvoted')
       } else {
@@ -52,26 +61,6 @@ function renderPosts(fresh, post) {
       } 
     }
   })
-  /*
-  $('#posts .postVoteContainer').each(function(idx, container) {
-    var postid = $(container).attr("data-postid");
-    renderComments(postid)
-    if (post.votes.indexOf(userID) == -1) {
-      var newVoteObj = {parentid: postid, userid: userID};
-      socket.emit('vote', {vote: newVoteObj, lecture: lectureID});
-      $('.vote-tally-rect').die()
-      $('.vote-tally-rect').css({cursor: 'pointer'})
-    } else {
-      alert('You have already voted')
-    }
-    if (postsVoted.indexOf(postid) != -1) {
-      //console.log("For " + postid + ": voted");
-    } else {
-      //console.log("For " + postid + ": NOT voted");
-      $(container).addClass("unvoted");
-    }
-  });
-  */
 }
 
 function renderComments(id) {
@@ -91,11 +80,13 @@ function renderComments(id) {
   }
 }
 
-$.fn.reOrder = function(array, prefix) {
+$.fn.reOrder = function(_array, prefix) {
+  var array = $.extend([], _array, true);
   return this.each(function() {
     prefix = prefix || "";
     
     if (array) {    
+      var reported = $('#reportedContainer');
       for(var i=0; i < array.length; i++) {
         var sel = '#' + prefix + array[i]._id;
         if ($(sel).length === 0)
@@ -108,6 +99,7 @@ $.fn.reOrder = function(array, prefix) {
       for(var i=0; i < array.length; i++) {
         $(this).append(array[i]);
       }
+      $(this).append(reported)
     }
   });    
 }
@@ -235,7 +227,6 @@ $(document).ready(function(){
   $('.comments').live('click', function(e) {
     e.preventDefault();
     var id = $(this).attr('id').replace('post-', '');
-    console.log(id)
     $('#post-'+id+' .commentContainer').toggleClass('hidden');
     $('#post-'+id+' .commentForm').toggleClass('hidden');
   })
