@@ -73,9 +73,7 @@ div.container1 {
 
 #editor {
 	float: left;
-
 	width: 70%;
-	height: 100%;
 }
 
 #title {
@@ -178,8 +176,8 @@ color: red;
 #enterAdmin { display: none; }
 #posts {
 	background: #eec;
-	min-height: 6em;
 	padding: 1em 1.5em;
+  overflow-y: auto;
 }
 #postsHeader {
 padding-bottom: 0.5em;

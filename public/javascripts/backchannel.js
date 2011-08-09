@@ -124,20 +124,6 @@ function createdDesc(a, b) {
   }
 }
 $(document).ready(function(){
-  // fill in holes;
-  //setUserNameAndAffil();
-/*
-  $('#loginForm').submit(function(e) {
-    e.preventDefault();
-    userObj.userName = $(this).find('#userName').val();
-    userObj.userAffil = $(this).find('#userAffiliation').val();
-    userObj.userID = 1234;
-    loggedIn = true;
-    $('#userHeader .userName').text(userObj['userName']);
-    $('#userHeader .userAffil').text(userObj['userAffil']);
-    $(this).addClass('hidden');
-  });
-*/
 
   userObj.userName  = userName;
   userObj.userAffil = userAffil;

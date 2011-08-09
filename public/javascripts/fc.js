@@ -5,6 +5,7 @@ $( document ).ready( function() {
 
 	var editor	= $( '#editor' );
 	var bc			= $( '#sidebar' );
+  var posts   = $( '#posts' );
 
   if (mobile) {
     editor.toggle();
@@ -12,6 +13,10 @@ $( document ).ready( function() {
     $('#togglePad').hide();
     $('#toggleBC').hide();
     $('#epliframe').remove();
+  } else {
+    var height = $(window).height() - $('.header').height();
+    posts.height( height - $('.userBox').height() - 69 );
+    editor.height( height - 20 )
   }
 
 	$( '#toggleBC' ).click( function() {
