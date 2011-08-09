@@ -30,10 +30,6 @@ function renderPosts(fresh, post) {
   if (post) $("#postTemplate").tmpl(post).appendTo("#posts");
   if (fresh) $("#postTemplate").tmpl(displayPosts).appendTo("#posts");
   else $('#posts').reOrder(displayPosts, 'post-')
-  $.each(posts, function(i, post) {
-    if (post.reports.length >= 2) {
-    }
-  });
   posts.forEach(function(post) {
     renderComments(post._id)
     var $post = $('#post-'+post._id);
