@@ -93,7 +93,6 @@ div.container1 {
 
 /*========================*/
 #notesContainer {
-min-height: 30em;
 float: left;
 width: 25%;
 }
@@ -302,6 +301,9 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 #posts .flagged {
   opacity: 0.3;
   background: #eca;
+}
+#posts .instructor {
+  background: #EDDA74;
 }
 
 /*.button {
