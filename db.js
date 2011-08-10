@@ -65,6 +65,7 @@ mongoose.model( 'School', School );
 var Course = new Schema( {
 	name				: String,
 	description	: String,
+  instructor  : String,
 
 	// courses are tied to one school
 	school			: ObjectId,
@@ -110,13 +111,13 @@ var Post = new Schema({
   votes     : Array,
   reports   : Array,
 
-  userid    : String,//ObjectId,
+  userid    : ObjectId,
   userName  : String,
   userAffil : String,
 
-  comments   : Array,
+  comments  : Array,
 
-  lecture   : String//ObjectId
+  lecture   : ObjectId
 })
 
 mongoose.model( 'Post', Post );

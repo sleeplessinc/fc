@@ -175,9 +175,11 @@ app.get( '/', loggedIn, function( req, res ) {
 //				Course.find( { 'school' : school._id, 'users' : userId }, function( err, courses ) {
 					Course.find( { 'school' : school._id }, function( err, courses ) {
 					if( courses.length > 0 ) {
-						schools[ school.name ] = courses;
-					}
-
+            school.courses = courses;
+					} else {
+            school.courses = [];
+          }
+          schools[ school.name ] = school;
 					callback();
 				});
 			},
@@ -186,6 +188,82 @@ app.get( '/', loggedIn, function( req, res ) {
 			}
 		);
 	});
+});
+
+app.get( '/:id/course/new', loggedIn, function( req, res ) {
+  var schoolId = req.params.id;
+
+  School.findById( schoolId, function( err, school ) {
+		if( school ) {
+      res.render( 'course/new', { 'school': school } );
+		} else {
+			req.flash( 'error', 'Invalid note specified!' );
+
+			res.direct( '/' );
+		}
+  })
+});
+
+app.post( '/:id/course/new', loggedIn, function( req, res ) {
+	var schoolId	= req.params.id;
+	var course = new Course;
+  var email = req.body.email;
+  
+  if (!email) {
+    req.flash( 'error', 'Invalid parameters!' )
+    return res.render( 'course/new' );
+  }
+	course.name		= req.body.name;
+	course.description		= req.body.description;
+	course.school	= schoolId;
+  course.instructor = email;
+
+  User.find( { 'email': email }, function( err, user ) {
+    if ( user.length === 0 ) {
+      console.log(err, user)
+      var user = new User;
+
+      user.email = email;
+      user.name = '';
+      user.password = 'asdf';
+      user.affil = 'Instructor';
+      // XXX Put mailchimp integration here
+
+      user.save(function( err ) {
+        if ( err ) {
+          req.flash( 'error', 'Invalid parameters!' )
+          res.render( 'course/new' );
+        } else {
+          course.save( function( err ) {
+            if( err ) {
+              // XXX: better validation
+              req.flash( 'error', 'Invalid parameters!' );
+
+              res.render( 'course/new' );
+            } else {
+              res.redirect( '/' );
+            }
+          });
+        }
+      })
+    } else {
+      if (user.affil === 'Instructor') {
+        course.save( function( err ) {
+          if( err ) {
+            // XXX: better validation
+            req.flash( 'error', 'Invalid parameters!' );
+
+            res.render( 'course/new' );
+          } else {
+            res.redirect( '/' );
+          }
+        });
+      } else {
+        req.flash( 'error', 'The existing user\'s email you entered is not an instructor' );
+        res.render( 'course/new' );
+      }
+    }
+  })
 });
 
 app.get( '/course/:id', loggedIn, loadCourse, function( req, res ) {
