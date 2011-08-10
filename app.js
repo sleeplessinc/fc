@@ -2,6 +2,7 @@
 
 var sys				= require( 'sys' );
 var os				= require( 'os' );
+var url				= require( 'url' );
 
 var express		= require( 'express' );
 var mongoose	= require( './db.js' ).mongoose;
@@ -75,6 +76,10 @@ function loggedIn( req, res, next ) {
 
 			next();
 		} else {
+			// stash the original request so we can redirect
+			var path = url.parse( req.url ).pathname;
+			req.session.redirect = path;
+
 			res.redirect( '/login' );
 		}
 	});
@@ -330,7 +335,10 @@ app.post( '/login', function( req, res ) {
 			user.session = sid;
 
 			user.save( function() {
-				res.redirect( '/' );
+				var redirect = req.session.redirect;
+
+				// redirect to root if we don't have a stashed request
+				res.redirect( redirect || '/' );
 			});
 		} else {
 			req.flash( 'error', 'Invalid login!' );
