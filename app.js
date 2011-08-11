@@ -375,6 +375,7 @@ app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) 
 	note.name			= req.body.name;
 	note.date			= req.body.date;
 	note.lecture	= lecture._id;
+  note.public   = req.body.public ? true : false;
 
 	note.save( function( err ) {
 		if( err ) {
@@ -417,28 +418,45 @@ app.get( '/view/:id', loadNote, function( req, res ) {
   var note = req.note;
   var lectureId = note.lecture;
 
-  db.open('mongodb://' + app.set( 'dbHost' ) + '/etherpad/etherpad', function( err, epl ) {
-    epl.findOne( { key: 'pad2readonly:' + note._id }, function(err, record) {
-      var roId = record.value.replace(/"/g, '');
-      Lecture.findById( lectureId, function( err, lecture ) {
-        if( ! lecture ) {
-          req.flash( 'error', 'That notes page is orphaned!' );
+  if (!note.public) {
+    var sid = req.sessionID;
 
-          res.redirect( '/' );
-        }
+    User.findOne( { session : sid }, function( err, user ) {
+      if( user ) {
+        req.user = user;
 
-        res.render( 'notes/public', {
-          'layout'      : 'noteLayout',
-          'host'				: serverHost,
-          'note'				: note,
-          'roId'        : roId,
-          'lecture'			: lecture,
-          'stylesheets' : [ 'fc.css' ],
-          'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
+        return res.redirect( '/note/' + note._id );
+      } else {
+        req.session.redirect = '/note/' + note._id;
+        req.flash( 'error', 'You must be logged in to view this notepad' );
+        return res.redirect( '/login' );
+      }
+    });
+  } else {
+    db.open('mongodb://' + app.set( 'dbHost' ) + '/etherpad/etherpad', function( err, epl ) {
+      epl.findOne( { key: 'pad2readonly:' + note._id }, function(err, record) {
+        var roId = record.value.replace(/"/g, '');
+        Lecture.findById( lectureId, function( err, lecture ) {
+          if( ! lecture ) {
+            req.flash( 'error', 'That notes page is orphaned!' );
+
+            res.redirect( '/' );
+          }
+
+          res.render( 'notes/public', {
+            'layout'      : 'noteLayout',
+            'host'				: serverHost,
+            'note'				: note,
+            'roId'        : roId,
+            'lecture'			: lecture,
+            'stylesheets' : [ 'fc.css' ],
+            'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
+          });
         });
-      });
+      })
     })
-  })
+  }
+
 
 })
 

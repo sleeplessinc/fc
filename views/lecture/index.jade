@@ -12,6 +12,10 @@ div.content
 			- each note in notes
 				li
 					a( href = '/note/#{ note._id }' ) #{ note.name }
+					- if (note.public) 
+						|  (Public)
+					- else
+						|  (Private)
 
 		div
 			span(class='sub_menu')

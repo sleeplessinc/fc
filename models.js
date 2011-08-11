@@ -94,6 +94,7 @@ mongoose.model( 'Lecture', Lecture );
 var Note = new Schema( {
 	name					: String,
 	path					: String,
+  public        : Boolean,
 
 	lecture				: ObjectId,
 
