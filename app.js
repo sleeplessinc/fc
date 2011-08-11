@@ -1,17 +1,29 @@
 /* vim: set ts=2: */
 
-var sys				= require( 'sys' );
-var os				= require( 'os' );
-var url				= require( 'url' );
+// Prerequisites
 
-var express		= require( 'express' );
-var mongoose	= require( './db.js' ).mongoose;
-var async			= require( 'async' );
+var sys					= require( 'sys' );
+var os					= require( 'os' );
+var url					= require( 'url' );
 
+var express			= require( 'express' );
+var mongoStore	= require( 'connect-mongo' );
+var async				= require( 'async' );
+
+var db					= require( './db.js' );
+var mongoose		= require( './models.js' ).mongoose;
 
 var log3 = function() {}
 
 var app = module.exports = express.createServer();
+
+// Database
+
+var User		= mongoose.model( 'User' );
+var School	= mongoose.model( 'School' );
+var Course	= mongoose.model( 'Course' );
+var Lecture	= mongoose.model( 'Lecture' );
+var Note		= mongoose.model( 'Note' );
 
 // Configuration
 
@@ -25,49 +37,41 @@ if( serverHost ) {
 	console.log( 'No hostname defined, defaulting to os.hostname(): %s', serverHost );
 }
 
+app.configure( 'development', function() { 
+	app.set( 'errorHandler', express.errorHandler( { dumpExceptions: true, showStack: true } ) );
+
+	app.set( 'dbHost', 'localhost' );
+	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
+});
+
+app.configure( 'production', function() {
+	app.set( 'errorHandler', express.errorHandler() );
+
+	app.set( 'dbHost', 'localhost' );
+	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
+});
+
 app.configure(function(){
-  app.set( 'views', __dirname + '/views' );
-  app.set( 'view engine', 'jade' );
-  app.use( express.bodyParser() );
+	app.set( 'views', __dirname + '/views' );
+	app.set( 'view engine', 'jade' );
+	app.use( express.bodyParser() );
 
 	app.use( express.cookieParser() );
 	app.use( express.session( {
-		'secret' : 'finalsclub',
-		'maxAge' : new Date(Date.now() + (60 * 60 * 24 * 30 * 1000))
-		//'maxAge' : new Date(Date.now())
-		} ) );
+		'secret'	: 'finalsclub',
+		'maxAge'	: new Date(Date.now() + (60 * 60 * 24 * 30 * 1000)),
+		'store'		: new mongoStore( { 'url' : app.set( 'dbUri' ) } )
+	}));
 
   app.use( express.methodOverride() );
   app.use( app.router );
   app.use( express.static( __dirname + '/public' ) );
+
+	// use the error handler defined earlier
+	var errorHandler = app.set( 'errorHandler' );
+
+	app.use( errorHandler );
 });
-
-app.configure( 'development', function() { 
-	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
-
-	// still using local mongo instances for now; this may change
-	app.set( 'dbUri', 'mongodb://localhost/fc' );
-});
-
-app.configure( 'production', function() {
-	//app.use( express.errorHandler() ); 
-	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
-
-	app.set( 'dbUri', 'mongodb://localhost/fc' );
-});
-
-// db connect
-
-mongoose.connect( app.set( 'dbUri' ) );
-mongoose.connection.db.serverConfig.connection.autoReconnect = true
-
-// Models
-
-var User		= mongoose.model( 'User' );
-var School	= mongoose.model( 'School' );
-var Course	= mongoose.model( 'Course' );
-var Lecture	= mongoose.model( 'Lecture' );
-var Note		= mongoose.model( 'Note' );
 
 // Middleware
 
@@ -524,17 +528,21 @@ var Post = mongoose.model( 'Post' );
 var clients = posts = {};
 
 io.sockets.on('connection', function(socket) {
+
 	socket.on('subscribe', function(lecture) {
 		var id = socket.id;
+
 		clients[id] = {
 			socket: socket,
 			lecture: lecture
 		}
+
 		Post.find({'lecture': lecture}, function(err, res) {
 			posts[lecture] = res ? res : [];
 			socket.json.send({posts: res});
 		});
 	});
+
 	socket.on('post', function(res) {
 		var post = new Post;
 		var _post = res.post;
@@ -640,6 +648,11 @@ function publish(data, lecture) {
 		}
 	});
 }
+
+// Launch
+
+mongoose.connect( app.set( 'dbUri' ) );
+mongoose.connection.db.serverConfig.connection.autoReconnect = true
 
 app.listen( 3000 );
 console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
