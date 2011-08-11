@@ -13,6 +13,8 @@ var async				= require( 'async' );
 var db					= require( './db.js' );
 var mongoose		= require( './models.js' ).mongoose;
 
+var log3 = function() {}
+
 var app = module.exports = express.createServer();
 
 // Database
@@ -57,6 +59,7 @@ app.configure(function(){
 	app.use( express.cookieParser() );
 	app.use( express.session( {
 		'secret'	: 'finalsclub',
+		'maxAge'	: new Date(Date.now() + (60 * 60 * 24 * 30 * 1000)),
 		'store'		: new mongoStore( { 'url' : app.set( 'dbUri' ) } )
 	}));
 
@@ -74,14 +77,17 @@ app.configure(function(){
 
 function loggedIn( req, res, next ) {
 	var sid = req.sessionID;
+	log3("logged in ...")
 
 	console.log( 'got request from session ID: %s', sid );
 
 	User.findOne( { session : sid }, function( err, user ) {
+		log3(err);
+		log3(user);
 		if( user ) {
 			req.user = user;
 
-			console.log( 'authenticated user: %s / %s', user._id, user.email );
+			log3( 'authenticated user: '+user._id+' / '+user.email+'');
 
 			next();
 		} else {
@@ -181,6 +187,8 @@ app.get( '/', loggedIn, function( req, res ) {
 
 	var schools = {};
 
+	log3("get / page");
+
 //	School.find( { 'users' : userId }, function( err, results ) {
 	School.find( {}, function( err, results ) {
 		async.forEach(
@@ -189,9 +197,11 @@ app.get( '/', loggedIn, function( req, res ) {
 //				Course.find( { 'school' : school._id, 'users' : userId }, function( err, courses ) {
 					Course.find( { 'school' : school._id }, function( err, courses ) {
 					if( courses.length > 0 ) {
-						schools[ school.name ] = courses;
-					}
-
+            school.courses = courses;
+					} else {
+            school.courses = [];
+          }
+          schools[ school.name ] = school;
 					callback();
 				});
 			},
@@ -200,6 +210,82 @@ app.get( '/', loggedIn, function( req, res ) {
 			}
 		);
 	});
+});
+
+app.get( '/:id/course/new', loggedIn, function( req, res ) {
+  var schoolId = req.params.id;
+
+  School.findById( schoolId, function( err, school ) {
+		if( school ) {
+      res.render( 'course/new', { 'school': school } );
+		} else {
+			req.flash( 'error', 'Invalid note specified!' );
+
+			res.direct( '/' );
+		}
+  })
+});
+
+app.post( '/:id/course/new', loggedIn, function( req, res ) {
+	var schoolId	= req.params.id;
+	var course = new Course;
+  var email = req.body.email;
+  
+  if (!email) {
+    req.flash( 'error', 'Invalid parameters!' )
+    return res.render( 'course/new' );
+  }
+	course.name		= req.body.name;
+	course.description		= req.body.description;
+	course.school	= schoolId;
+  course.instructor = email;
+
+  User.find( { 'email': email }, function( err, user ) {
+    if ( user.length === 0 ) {
+      console.log(err, user)
+      var user = new User;
+
+      user.email = email;
+      user.name = '';
+      user.password = 'asdf';
+      user.affil = 'Instructor';
+      // XXX Put mailchimp integration here
+
+      user.save(function( err ) {
+        if ( err ) {
+          req.flash( 'error', 'Invalid parameters!' )
+          res.render( 'course/new' );
+        } else {
+          course.save( function( err ) {
+            if( err ) {
+              // XXX: better validation
+              req.flash( 'error', 'Invalid parameters!' );
+
+              res.render( 'course/new' );
+            } else {
+              res.redirect( '/' );
+            }
+          });
+        }
+      })
+    } else {
+      if (user.affil === 'Instructor') {
+        course.save( function( err ) {
+          if( err ) {
+            // XXX: better validation
+            req.flash( 'error', 'Invalid parameters!' );
+
+            res.render( 'course/new' );
+          } else {
+            res.redirect( '/' );
+          }
+        });
+      } else {
+        req.flash( 'error', 'The existing user\'s email you entered is not an instructor' );
+        res.render( 'course/new' );
+      }
+    }
+  })
 });
 
 app.get( '/course/:id', loggedIn, loadCourse, function( req, res ) {
@@ -330,15 +416,20 @@ app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 // authentication
 
 app.get( '/login', function( req, res ) {
+  log3("get login page")
 	res.render( 'login' );	
 });
 
 app.post( '/login', function( req, res ) {
 	var email		 = req.body.email;
 	var password = req.body.password;
+  log3("post login ...")
 
 	User.findOne( { 'email' : email }, function( err, user ) {
+		log3(err) 
+		log3(user) 
 		if( user && user.authenticate( password ) ) {
+			log3("pass ok") 
 			var sid = req.sessionID;
 
 			user.session = sid;
@@ -350,6 +441,7 @@ app.post( '/login', function( req, res ) {
 				res.redirect( redirect || '/' );
 			});
 		} else {
+			log3("bad login")
 			req.flash( 'error', 'Invalid login!' );
 
 			res.render( 'login' );
@@ -358,6 +450,7 @@ app.post( '/login', function( req, res ) {
 });
 
 app.get( '/register', function( req, res ) {
+  log3("get reg page");
 	res.render( 'register' );
 });
 
@@ -365,21 +458,28 @@ app.post( '/register', function( req, res ) {
 	var sid = req.sessionId;
 
 	var user = new User;
+  log3("post reg ");
+	log3(user)
 
 	user.email    = req.body.email;
 	user.password = req.body.password;
 	user.session  = sid;
   user.name     = req.body.name;
   user.affil    = req.body.affil;
+	log3('register '+user.email+"/"+user.password+" "+user.session) 
+	log3(user)
 
 	user.save( function( err ) {
 		var hostname = user.email.split( '@' ).pop();
+		log3('save '+user.email);
 
 		School.findOne( { 'hostnames' : hostname }, function( err, school ) {
 			if( school ) {
+				log3('school recognized '+school.name);
 				school.users.push( user._id );
 
 				school.save( function( err ) {
+				  log3('school.save() done');
 					req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network.' );
 				});
 			}
@@ -390,6 +490,7 @@ app.post( '/register', function( req, res ) {
 });
 
 app.get( '/logout', function( req, res ) {
+	log3('logout') 
 	req.session.destroy();
 
 	res.redirect( '/' );

@@ -6,10 +6,14 @@ div.content
 				a( href='/logout' ) Logout
 
 	div.container1
-		- each courses, school in schools
+		- each school, name in schools
 			div(class='school')
-				h2= school
+				h2= name
 				ul
-					- each course in courses
+					- each course in school.courses
 						li
 							a( href = 'course/#{ course._id }' ) #{ course.name }
+
+			div
+				span(class='sub_menu')
+					a( href = '/#{ school._id }/course/new' ) New Course

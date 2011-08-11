@@ -55,6 +55,10 @@ function renderPosts(fresh, post) {
         $post.find('.voteFlag').css('cursor', 'default')
         $post.find('.voteFlag').css('background', '#888')
       } 
+
+      if (post.userAffil === 'Instructor') {
+        $post.addClass('instructor');
+      }
     }
   })
 }

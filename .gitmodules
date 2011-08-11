@@ -1,3 +1,3 @@
 [submodule "etherpad-lite"]
 	path = etherpad-lite
-	url = git@github.com:chapel/etherpad-lite.git
+	url = git@github.com:chapel/etherpad-lite
