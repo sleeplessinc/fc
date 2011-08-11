@@ -409,6 +409,29 @@ app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 	});
 });
 
+app.get( '/view/:id', loadNote, function( req, res ) {
+  var note = req.note;
+
+  var lectureId = note.lecture;
+
+	Lecture.findById( lectureId, function( err, lecture ) {
+		if( ! lecture ) {
+			req.flash( 'error', 'That notes page is orphaned!' );
+
+			res.redirect( '/' );
+		}
+
+		res.render( 'notes/public', {
+      'layout'      : 'noteLayout',
+			'host'				: serverHost,
+			'note'				: note,
+			'lecture'			: lecture,
+			'stylesheets' : [ 'fc.css' ],
+			'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
+		});
+	});
+})
+
 // authentication
 
 app.get( '/login', function( req, res ) {
