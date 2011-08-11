@@ -45,7 +45,7 @@ function renderPosts(fresh, post) {
         $('#reportedContainer .reportedPosts').append($post)
       }
       if (post.votes.indexOf(userID) == -1) {
-        $post.find('.postVoteContainer').addClass('unvoted')
+        if (!public) $post.find('.postVoteContainer').addClass('unvoted')
       } else {
         $post.find('.vote-tally-rect').die()
         $post.find('.vote-tally-rect').css('cursor', 'default')
@@ -58,6 +58,15 @@ function renderPosts(fresh, post) {
 
       if (post.userAffil === 'Instructor') {
         $post.addClass('instructor');
+      }
+
+      if (public) {
+        $post.find('.voteFlag').css({
+          'cursor': 'default',
+          'background': '#888'
+        })
+
+        $post.find('.vote-tally-rect').css('cursor', 'default');
       }
     }
   })
@@ -127,13 +136,26 @@ function createdDesc(a, b) {
     return new Date(b.date).valueOf() - new Date(a.date).valueOf();
   }
 }
+
+function refreshRO() {
+  $('#editor').load(rourl, function() {
+    $('#editor').find('style').remove();
+  })
+}
+
 $(document).ready(function(){
+  userObj.userName  = public ? null : userName;
+  userObj.userAffil = public ? null : userAffil;
+  userObj.userID    = public ? null : userID;
+  loggedIn = public ? false : true;
 
-  userObj.userName  = userName;
-  userObj.userAffil = userAffil;
-  userObj.userID    = userID;
-
-  loggedIn = true;
+  if (public) {
+    $('#editor').css('overflow-y', 'auto')
+    refreshRO();
+    setInterval(function() {
+      refreshRO();
+    }, 10*1000)
+  }
 
   $('#userBox').removeClass('hidden');
 
@@ -167,21 +189,25 @@ $(document).ready(function(){
       $('#enterPostTextarea').val('');
     }
   });
-  $('.vote-tally-rect').live("click", function() {
-    var that = this;
-    var postid = $(this).parent().attr('data-postid');
-    posts.forEach(function(post) {
-      if (post._id === postid) {
-        if (post.votes.indexOf(userID) == -1) {
-          var newVoteObj = {parentid: postid, userid: userID};
-          socket.emit('vote', {vote: newVoteObj, lecture: lectureID});
-          $(that).die()
-          $(that).css('cursor', 'default')
-          $(that).parent().removeClass('unvoted');
-        } 
-      }
-    })
-  });
+
+  if (!public) {
+    $('.vote-tally-rect').live("click", function() {
+      var that = this;
+      var postid = $(this).parent().attr('data-postid');
+      posts.forEach(function(post) {
+        if (post._id === postid) {
+          if (post.votes.indexOf(userID) == -1) {
+            var newVoteObj = {parentid: postid, userid: userID};
+            socket.emit('vote', {vote: newVoteObj, lecture: lectureID});
+            $(that).die()
+            $(that).css('cursor', 'default')
+            $(that).parent().removeClass('unvoted');
+          } 
+        }
+      })
+    });
+  }
+
   $('#amountPosts').change(function() {
     MAXPOSTS = $(this).val();
     renderPosts();
@@ -214,25 +240,27 @@ $(document).ready(function(){
     e.preventDefault();
     var id = $(this).attr('id').replace('post-', '');
     $('#post-'+id+' .commentContainer').toggleClass('hidden');
-    $('#post-'+id+' .commentForm').toggleClass('hidden');
+    if (!public) $('#post-'+id+' .commentForm').toggleClass('hidden');
   })
 
-  $('.voteFlag').live('click', function() {
-    var that = this;
-    var id = $(this).parent().parent().attr('id').replace('post-', '');
-    $.each(posts, function(i, post){
-      if (post._id == id) {
-        if (post.reports.indexOf(userID) == -1) {
-          if(confirm('By flagging a comment, you are identifying it as a violation of the FinalsClub Code of Conduct: Keep it academic.')) {
-            socket.emit('report', {report: {parentid: id, userid: userID}, lecture: lectureID});
-            $(that).die()
-            $(that).css('cursor', 'default')
-            $(that).css('background', '#888')
-          }
-        } 
-      }
+  if (!public) {
+    $('.voteFlag').live('click', function() {
+      var that = this;
+      var id = $(this).parent().parent().attr('id').replace('post-', '');
+      $.each(posts, function(i, post){
+        if (post._id == id) {
+          if (post.reports.indexOf(userID) == -1) {
+            if(confirm('By flagging a comment, you are identifying it as a violation of the FinalsClub Code of Conduct: Keep it academic.')) {
+              socket.emit('report', {report: {parentid: id, userid: userID}, lecture: lectureID});
+              $(that).die()
+              $(that).css('cursor', 'default')
+              $(that).css('background', '#888')
+            }
+          } 
+        }
+      })
     })
-  })
+  }
 
   //=====================================================================
   // create socket to server; note that we only permit websocket transport

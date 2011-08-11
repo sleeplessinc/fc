@@ -415,25 +415,31 @@ app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 
 app.get( '/view/:id', loadNote, function( req, res ) {
   var note = req.note;
-
   var lectureId = note.lecture;
 
-	Lecture.findById( lectureId, function( err, lecture ) {
-		if( ! lecture ) {
-			req.flash( 'error', 'That notes page is orphaned!' );
+  db.open('mongodb://' + app.set( 'dbHost' ) + '/etherpad/etherpad', function( err, epl ) {
+    epl.findOne( { key: 'pad2readonly:' + note._id }, function(err, record) {
+      var roId = record.value.replace(/"/g, '');
+      Lecture.findById( lectureId, function( err, lecture ) {
+        if( ! lecture ) {
+          req.flash( 'error', 'That notes page is orphaned!' );
 
-			res.redirect( '/' );
-		}
+          res.redirect( '/' );
+        }
 
-		res.render( 'notes/public', {
-      'layout'      : 'noteLayout',
-			'host'				: serverHost,
-			'note'				: note,
-			'lecture'			: lecture,
-			'stylesheets' : [ 'fc.css' ],
-			'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
-		});
-	});
+        res.render( 'notes/public', {
+          'layout'      : 'noteLayout',
+          'host'				: serverHost,
+          'note'				: note,
+          'roId'        : roId,
+          'lecture'			: lecture,
+          'stylesheets' : [ 'fc.css' ],
+          'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
+        });
+      });
+    })
+  })
+
 })
 
 // authentication

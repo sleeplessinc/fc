@@ -1,7 +1,8 @@
 /* vim: set ts=2: */
 function resizeElems() {
+  var ubHeight = public ? -17 : $('.userBox').height();
   var height = $(window).height() - $('.header').height();
-  $('#posts').height( height - $('.userBox').height() - 69 );
+  $('#posts').height( height - ubHeight - 69 );
   $('#editor').height( height - 20 )
 }
 

@@ -40,13 +40,13 @@ module.exports.open = function( uri, callback ) {
 		} else {
 			// do we want to open a specific collection? otherwise just return DB
 			if( ! collection ) {
-				callback( database );
+				callback( null, database );
 			} else {
 				database.createCollection( collection, function( err, c ) {	
 					if( err ) {
 						callback( err );
 					} else {
-						callback( c );
+						callback( null, c );
 					}
 				});
 			}
