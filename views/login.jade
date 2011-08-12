@@ -6,7 +6,7 @@ div.content
 				div( class = 'label')
 					label( for = 'email' ) Email
 				div( class = 'field')
-					input( type = 'text', name = 'email', size='15')
+					input( type = 'text', name = 'email', size='15', value = session.email )
 
 			div( class = 'row')
 				div( class = 'label')
@@ -22,3 +22,12 @@ div.content
 					&nbsp;
 					&nbsp;
 					a( href = '/register' ) Register
+
+script
+	$( document ).ready( function() {
+		if( $( 'input[name=email]' ).val() ) {
+			$( 'input[name=password]' ).focus();
+		} else {
+			$( 'input[name=email]' ).focus();
+		}
+	});

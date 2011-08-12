@@ -177,6 +177,10 @@ app.dynamicHelpers( {
 
 	'user' : function( req, res ) {
 		return req.user;
+	},
+
+	'session' : function( req, res ) {
+		return req.session;
 	}
 });
 
@@ -464,6 +468,7 @@ app.get( '/view/:id', loadNote, function( req, res ) {
 
 app.get( '/login', function( req, res ) {
   log3("get login page")
+
 	res.render( 'login' );	
 });
 
@@ -483,6 +488,11 @@ app.post( '/login', function( req, res ) {
 
 			user.save( function() {
 				var redirect = req.session.redirect;
+
+				// login complete, remember the user's email for next time
+				req.session.email = email;
+
+				console.log( req.session.email );
 
 				// redirect to root if we don't have a stashed request
 				res.redirect( redirect || '/' );
@@ -537,10 +547,25 @@ app.post( '/register', function( req, res ) {
 });
 
 app.get( '/logout', function( req, res ) {
-	log3('logout') 
+	var sid = req.sessionID;
+
+	User.findOne( { 'session' : sid }, function( err, user ) {
+		if( user ) {
+			user.session = '';
+
+			user.save( function( err ) {
+				res.redirect( '/' );
+			});
+		} else {
+			res.redirect( '/' );
+		}
+	});
+
+/*
 	req.session.destroy();
 
 	res.redirect( '/' );
+*/
 });
 
 // socket.io server
