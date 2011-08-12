@@ -67,6 +67,10 @@ function renderPosts(fresh, post) {
         })
 
         $post.find('.vote-tally-rect').css('cursor', 'default');
+        console.log(post.public)
+        if (!post.public) $post.remove();
+      } else {
+        if (!post.public) $post.find('.postFooter').append('Private')
       }
     }
   })
@@ -184,7 +188,9 @@ $(document).ready(function(){
       var newPost = assembleNewPostObj(body);
 
       var anonymous = $('#enterPostForm').find( 'input[name=anonymous]' ).is(':checked') ? true : false;
+      var public = $('#enterPostForm').find( 'input[name=private]' ).is(':checked') ? false : true;
       newPost.anonymous = anonymous;
+      newPost.public    = public;
       socket.emit('post', {post: newPost, lecture: lectureID});
       $('#enterPostTextarea').val('');
     }
@@ -293,44 +299,52 @@ $(document).ready(function(){
       renderPosts(true);
     } else if ('post' in obj) {
       var post = obj.post;
-      posts.push(post);
-      renderPosts(false, post);
+      if (!public || (public && post.public)) {
+        posts.push(post);
+        renderPosts(false, post);
+      }
     } else if ('vote' in obj) {
       var vote = obj.vote;
       posts = posts.map(function(post) {
         if(post._id == vote.parentid) {
-          post.votes.push(vote.userid);
-          $('#post-'+vote.parentid).find('.vote-tally-rect').text(post.votes.length);
+          if (!public || (public && post.public)) {
+            post.votes.push(vote.userid);
+            $('#post-'+vote.parentid).find('.vote-tally-rect').text(post.votes.length);
+            renderPosts();
+          }
         }
         return post;
       });
-      renderPosts();
     } else if ('report' in obj) {
       var report = obj.report;
       posts = posts.map(function(post) {
         if(post._id == report.parentid) {
-          post.reports.push(report.userid);
-          if (post.reports.length >= 2) {
-            $('#post-'+post._id).addClass('flagged');
+          if (!public || (public && post.public)) {
+            post.reports.push(report.userid);
+            if (post.reports.length >= 2) {
+              $('#post-'+post._id).addClass('flagged');
+            }
+            renderPosts();
           }
         }
         return post;
       });
-      renderPosts();
     } else if ('comment' in obj) {
       var comment = obj.comment;
       posts = posts.map(function(post) {
         if (post._id == comment.parentid) {
-          if (!post.comments) {
-            post.comments = [];
+          if (!public || (public && post.public)) {
+            if (!post.comments) {
+              post.comments = [];
+            }
+            post.comments.push(comment);
+            post.date = new Date();
+            if (sortedBy == 'created') renderPosts();
+            renderComments(comment.parentid);
           }
-          post.comments.push(comment);
-          post.date = new Date();
         }
         return post;
       });
-      if (sortedBy == 'created') renderPosts();
-      renderComments(comment.parentid);
     }
   });
   socket.on('disconnect', function(){ 

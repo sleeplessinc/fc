@@ -110,6 +110,7 @@ var Post = new Schema({
   body      : String,
   votes     : Array,
   reports   : Array,
+  public    : Boolean,
 
   userid    : String,//ObjectId,
   userName  : String,

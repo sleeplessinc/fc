@@ -580,6 +580,8 @@ io.sockets.on('connection', function(socket) {
 			post.userName = _post.userName;
 			post.userAffil = _post.userAffil;
 		}
+
+    post.public = _post.public;
 		post.date = new Date();
 		post.body = _post.body;
 		post.votes = [];
