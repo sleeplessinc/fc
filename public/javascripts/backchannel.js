@@ -70,7 +70,7 @@ function renderPosts(fresh, post) {
         console.log(post.public)
         if (!post.public) $post.remove();
       } else {
-        if (!post.public) $post.find('.postFooter').append('Private')
+        if (!post.public) $post.find('.privacy').text('Private')
       }
     }
   })
