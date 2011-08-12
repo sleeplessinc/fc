@@ -142,7 +142,7 @@ function createdDesc(a, b) {
 }
 
 function refreshRO() {
-  $('#editor').load(rourl, function() {
+  $('#editor div').load(rourl, function() {
     $('#editor').find('style').remove();
   })
 }
