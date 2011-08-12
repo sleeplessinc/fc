@@ -8,7 +8,7 @@ script
 div#wrapper
 	div.header #{lecture.name} &mdash; #{note.name}
 		div.buttons
-			a( href = '/view/#{note._id}' ) Read Only Link
+			a( href = '/view/#{note._id}', class = 'readonlylink') Read-Only Version
 			button#toggleBC Discussion
 			button#togglePad Editor
 	div#sidebar
