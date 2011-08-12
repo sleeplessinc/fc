@@ -8,6 +8,7 @@ script
 div#wrapper
 	div.header #{lecture.name} &mdash; #{note.name}
 		div.buttons
+			a( href = '/view/#{note._id}' ) Read Only Link
 			button#toggleBC Discussion
 			button#togglePad Editor
 	div#sidebar
