@@ -36,7 +36,7 @@ function renderPosts(fresh, post) {
     if ($post !== []) {
       if (post.reports.length >= 2) {
         if ($('#reportedContainer').length === 0) {
-          $('#posts').append('<div id="reportedContainer">Flagged Posts<div class="reportedPosts hidden"></div></div>')
+          $('#posts').append('<div id="reportedContainer"><h1>Flagged Posts</h1><div class="reportedPosts hidden"></div></div>')
           $('#reportedContainer').click(function() {
             $(this).find('.reportedPosts').toggleClass('hidden')
           })

@@ -291,8 +291,6 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 }
 #loginBox h1 {
 	font-size: 105%;
-	zmargin: 0 0 0.5em 0;
-	zpadding: 0;
 }
 
 #commentText {
@@ -362,7 +360,7 @@ h1 {
 	zmargin: 0.3em 0;
 	text-align: center;
 	color:#fff;
-	text-shadow: black 0 0 0.2em;
+	ztext-shadow: black 0 0 0.2em;
 	font-size: 120%;
 }
 h2 {
@@ -457,7 +455,41 @@ a.readonlylink {
 
 div#editor div.readonly {
 	background: #fff;
-	height: 100%;
+	min-height: 100%;
 	padding: 1.5em 3%;
 }
 
+div#reportedContainer h1 {
+	margin: 0;
+	padding: 0.3em 1em;
+	font-weight: bold;
+	font-size: 100%;
+	color:#442;
+	text-align: left;
+	background-color:#ddb;
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	letter-spacing: 0.1em;
+	cursor: pointer; cursor: hand;
+}
+
+div#postsHeader h1 {
+	margin: 0;
+	padding: 0.3em 1em;
+	font-weight: bold;
+	font-size: 100%;
+	color:#442;
+	text-align: left;
+	background-color:#ddb;
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	letter-spacing: 0.1em;
+}
+
+#sortPosts {
+	float: right;
+}
