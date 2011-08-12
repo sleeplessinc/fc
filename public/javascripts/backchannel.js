@@ -37,8 +37,8 @@ function renderPosts(fresh, post) {
       if (post.reports.length >= 2) {
         if ($('#reportedContainer').length === 0) {
           $('#posts').append('<div id="reportedContainer"><h1>Flagged Posts</h1><div class="reportedPosts hidden"></div></div>')
-          $('#reportedContainer').click(function() {
-            $(this).find('.reportedPosts').toggleClass('hidden')
+          $('#reportedContainer h1').click(function() {
+            $('.reportedPosts').toggleClass('hidden')
           })
         }
         $post.addClass('flagged');
@@ -67,7 +67,6 @@ function renderPosts(fresh, post) {
         })
 
         $post.find('.vote-tally-rect').css('cursor', 'default');
-        console.log(post.public)
         if (!post.public) $post.remove();
       } else {
         if (!post.public) $post.find('.privacy').text('Private')
