@@ -447,3 +447,17 @@ div.menubar {
 li {
 	padding: 0.2em 0; 
 }
+
+a.readonlylink {
+	font-weight: normal;
+	color: #bbb;
+	font-size: 80%;
+	margin: 0 2em;
+}
+
+div#editor div.readonly {
+	background: #fff;
+	height: 100%;
+	padding: 1.5em 3%;
+}
+
