@@ -455,3 +455,9 @@ a.readonlylink {
 	margin: 0 2em;
 }
 
+div#editor div.readonly {
+	background: #fff;
+	height: 100%;
+	padding: 1.5em 3%;
+}
+
