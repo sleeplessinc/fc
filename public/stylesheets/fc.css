@@ -300,6 +300,9 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
   opacity: 0.3;
   background: #eca;
 }
+#posts .flagged .commentForm {
+  display: none;
+}
 #posts .instructor {
   background: #EDDA74;
 }
