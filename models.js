@@ -65,7 +65,7 @@ mongoose.model( 'School', School );
 var Course = new Schema( {
 	name				: String,
 	description	: String,
-
+  instructor  : String,
 	// courses are tied to one school
 	school			: ObjectId,
 
