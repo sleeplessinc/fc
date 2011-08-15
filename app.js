@@ -574,7 +574,7 @@ var io = require( 'socket.io' ).listen( app );
 
 var Post = mongoose.model( 'Post' );
 
-var clients = posts = {};
+var clients = {};
 
 io.sockets.on('connection', function(socket) {
 
@@ -587,7 +587,6 @@ io.sockets.on('connection', function(socket) {
 		}
 
 		Post.find({'lecture': lecture}, function(err, res) {
-			posts[lecture] = res ? res : [];
 			socket.json.send({posts: res});
 		});
 	});
@@ -616,7 +615,6 @@ io.sockets.on('connection', function(socket) {
 				// XXX some error handling
 				console.log(err);
 			} else {
-				posts[lecture].push(post);
 				publish({post: post}, lecture);
 			}
 		});
@@ -625,8 +623,8 @@ io.sockets.on('connection', function(socket) {
 	socket.on('vote', function(res) {
 		var vote = res.vote;
 		var lecture = res.lecture;
-		posts[lecture] = posts[lecture].map(function(post) {
-			if(post._id == vote.parentid) {
+    Post.findById(vote.parentid, function( err, post ) {
+      if (!err) {
         if (post.votes.indexOf(vote.userid) == -1) {
           post.votes.push(vote.userid);
           post.save(function(err) {
@@ -637,16 +635,15 @@ io.sockets.on('connection', function(socket) {
             }
           });
         }
-			}
-			return post;
-		});
+      }
+    })
 	});
 
 	socket.on('report', function(res) {
 		var report = res.report;
 		var lecture = res.lecture;
-		posts[lecture] = posts[lecture].map(function(post) {
-			if(post._id == report.parentid) {
+    Post.findById(report.parentid, function( err, post ){
+      if (!err) {
         if (post.reports.indexOf(report.userid) == -1) {
           post.reports.push(report.userid);
           post.save(function(err) {
@@ -657,9 +654,8 @@ io.sockets.on('connection', function(socket) {
             }
           });
         }
-			}
-			return post;
-		});
+      }
+    })
 	});
 
 	socket.on('comment', function(res) {
@@ -671,20 +667,19 @@ io.sockets.on('connection', function(socket) {
 			comment.userName	= 'Anonymous';
 			comment.userAffil = 'N/A';
 		}
-		posts[lecture] = posts[lecture].map(function(post) {
-			if(post._id == comment.parentid) {
-				post.comments.push(comment);
-				post.date = new Date();
-				post.save(function(err) {
-					if (err) {
-						console.log(err);
-					} else {
-						publish({comment: comment}, lecture);
-					}
-				})
-			}
-			return post;
-		});
+    Post.findById(comment.parentid, function( err, post ) {
+      if (!err) {
+        post.comments.push(comment);
+        post.date = new Date();
+        post.save(function(err) {
+          if (err) {
+            console.log(err);
+          } else {
+            publish({comment: comment}, lecture);
+          }
+        })
+      }
+    })
 	});
 	
 	socket.on('disconnect', function() {
