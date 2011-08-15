@@ -574,20 +574,12 @@ var io = require( 'socket.io' ).listen( app );
 
 var Post = mongoose.model( 'Post' );
 
-var clients = {};
-
 io.sockets.on('connection', function(socket) {
 
-	socket.on('subscribe', function(lecture) {
-		var id = socket.id;
-
-		clients[id] = {
-			socket: socket,
-			lecture: lecture
-		}
-
+	socket.on('subscribe', function(lecture, cb) {
+    socket.join(lecture);
 		Post.find({'lecture': lecture}, function(err, res) {
-			socket.json.send({posts: res});
+      cb(res);
 		});
 	});
 
@@ -615,7 +607,7 @@ io.sockets.on('connection', function(socket) {
 				// XXX some error handling
 				console.log(err);
 			} else {
-				publish({post: post}, lecture);
+        io.sockets.in(lecture).emit('post', post);
 			}
 		});
 	});
@@ -631,7 +623,7 @@ io.sockets.on('connection', function(socket) {
             if (err) {
               // XXX error handling
             } else {
-              publish({vote: vote}, lecture);
+              io.sockets.in(lecture).emit('vote', vote);
             }
           });
         }
@@ -650,7 +642,7 @@ io.sockets.on('connection', function(socket) {
             if (err) {
               // XXX error handling
             } else {
-              publish({report: report}, lecture);
+              io.sockets.in(lecture).emit('report', report);
             }
           });
         }
@@ -675,16 +667,17 @@ io.sockets.on('connection', function(socket) {
           if (err) {
             console.log(err);
           } else {
-            publish({comment: comment}, lecture);
+            io.sockets.in(lecture).emit('comment', comment);
           }
         })
       }
     })
 	});
-	
+	/*
 	socket.on('disconnect', function() {
 		delete clients[socket.id];
 	});
+  */
 });
 
 function publish(data, lecture) {
