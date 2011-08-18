@@ -349,6 +349,7 @@ span.sub_menu{
 span.sub_menu a{
 	color:#fff;
 	text-decoration:none;
+	font-size: 90%;
 }
 span.sub_menu a:hover {
 	color:#fff;
@@ -400,20 +401,21 @@ ul{
 	zmargin:0 auto;
 }
 
-#credentials .row {
+.row {
 	display: table-row;
 }
-#credentials .row .label {
-	width: 40%;
+.row .label {
+	width: 50%;
 	text-align: right;
 	display: table-cell;
 	padding: 0.8em 3% 0.8em 0%;
+	white-space: nowrap;
 }
-#credentials .row .field {
+.row .field {
 	display: table-cell;
 	padding: 0.2em 0;
 }
-#credentials .row .field input {
+.row .field input {
 	width: 90%;
 }
 
@@ -423,12 +425,22 @@ ul{
 }
 
 div.school {
-	zborder:  solid 1px #eeb;
+	zborder:  solid 1px #a98;
 	-moz-border-radius: 0.2em;
 	-webkit-border-radius: 0.2em;
+	margin: 1.0em 0;
+	padding: 1em 2%;
+	background: #FaF6d3;
+	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
 }
 div.menubar {
 	text-align: right;
+}
+
+div.school h2 {
+	font-size: 120%;
+	margin: 0 0;
 }
 
 #messages {
@@ -492,4 +504,11 @@ div#postsHeader h1 {
 
 #sortPosts {
 	float: right;
+}
+
+div.postContainer div.privacy {
+	background: #00f;
+	font-size: 75%;
+	color: #eef;
+	text-align: center;
 }
