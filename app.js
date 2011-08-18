@@ -407,13 +407,19 @@ app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 			res.redirect( '/' );
 		}
 
-		res.render( 'notes/index', {
-      'layout'      : 'noteLayout',
-			'host'				: serverHost,
-			'note'				: note,
-			'lecture'			: lecture,
-			'stylesheets' : [ 'fc.css' ],
-			'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
+		// pull out our other notes
+		Note.find( { 'lecture' : lecture._id }, function( err, otherNotes ) {
+			res.render( 'notes/index', {
+				'layout'      : 'noteLayout',
+				'host'				: serverHost,
+
+				'note'				: note,
+				'otherNotes'	: otherNotes,
+
+				'lecture'			: lecture,
+				'stylesheets' : [ 'fc.css', 'dropdown.css' ],
+				'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js', 'dropdown.js' ]
+			});
 		});
 	});
 });
@@ -447,22 +453,26 @@ app.get( '/view/:id', loadNote, function( req, res ) {
             res.redirect( '/' );
           }
 
-          res.render( 'notes/public', {
-            'layout'      : 'noteLayout',
-            'host'				: serverHost,
-            'note'				: note,
-            'roId'        : roId,
-            'lecture'			: lecture,
-            'stylesheets' : [ 'fc.css' ],
-            'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
+					// pull out our other notes
+					Note.find( { 'lecture' : lecture._id }, function( err, otherNotes ) {
+	          res.render( 'notes/public', {
+	            'layout'      : 'noteLayout',
+	            'host'				: serverHost,
+
+	            'note'				: note,
+							'otherNotes'	: otherNotes,
+
+	            'roId'        : roId,
+	            'lecture'			: lecture,
+	            'stylesheets' : [ 'fc.css', 'dropdown.css' ],
+	            'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js', 'dropdown.js' ]
+						});
           });
         });
       })
     })
   }
-
-
-})
+});
 
 // authentication
 
@@ -574,111 +584,112 @@ var io = require( 'socket.io' ).listen( app );
 
 var Post = mongoose.model( 'Post' );
 
-io.sockets.on('connection', function(socket) {
-
-	socket.on('subscribe', function(lecture, cb) {
-    socket.join(lecture);
-		Post.find({'lecture': lecture}, function(err, res) {
-      cb(res);
+var backchannel = io
+	.of( '/backchannel' )
+	.on( 'connection', function( socket ) {
+		socket.on('subscribe', function(lecture, cb) {
+  	  socket.join(lecture);
+			Post.find({'lecture': lecture}, function(err, res) {
+	      cb(res);
+			});
 		});
-	});
 
-	socket.on('post', function(res) {
-		var post = new Post;
-		var _post = res.post;
-		var lecture = res.lecture;
-		post.lecture = lecture;
-		if ( _post.anonymous ) {
-			post.userid		= 0;
-			post.userName	= 'Anonymous';
-			post.userAffil = 'N/A';
-		} else {
-			post.userName = _post.userName;
-			post.userAffil = _post.userAffil;
-		}
-
-    post.public = _post.public;
-		post.date = new Date();
-		post.body = _post.body;
-		post.votes = [];
-    post.reports = [];
-		post.save(function(err) {
-			if (err) {
-				// XXX some error handling
-				console.log(err);
+		socket.on('post', function(res) {
+			var post = new Post;
+			var _post = res.post;
+			var lecture = res.lecture;
+			post.lecture = lecture;
+			if ( _post.anonymous ) {
+				post.userid		= 0;
+				post.userName	= 'Anonymous';
+				post.userAffil = 'N/A';
 			} else {
-        io.sockets.in(lecture).emit('post', post);
+				post.userName = _post.userName;
+				post.userAffil = _post.userAffil;
 			}
+
+			post.public = _post.public;
+			post.date = new Date();
+			post.body = _post.body;
+			post.votes = [];
+	    post.reports = [];
+			post.save(function(err) {
+				if (err) {
+					// XXX some error handling
+					console.log(err);
+				} else {
+	        io.sockets.in(lecture).emit('post', post);
+				}
+			});
 		});
-	});
 
-	socket.on('vote', function(res) {
-		var vote = res.vote;
-		var lecture = res.lecture;
-    Post.findById(vote.parentid, function( err, post ) {
-      if (!err) {
-        if (post.votes.indexOf(vote.userid) == -1) {
-          post.votes.push(vote.userid);
-          post.save(function(err) {
-            if (err) {
-              // XXX error handling
-            } else {
-              io.sockets.in(lecture).emit('vote', vote);
-            }
-          });
-        }
-      }
-    })
-	});
+		socket.on('vote', function(res) {
+			var vote = res.vote;
+			var lecture = res.lecture;
+	    Post.findById(vote.parentid, function( err, post ) {
+	      if (!err) {
+	        if (post.votes.indexOf(vote.userid) == -1) {
+	          post.votes.push(vote.userid);
+	          post.save(function(err) {
+	            if (err) {
+	              // XXX error handling
+	            } else {
+	              io.sockets.in(lecture).emit('vote', vote);
+	            }
+	          });
+	        }
+	      }
+	    })
+		});
 
-	socket.on('report', function(res) {
-		var report = res.report;
-		var lecture = res.lecture;
-    Post.findById(report.parentid, function( err, post ){
-      if (!err) {
-        if (post.reports.indexOf(report.userid) == -1) {
-          post.reports.push(report.userid);
-          post.save(function(err) {
-            if (err) {
-              // XXX error handling
-            } else {
-              io.sockets.in(lecture).emit('report', report);
-            }
-          });
-        }
-      }
-    })
-	});
+		socket.on('report', function(res) {
+			var report = res.report;
+			var lecture = res.lecture;
+	    Post.findById(report.parentid, function( err, post ){
+	      if (!err) {
+	        if (post.reports.indexOf(report.userid) == -1) {
+	          post.reports.push(report.userid);
+	          post.save(function(err) {
+	            if (err) {
+	              // XXX error handling
+	            } else {
+	              io.sockets.in(lecture).emit('report', report);
+	            }
+	          });
+	        }
+	      }
+	    })
+		});
 
-	socket.on('comment', function(res) {
-		var comment = res.comment;
-		var lecture = res.lecture;
-		console.log('anon', comment.anonymous);
-		if ( comment.anonymous ) {
-			comment.userid		= 0;
-			comment.userName	= 'Anonymous';
-			comment.userAffil = 'N/A';
-		}
-    Post.findById(comment.parentid, function( err, post ) {
-      if (!err) {
-        post.comments.push(comment);
-        post.date = new Date();
-        post.save(function(err) {
-          if (err) {
-            console.log(err);
-          } else {
-            io.sockets.in(lecture).emit('comment', comment);
-          }
-        })
-      }
-    })
+		socket.on('comment', function(res) {
+			var comment = res.comment;
+			var lecture = res.lecture;
+			console.log('anon', comment.anonymous);
+			if ( comment.anonymous ) {
+				comment.userid		= 0;
+				comment.userName	= 'Anonymous';
+				comment.userAffil = 'N/A';
+			}
+	    Post.findById(comment.parentid, function( err, post ) {
+	      if (!err) {
+	        post.comments.push(comment);
+	        post.date = new Date();
+	        post.save(function(err) {
+	          if (err) {
+	            console.log(err);
+	          } else {
+	            io.sockets.in(lecture).emit('comment', comment);
+	          }
+	        })
+	      }
+	    })
+		});
+		/*
+		socket.on('disconnect', function() {
+			delete clients[socket.id];
+		});
+	  */
 	});
-	/*
-	socket.on('disconnect', function() {
-		delete clients[socket.id];
-	});
-  */
-});
 
 function publish(data, lecture) {
 	Object.getOwnPropertyNames(clients).forEach(function(id) {
@@ -687,6 +698,69 @@ function publish(data, lecture) {
 		}
 	});
 }
+
+var counters = {};
+
+var counts = io
+	.of( '/counts' )
+	.on( 'connection', function( socket ) {
+		var watched		= [];
+		var note			= null;
+
+		var timer			= null;
+
+		socket.on( 'join', function( n ) {
+			note = n;
+
+			if( ! counters[ note ] ) {
+				counters[ note ] = 1;
+			} else {
+				counters[ note ]++;
+			}
+
+			console.log( counters[ note ] );
+		});
+
+		socket.on( 'watch', function( l ) {
+			Note.find( { 'lecture' : l }, [ '_id' ], function( err, notes ) {
+				notes.forEach( function( note ) {
+					watched.push( note._id );
+				});
+			});
+
+			var sendCounts = function() {
+				var send = {};
+
+				async.forEach(
+					watched,
+					function( watch, callback ) {
+						var count = counters[ watch ];
+
+						if( count ) {
+							send[ watch ] = count;
+						}
+
+						callback();
+					},
+					function() {
+						socket.emit( 'counts', send );
+
+						timer = setTimeout( sendCounts, 5000 );
+					}
+				);
+			};
+
+			sendCounts();
+		});
+
+		socket.on( 'disconnect', function() {
+			if( note ) {
+				counters[ note ]--;
+			}
+
+			clearTimeout( timer );
+		});
+	});
 
 // Launch
 

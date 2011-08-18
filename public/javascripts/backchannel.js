@@ -273,7 +273,27 @@ $(document).ready(function(){
   var loc = document.location;
   var port = loc.port == '' ? (loc.protocol == 'https:' ? 443 : 80) : loc.port;
   var url = loc.protocol + '//' + loc.hostname + ':' + port;
-  socket = io.connect(url);
+
+  socket = io.connect(url + '/backchannel');
+
+  counts = io.connect( url + '/counts' );
+
+	counts.on( 'connect', function() {
+		counts.emit( 'join', noteID );
+		counts.emit( 'watch', lectureID );
+	});
+
+	counts.on( 'counts', function( c ) {
+		for( id in c ) {
+			var selector = 'div[note-id="' + id + '"] span.count';
+			var target = $( selector );
+
+			if( target ) {
+				target.text( c[ id ] );
+			}
+		}
+	});
+
   // incoming messages are objects with one property whose value is the
   // type of message:
   //   { "posts":    [ <array of Post objects> ] }
