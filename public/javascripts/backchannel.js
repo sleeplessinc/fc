@@ -285,67 +285,59 @@ $(document).ready(function(){
   // arrays with updated vote counts and refrain from sending vote message.
   var messagesArrived = 0;
   socket.on('connect', function(){
-    //lectureID = window.location.hash.substring(1);
-    socket.emit('subscribe', lectureID);
-    /*$(window).bind('hashchange', function() {
-      lectureID = window.location.hash.substring(1);
-      socket.emit('subscribe', lectureID);
-    });*/
-  });
-  socket.on('message', function(obj) {
-    if ('posts' in obj) {
-      posts = obj.posts;
+    socket.emit('subscribe', lectureID, function(_posts) {
+      posts = _posts;
       renderPosts(true);
-    } else if ('post' in obj) {
-      var post = obj.post;
-      if (!public || (public && post.public)) {
-        posts.push(post);
-        renderPosts(false, post);
-      }
-    } else if ('vote' in obj) {
-      var vote = obj.vote;
-      posts = posts.map(function(post) {
-        if(post._id == vote.parentid) {
-          if (!public || (public && post.public)) {
-            post.votes.push(vote.userid);
-            $('#post-'+vote.parentid).find('.vote-tally-rect').text(post.votes.length);
-            renderPosts();
-          }
-        }
-        return post;
-      });
-    } else if ('report' in obj) {
-      var report = obj.report;
-      posts = posts.map(function(post) {
-        if(post._id == report.parentid) {
-          if (!public || (public && post.public)) {
-            post.reports.push(report.userid);
-            if (post.reports.length >= 2) {
-              $('#post-'+post._id).addClass('flagged');
-            }
-            renderPosts();
-          }
-        }
-        return post;
-      });
-    } else if ('comment' in obj) {
-      var comment = obj.comment;
-      posts = posts.map(function(post) {
-        if (post._id == comment.parentid) {
-          if (!public || (public && post.public)) {
-            if (!post.comments) {
-              post.comments = [];
-            }
-            post.comments.push(comment);
-            post.date = new Date();
-            if (sortedBy == 'created') renderPosts();
-            renderComments(comment.parentid);
-          }
-        }
-        return post;
-      });
-    }
+    });
   });
+  socket.on('post', function(post) {
+    if (!public || (public && post.public)) {
+      posts.push(post);
+      renderPosts(false, post);
+    }
+  })
+  socket.on('vote', function(vote) {
+    posts = posts.map(function(post) {
+      if(post._id == vote.parentid) {
+        if (!public || (public && post.public)) {
+          post.votes.push(vote.userid);
+          $('#post-'+vote.parentid).find('.vote-tally-rect').text(post.votes.length);
+          renderPosts();
+        }
+      }
+      return post;
+    });
+  })
+  socket.on('report', function(report) {
+    posts = posts.map(function(post) {
+      if(post._id == report.parentid) {
+        if (!public || (public && post.public)) {
+          post.reports.push(report.userid);
+          if (post.reports.length >= 2) {
+            $('#post-'+post._id).addClass('flagged');
+          }
+          renderPosts();
+        }
+      }
+      return post;
+    });
+  })
+  socket.on('comment', function(comment) {
+    posts = posts.map(function(post) {
+      if (post._id == comment.parentid) {
+        if (!public || (public && post.public)) {
+          if (!post.comments) {
+            post.comments = [];
+          }
+          post.comments.push(comment);
+          post.date = new Date();
+          if (sortedBy == 'created') renderPosts();
+          renderComments(comment.parentid);
+        }
+      }
+      return post;
+    });
+  })
   socket.on('disconnect', function(){ 
     // XXX something here
   });
