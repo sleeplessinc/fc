@@ -2,9 +2,16 @@ div.header New Course
 div.content
 	div.container1
 		form( method = 'POST' )
-			label( for = 'name' ) New Course name
-			input( type = 'text', name = 'name' )
-			label( for = 'email' ) Course Instructor Email
-			input( type = 'text', name = 'email' )
-
-			button Create
+			div.row
+				div.label Course name
+				div.field
+					input( type = 'text', name = 'name' )
+			div.row
+				div.label Instructor's Email
+				div.field
+					input( type = 'text', name = 'email' )
+			div.row
+				div( class = 'label')
+					&nbsp;
+				div( class = 'field')
+					button Create
