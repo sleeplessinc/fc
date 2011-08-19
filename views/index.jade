@@ -1,19 +1,4 @@
-div.header FinalsClub.org
-div.content
-	div.menubar
-		- if( user )
-			span(class='sub_menu')
-				a( href='/logout' ) Logout
+div.contenthome
+	div.tagline FinalsClub is the premier web portal for interactive education. Store your notes online, collaborate with classmates, and share knowledge with the world.
 
-	div.container1
-		- each school, name in schools
-			div(class='school')
-				h2= name
-				ul
-					- each course in school.courses
-						li
-							a( href = 'course/#{ course._id }' ) #{ course.name }
 
-				div
-					span(class='sub_menu')
-						a( href = '/#{ school._id }/course/new' ) New Course
