@@ -1,6 +1,7 @@
 body, td { font-family: Helvetica, sans-serif; }
 body { background: #fff; margin: 0; padding: 0; }
 img { border: none; }
+p { color: #444; }
 
 div.logbar {
 	margin: 0 5% 0.1em 5%;
@@ -488,7 +489,7 @@ ul{
 	display: table-row;
 }
 .row .label {
-	width: 50%;
+	width: 60%;
 	text-align: right;
 	display: table-cell;
 	padding: 0.8em 3% 0.8em 0%;
