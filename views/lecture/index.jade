@@ -1,3 +1,6 @@
+script
+	var lectureID = '#{lecture._id}';
+
 div.content
 	div.container1
 
@@ -15,6 +18,7 @@ div.content
 						|  (Public)
 					- else
 						|  (Private)
+					span( note-id = note._id ).count= counts[ note._id ]
 
 		div
 			span(class='sub_menu')

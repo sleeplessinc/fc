@@ -13,6 +13,10 @@ var async				= require( 'async' );
 var db					= require( './db.js' );
 var mongoose		= require( './models.js' ).mongoose;
 
+var connect			= require( 'connect' );
+var Session			= connect.middleware.session.Session;
+var parseCookie = connect.utils.parseCookie;
+
 var log3 = function() {}
 
 var app = module.exports = express.createServer();
@@ -57,10 +61,16 @@ app.configure(function(){
 	app.use( express.bodyParser() );
 
 	app.use( express.cookieParser() );
+
+	// sessions
+	app.set( 'sessionStore', new mongoStore( {
+		'url' : app.set( 'dbUri' )
+	}));
+
 	app.use( express.session( {
 		'secret'	: 'finalsclub',
 		'maxAge'	: new Date(Date.now() + (60 * 60 * 24 * 30 * 1000)),
-		'store'		: new mongoStore( { 'url' : app.set( 'dbUri' ) } )
+		'store'		: app.set( 'sessionStore' )
 	}));
 
   app.use( express.methodOverride() );
@@ -366,7 +376,10 @@ app.get( '/lecture/:id', loggedIn, loadLecture, function( req, res ) {
 	Note.find( { 'lecture' : lecture._id }, function( err, notes ) {
 		res.render( 'lecture/index', {
 			'lecture'			: lecture,
-			'notes'				: notes
+			'notes'				: notes,
+			'counts'			: counts,
+
+			'javascripts'	: [ 'counts.js' ]
 		});
 	});
 });
@@ -423,7 +436,7 @@ app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 
 				'lecture'			: lecture,
 				'stylesheets' : [ 'fc.css', 'dropdown.css' ],
-				'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js', 'dropdown.js' ]
+				'javascripts'	: [ 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js', 'dropdown.js' ]
 			});
 		});
 	});
@@ -470,7 +483,7 @@ app.get( '/view/:id', loadNote, function( req, res ) {
 	            'roId'        : roId,
 	            'lecture'			: lecture,
 	            'stylesheets' : [ 'fc.css', 'dropdown.css' ],
-	            'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js', 'dropdown.js' ]
+	            'javascripts'	: [ 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js', 'dropdown.js' ]
 						});
           });
         });
@@ -586,6 +599,36 @@ app.get( '/logout', function( req, res ) {
 // socket.io server
 
 var io = require( 'socket.io' ).listen( app );
+
+io.set( 'authorization', function( handshake, next ) {
+	var rawCookie = handshake.headers.cookie;
+
+	if( rawCookie ) {
+		handshake.cookie	= parseCookie( rawCookie );
+		handshake.sid			= handshake.cookie[ 'connect.sid' ];
+
+		if( handshake.sid ) {
+			app.set( 'sessionStore' ).get( handshake.sid, function( err, session ) {
+				if( err ) {
+					next( err.message, false );
+				} else {
+					// bake a new session object for full r/w
+					handshake.session = new Session( handshake, session );
+
+					User.findOne( { session : handshake.sid }, function( err, user ) {
+						handshake.user = user;
+
+						next( null, true );
+					});
+				}
+			});
+		} else {
+			return next( 'No session ID found!', false );
+		}
+	} else {
+		return next( 'No cookie found!', false );
+	}
+});
 
 var Post = mongoose.model( 'Post' );
 
@@ -709,61 +752,79 @@ var counters = {};
 var counts = io
 	.of( '/counts' )
 	.on( 'connection', function( socket ) {
+		// pull out user/session information etc.
+		var handshake = socket.handshake;
+		var userID		= handshake.user._id;
+
 		var watched		= [];
-		var note			= null;
+		var noteID		= null;
 
 		var timer			= null;
 
-		socket.on( 'join', function( n ) {
-			note = n;
+		socket.on( 'join', function( note ) {
+			noteID			= note;
 
-			if( ! counters[ note ] ) {
-				counters[ note ] = 1;
-			} else {
-				counters[ note ]++;
-			}
+			// XXX: replace by addToSet (once it's implemented in mongoose)
+			Note.findById( noteID, function( err, note ) {
+				if( note ) {
+					if( note.collaborators.indexOf( userID ) == -1 ) {
+						note.collaborators.push( userID );
 
-			console.log( counters[ note ] );
+						note.save();
+					}
+				}
+			});
 		});
 
 		socket.on( 'watch', function( l ) {
+			var sendCounts = function() {
+				var send = {};
+
+				Note.find( { '_id' : { '$in' : watched } }, function( err, notes ) {
+					async.forEach(
+						notes,
+						function( note, callback ) {
+							var id		= note._id;
+							var count	= note.collaborators.length;
+
+							send[ id ] = count;
+
+							callback();
+						}, function() {
+							socket.emit( 'counts', send );
+
+							timer = setTimeout( sendCounts, 5000 );
+						}
+					);
+				});
+			}
+
 			Note.find( { 'lecture' : l }, [ '_id' ], function( err, notes ) {
 				notes.forEach( function( note ) {
 					watched.push( note._id );
 				});
 			});
 
-			var sendCounts = function() {
-				var send = {};
-
-				async.forEach(
-					watched,
-					function( watch, callback ) {
-						var count = counters[ watch ];
-
-						if( count ) {
-							send[ watch ] = count;
-						}
-
-						callback();
-					},
-					function() {
-						socket.emit( 'counts', send );
-
-						timer = setTimeout( sendCounts, 5000 );
-					}
-				);
-			};
-
 			sendCounts();
 		});
 
 		socket.on( 'disconnect', function() {
-			if( note ) {
-				counters[ note ]--;
-			}
-
 			clearTimeout( timer );
+
+			// XXX: replace with $pull once it's available
+			if( noteID ) {
+				Note.findById( noteID, function( err, note ) {
+					if( note ) {
+						var index = note.collaborators.indexOf( userID );
+
+						if( index != -1 ) {
+							note.collaborators.splice( index, 1 );
+						}
+
+						note.save();
+					}
+				});
+			}
 		});
 	});
 

@@ -7,7 +7,7 @@ ul.dropdown
 				li
 					div( note-id = otherNote._id )
 						a( href = '/note/#{ otherNote._id }' ) #{ otherNote.name }
-						span.count
+						span.count( note-id = otherNote._id )
 
 						div.clear
 			li
