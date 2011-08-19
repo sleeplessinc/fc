@@ -24,6 +24,8 @@ var User = new Schema( {
   name          : String,
   affil         : String,
 	hashed				: String,
+  activated     : Boolean,
+  activateCode  : String,
 	salt					: String,
 	session				: String
 });
@@ -95,6 +97,7 @@ var Note = new Schema( {
 	name					: String,
 	path					: String,
   public        : Boolean,
+  roID          : String,
 
 	lecture				: ObjectId,
 

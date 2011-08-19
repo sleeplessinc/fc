@@ -141,9 +141,11 @@ function createdDesc(a, b) {
 }
 
 function refreshRO() {
-  $('#editor div').load(rourl, function() {
-    $('#editor').find('style').remove();
-  })
+  if (roID !== false || public === true) {
+    $('#editor div').load(rourl, function() {
+      $('#editor').find('style').remove();
+    })
+  }
 }
 
 $(document).ready(function(){
@@ -153,6 +155,14 @@ $(document).ready(function(){
   loggedIn = public ? false : true;
 
   if (public) {
+    $('#editor').css('overflow-y', 'auto')
+    refreshRO();
+    setInterval(function() {
+      refreshRO();
+    }, 10*1000)
+  } else if (RO === true) {
+    console.log('test')
+    $('#editor').empty().append('<div class="readonly"></div>');
     $('#editor').css('overflow-y', 'auto')
     refreshRO();
     setInterval(function() {
@@ -266,6 +276,14 @@ $(document).ready(function(){
       })
     })
   }
+  // XXX for demonstration purposes only
+  $('.readonlylink').click(function(e) {
+    e.preventDefault()
+
+    $.get('/logout', function() {
+      location.reload(true)
+    })
+  })
 
   //=====================================================================
   // create socket to server; note that we only permit websocket transport
@@ -274,28 +292,24 @@ $(document).ready(function(){
   var port = loc.port == '' ? (loc.protocol == 'https:' ? 443 : 80) : loc.port;
   var url = loc.protocol + '//' + loc.hostname + ':' + port;
   socket = io.connect(url);
-  // incoming messages are objects with one property whose value is the
-  // type of message:
-  //   { "posts":    [ <array of Post objects> ] }
-  //   { "recentPosts": [ <array of Post objects> ] }
-  //   { "vote":        [ "postid": <string>, "direction": <"up"|"down"> ] }
-  // Unresolved: whether to send vote messages for local change of display
-  // or new arrays of posts with updated vote counts.  Vote message would not
-  // be adequate if it changed order of posts.  For now, send two new
-  // arrays with updated vote counts and refrain from sending vote message.
+
+
   var messagesArrived = 0;
   socket.on('connect', function(){
     socket.emit('subscribe', lectureID, function(_posts) {
       posts = _posts;
+      console.log(posts)
       renderPosts(true);
     });
   });
+
   socket.on('post', function(post) {
     if (!public || (public && post.public)) {
       posts.push(post);
       renderPosts(false, post);
     }
   })
+
   socket.on('vote', function(vote) {
     posts = posts.map(function(post) {
       if(post._id == vote.parentid) {
@@ -308,6 +322,7 @@ $(document).ready(function(){
       return post;
     });
   })
+
   socket.on('report', function(report) {
     posts = posts.map(function(post) {
       if(post._id == report.parentid) {
@@ -322,6 +337,7 @@ $(document).ready(function(){
       return post;
     });
   })
+
   socket.on('comment', function(comment) {
     posts = posts.map(function(post) {
       if (post._id == comment.parentid) {
@@ -338,6 +354,7 @@ $(document).ready(function(){
       return post;
     });
   })
+
   socket.on('disconnect', function(){ 
     // XXX something here
   });

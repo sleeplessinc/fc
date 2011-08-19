@@ -4,11 +4,14 @@ script
 	var userID    = '#{user._id}';
 	var userAffil = '#{user.affil}';
 	var public    = false;
+	var RO        = '#{RO}';
+	var rourl     = 'http://#{ host }:9001/ro/#{ roID }';
+	var roID      = '#{roID}';
 
 div#wrapper
 	div.header #{lecture.name} &mdash; #{note.name}
 		div.buttons
-			a( href = '/view/#{note._id}', class = 'readonlylink') Read-Only Version
+			a( href = '/note/#{note._id}', class = 'readonlylink') Read-Only Version
 			button#toggleBC Discussion
 			button#togglePad Editor
 	div#sidebar

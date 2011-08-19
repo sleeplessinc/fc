@@ -2,7 +2,8 @@ script
 	var lectureID = '#{lecture._id}';
 	var public    = true;
 	var userID    = false;
-	var rourl     = 'http://#{ host }:9001/ro/#{ roId }';
+	var rourl     = 'http://#{ host }:9001/ro/#{ roID }';
+	var roID      = '#{roID}';
 
 div#wrapper
 	div.header #{lecture.name} &mdash; #{note.name}
