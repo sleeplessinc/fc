@@ -1,11 +1,16 @@
 /* vim: set ts=2: */
+function resizeElems() {
+  var ubHeight = public ? -17 : $('.userBox').height();
+  var height = $(window).height() - $('.header').height();
+  $('#posts').height( height - ubHeight - 69 );
+  $('#editor').height( height - 20 )
+}
 
 $( document ).ready( function() {
 	var padVisible = bcVisible = true;
 
 	var editor	= $( '#editor' );
 	var bc			= $( '#sidebar' );
-  var posts   = $( '#posts' );
 
   if (mobile) {
     editor.toggle();
@@ -14,9 +19,8 @@ $( document ).ready( function() {
     $('#toggleBC').hide();
     $('#epliframe').remove();
   } else {
-    var height = $(window).height() - $('.header').height();
-    posts.height( height - $('.userBox').height() - 69 );
-    editor.height( height - 20 )
+    resizeElems();
+    $(window).resize(resizeElems);
   }
 
 	$( '#toggleBC' ).click( function() {

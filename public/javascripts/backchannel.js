@@ -36,16 +36,16 @@ function renderPosts(fresh, post) {
     if ($post !== []) {
       if (post.reports.length >= 2) {
         if ($('#reportedContainer').length === 0) {
-          $('#posts').append('<div id="reportedContainer">Flagged Posts<div class="reportedPosts hidden"></div></div>')
-          $('#reportedContainer').click(function() {
-            $(this).find('.reportedPosts').toggleClass('hidden')
+          $('#posts').append('<div id="reportedContainer"><h1>Flagged Posts</h1><div class="reportedPosts hidden"></div></div>')
+          $('#reportedContainer h1').click(function() {
+            $('.reportedPosts').toggleClass('hidden')
           })
         }
         $post.addClass('flagged');
         $('#reportedContainer .reportedPosts').append($post)
       }
       if (post.votes.indexOf(userID) == -1) {
-        $post.find('.postVoteContainer').addClass('unvoted')
+        if (!public) $post.find('.postVoteContainer').addClass('unvoted')
       } else {
         $post.find('.vote-tally-rect').die()
         $post.find('.vote-tally-rect').css('cursor', 'default')
@@ -55,6 +55,22 @@ function renderPosts(fresh, post) {
         $post.find('.voteFlag').css('cursor', 'default')
         $post.find('.voteFlag').css('background', '#888')
       } 
+
+      if (post.userAffil === 'Instructor') {
+        $post.addClass('instructor');
+      }
+
+      if (public) {
+        $post.find('.voteFlag').css({
+          'cursor': 'default',
+          'background': '#888'
+        })
+
+        $post.find('.vote-tally-rect').css('cursor', 'default');
+        if (!post.public) $post.remove();
+      } else {
+        if (!post.public) $post.find('.privacy').text('Private')
+      }
     }
   })
 }
@@ -123,13 +139,26 @@ function createdDesc(a, b) {
     return new Date(b.date).valueOf() - new Date(a.date).valueOf();
   }
 }
+
+function refreshRO() {
+  $('#editor div').load(rourl, function() {
+    $('#editor').find('style').remove();
+  })
+}
+
 $(document).ready(function(){
+  userObj.userName  = public ? null : userName;
+  userObj.userAffil = public ? null : userAffil;
+  userObj.userID    = public ? null : userID;
+  loggedIn = public ? false : true;
 
-  userObj.userName  = userName;
-  userObj.userAffil = userAffil;
-  userObj.userID    = userID;
-
-  loggedIn = true;
+  if (public) {
+    $('#editor').css('overflow-y', 'auto')
+    refreshRO();
+    setInterval(function() {
+      refreshRO();
+    }, 10*1000)
+  }
 
   $('#userBox').removeClass('hidden');
 
@@ -158,26 +187,32 @@ $(document).ready(function(){
       var newPost = assembleNewPostObj(body);
 
       var anonymous = $('#enterPostForm').find( 'input[name=anonymous]' ).is(':checked') ? true : false;
+      var public = $('#enterPostForm').find( 'input[name=private]' ).is(':checked') ? false : true;
       newPost.anonymous = anonymous;
+      newPost.public    = public;
       socket.emit('post', {post: newPost, lecture: lectureID});
       $('#enterPostTextarea').val('');
     }
   });
-  $('.vote-tally-rect').live("click", function() {
-    var that = this;
-    var postid = $(this).parent().attr('data-postid');
-    posts.forEach(function(post) {
-      if (post._id === postid) {
-        if (post.votes.indexOf(userID) == -1) {
-          var newVoteObj = {parentid: postid, userid: userID};
-          socket.emit('vote', {vote: newVoteObj, lecture: lectureID});
-          $(that).die()
-          $(that).css('cursor', 'default')
-          $(that).parent().removeClass('unvoted');
-        } 
-      }
-    })
-  });
+
+  if (!public) {
+    $('.vote-tally-rect').live("click", function() {
+      var that = this;
+      var postid = $(this).parent().attr('data-postid');
+      posts.forEach(function(post) {
+        if (post._id === postid) {
+          if (post.votes.indexOf(userID) == -1) {
+            var newVoteObj = {parentid: postid, userid: userID};
+            socket.emit('vote', {vote: newVoteObj, lecture: lectureID});
+            $(that).die()
+            $(that).css('cursor', 'default')
+            $(that).parent().removeClass('unvoted');
+          } 
+        }
+      })
+    });
+  }
+
   $('#amountPosts').change(function() {
     MAXPOSTS = $(this).val();
     renderPosts();
@@ -210,25 +245,27 @@ $(document).ready(function(){
     e.preventDefault();
     var id = $(this).attr('id').replace('post-', '');
     $('#post-'+id+' .commentContainer').toggleClass('hidden');
-    $('#post-'+id+' .commentForm').toggleClass('hidden');
+    if (!public) $('#post-'+id+' .commentForm').toggleClass('hidden');
   })
 
-  $('.voteFlag').live('click', function() {
-    var that = this;
-    var id = $(this).parent().parent().attr('id').replace('post-', '');
-    $.each(posts, function(i, post){
-      if (post._id == id) {
-        if (post.reports.indexOf(userID) == -1) {
-          if(confirm('By flagging a comment, you are identifying it as a violation of the FinalsClub Code of Conduct: Keep it academic.')) {
-            socket.emit('report', {report: {parentid: id, userid: userID}, lecture: lectureID});
-            $(that).die()
-            $(that).css('cursor', 'default')
-            $(that).css('background', '#888')
-          }
-        } 
-      }
+  if (!public) {
+    $('.voteFlag').live('click', function() {
+      var that = this;
+      var id = $(this).parent().parent().attr('id').replace('post-', '');
+      $.each(posts, function(i, post){
+        if (post._id == id) {
+          if (post.reports.indexOf(userID) == -1) {
+            if(confirm('By flagging a comment, you are identifying it as a violation of the FinalsClub Code of Conduct: Keep it academic.')) {
+              socket.emit('report', {report: {parentid: id, userid: userID}, lecture: lectureID});
+              $(that).die()
+              $(that).css('cursor', 'default')
+              $(that).css('background', '#888')
+            }
+          } 
+        }
+      })
     })
-  })
+  }
 
   //=====================================================================
   // create socket to server; note that we only permit websocket transport
@@ -236,7 +273,27 @@ $(document).ready(function(){
   var loc = document.location;
   var port = loc.port == '' ? (loc.protocol == 'https:' ? 443 : 80) : loc.port;
   var url = loc.protocol + '//' + loc.hostname + ':' + port;
-  socket = io.connect(url);
+
+  socket = io.connect(url + '/backchannel');
+
+  counts = io.connect( url + '/counts' );
+
+	counts.on( 'connect', function() {
+		counts.emit( 'join', noteID );
+		counts.emit( 'watch', lectureID );
+	});
+
+	counts.on( 'counts', function( c ) {
+		for( id in c ) {
+			var selector = 'div[note-id="' + id + '"] span.count';
+			var target = $( selector );
+
+			if( target ) {
+				target.text( c[ id ] );
+			}
+		}
+	});
+
   // incoming messages are objects with one property whose value is the
   // type of message:
   //   { "posts":    [ <array of Post objects> ] }
@@ -248,59 +305,59 @@ $(document).ready(function(){
   // arrays with updated vote counts and refrain from sending vote message.
   var messagesArrived = 0;
   socket.on('connect', function(){
-    //lectureID = window.location.hash.substring(1);
-    socket.emit('subscribe', lectureID);
-    /*$(window).bind('hashchange', function() {
-      lectureID = window.location.hash.substring(1);
-      socket.emit('subscribe', lectureID);
-    });*/
-  });
-  socket.on('message', function(obj) {
-    if ('posts' in obj) {
-      posts = obj.posts;
+    socket.emit('subscribe', lectureID, function(_posts) {
+      posts = _posts;
       renderPosts(true);
-    } else if ('post' in obj) {
-      var post = obj.post;
+    });
+  });
+  socket.on('post', function(post) {
+    if (!public || (public && post.public)) {
       posts.push(post);
       renderPosts(false, post);
-    } else if ('vote' in obj) {
-      var vote = obj.vote;
-      posts = posts.map(function(post) {
-        if(post._id == vote.parentid) {
+    }
+  })
+  socket.on('vote', function(vote) {
+    posts = posts.map(function(post) {
+      if(post._id == vote.parentid) {
+        if (!public || (public && post.public)) {
           post.votes.push(vote.userid);
           $('#post-'+vote.parentid).find('.vote-tally-rect').text(post.votes.length);
+          renderPosts();
         }
-        return post;
-      });
-      renderPosts();
-    } else if ('report' in obj) {
-      var report = obj.report;
-      posts = posts.map(function(post) {
-        if(post._id == report.parentid) {
+      }
+      return post;
+    });
+  })
+  socket.on('report', function(report) {
+    posts = posts.map(function(post) {
+      if(post._id == report.parentid) {
+        if (!public || (public && post.public)) {
           post.reports.push(report.userid);
           if (post.reports.length >= 2) {
             $('#post-'+post._id).addClass('flagged');
           }
+          renderPosts();
         }
-        return post;
-      });
-      renderPosts();
-    } else if ('comment' in obj) {
-      var comment = obj.comment;
-      posts = posts.map(function(post) {
-        if (post._id == comment.parentid) {
+      }
+      return post;
+    });
+  })
+  socket.on('comment', function(comment) {
+    posts = posts.map(function(post) {
+      if (post._id == comment.parentid) {
+        if (!public || (public && post.public)) {
           if (!post.comments) {
             post.comments = [];
           }
           post.comments.push(comment);
           post.date = new Date();
+          if (sortedBy == 'created') renderPosts();
+          renderComments(comment.parentid);
         }
-        return post;
-      });
-      if (sortedBy == 'created') renderPosts();
-      renderComments(comment.parentid);
-    }
-  });
+      }
+      return post;
+    });
+  })
   socket.on('disconnect', function(){ 
     // XXX something here
   });

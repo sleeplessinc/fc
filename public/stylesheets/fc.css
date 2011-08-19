@@ -93,7 +93,6 @@ div.container1 {
 
 /*========================*/
 #notesContainer {
-min-height: 30em;
 float: left;
 width: 25%;
 }
@@ -292,8 +291,6 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 }
 #loginBox h1 {
 	font-size: 105%;
-	zmargin: 0 0 0.5em 0;
-	zpadding: 0;
 }
 
 #commentText {
@@ -302,6 +299,12 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 #posts .flagged {
   opacity: 0.3;
   background: #eca;
+}
+#posts .flagged .commentForm {
+  display: none;
+}
+#posts .instructor {
+  background: #EDDA74;
 }
 
 /*.button {
@@ -349,6 +352,7 @@ span.sub_menu{
 span.sub_menu a{
 	color:#fff;
 	text-decoration:none;
+	font-size: 90%;
 }
 span.sub_menu a:hover {
 	color:#fff;
@@ -360,7 +364,7 @@ h1 {
 	zmargin: 0.3em 0;
 	text-align: center;
 	color:#fff;
-	text-shadow: black 0 0 0.2em;
+	ztext-shadow: black 0 0 0.2em;
 	font-size: 120%;
 }
 h2 {
@@ -400,20 +404,21 @@ ul{
 	zmargin:0 auto;
 }
 
-#credentials .row {
+.row {
 	display: table-row;
 }
-#credentials .row .label {
-	width: 40%;
+.row .label {
+	width: 50%;
 	text-align: right;
 	display: table-cell;
 	padding: 0.8em 3% 0.8em 0%;
+	white-space: nowrap;
 }
-#credentials .row .field {
+.row .field {
 	display: table-cell;
 	padding: 0.2em 0;
 }
-#credentials .row .field input {
+.row .field input {
 	width: 90%;
 }
 
@@ -423,12 +428,22 @@ ul{
 }
 
 div.school {
-	zborder:  solid 1px #eeb;
+	zborder:  solid 1px #a98;
 	-moz-border-radius: 0.2em;
 	-webkit-border-radius: 0.2em;
+	margin: 1.0em 0;
+	padding: 1em 2%;
+	background: #FaF6d3;
+	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
 }
 div.menubar {
 	text-align: right;
+}
+
+div.school h2 {
+	font-size: 120%;
+	margin: 0 0;
 }
 
 #messages {
@@ -444,4 +459,59 @@ div.menubar {
 
 li {
 	padding: 0.2em 0; 
+}
+
+a.readonlylink {
+	font-weight: normal;
+	color: #bbb;
+	font-size: 80%;
+	margin: 0 2em;
+}
+
+div#editor div.readonly {
+	background: #fff;
+	min-height: 100%;
+	padding: 1.5em 3%;
+}
+
+div#reportedContainer h1 {
+	margin: 0;
+	padding: 0.3em 1em;
+	font-weight: bold;
+	font-size: 100%;
+	color:#442;
+	text-align: left;
+	background-color:#ddb;
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	letter-spacing: 0.1em;
+	cursor: pointer; cursor: hand;
+}
+
+div#postsHeader h1 {
+	margin: 0;
+	padding: 0.3em 1em;
+	font-weight: bold;
+	font-size: 100%;
+	color:#442;
+	text-align: left;
+	background-color:#ddb;
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	letter-spacing: 0.1em;
+}
+
+#sortPosts {
+	float: right;
+}
+
+div.postContainer div.privacy {
+	background: #00f;
+	font-size: 75%;
+	color: #eef;
+	text-align: center;
 }

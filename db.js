@@ -1,124 +1,55 @@
 /* vim: set ts=2: */
 
-// DEPENDENCIES
+var url		= require( 'url' );
 
-var crypto = require( 'crypto' );
+var mongo	= require( 'mongodb' );
 
-var mongoose	= require( 'mongoose' );
+module.exports.open = function( uri, callback ) {
+	if( ! uri ) {
+		throw new Error( 'No URI defined!' );
+	}
 
-var Schema		= mongoose.Schema;
-var ObjectId	= mongoose.SchemaTypes.ObjectId;
+	var parsed			= url.parse( uri );
+	var path				= parsed.pathname.split( '/' );
 
-// SUPPORT FUNCTIONS
+	var port				= parsed.port || 27017;
+	var host				= parsed.hostname || 'localhost';
 
-function salt() {
-	return Math.round( ( new Date().valueOf() * Math.random() ) ).toString();
-}
+	var db					= path[ 1 ];
+	var collection	= path[ 2 ];
 
-// MODELS
+	if( parsed.auth ) {
+		var auth = parsed.auth.split( ':' );
 
-// user
+		var username = auth[ 0 ];
+		var password = auth[ 1 ];
+	}
 
-var User = new Schema( {
-	email					: { type : String, index : { unique : true } },
-  name          : String,
-  affil         : String,
-	hashed				: String,
-	salt					: String,
-	session				: String
-});
+	if( ! db ) {
+		throw new Error( 'Unable to parse database name!' );
+	}
 
-User.virtual( 'password' )
-	.set( function( password ) {
-		this.salt				= salt();
-		this.hashed			= this.encrypt( password );
+	var server		= new mongo.Server( host, port, { auto_reconnect : true } );
+	var database	= new mongo.Db( db, server );
+
+	database.open( function( err, database ) {
+		// XXX: add authentication
+
+		if( err ) {
+			callback( err );
+		} else {
+			// do we want to open a specific collection? otherwise just return DB
+			if( ! collection ) {
+				callback( null, database );
+			} else {
+				database.createCollection( collection, function( err, c ) {	
+					if( err ) {
+						callback( err );
+					} else {
+						callback( null, c );
+					}
+				});
+			}
+		}	
 	});
-
-User.method( 'encrypt', function( password ) {
-	var hmac = crypto.createHmac( 'sha1', this.salt );
-
-	return hmac.update( password ).digest( 'hex' );
-});
-
-User.method( 'authenticate', function( plaintext ) {
-	return ( this.encrypt( plaintext ) === this.hashed );
-});
-
-mongoose.model( 'User', User );
-
-// schools
-
-var School = new Schema( {
-	name				: String,
-	description	: String,
-	url					: String,
-
-	hostnames		: Array,
-
-	users				: Array
-});
-
-mongoose.model( 'School', School );
-
-// courses
-
-var Course = new Schema( {
-	name				: String,
-	description	: String,
-
-	// courses are tied to one school
-	school			: ObjectId,
-
-	// XXX: room for additional resources
-
-	// many users may subscribe to a course
-	users				: Array
-});
-
-mongoose.model( 'Course', Course );
-
-// lectures
-
-var Lecture	= new Schema( {
-	name					: String,
-	date					: Date,
-	live					: Boolean,
-
-	course				: ObjectId
-});
-
-mongoose.model( 'Lecture', Lecture );
-
-// notes
-
-var Note = new Schema( {
-	name					: String,
-	path					: String,
-
-	lecture				: ObjectId,
-
-	collaborators : Array
-});
-
-mongoose.model( 'Note', Note );
-
-// comments
-
-var Post = new Schema({
-  date      : Date,
-  body      : String,
-  votes     : Array,
-  reports   : Array,
-
-  userid    : String,//ObjectId,
-  userName  : String,
-  userAffil : String,
-
-  comments   : Array,
-
-  lecture   : String//ObjectId
-})
-
-mongoose.model( 'Post', Post );
-
-module.exports.mongoose = mongoose;
+}

@@ -1,3 +1,6 @@
+script
+	var lectureID = '#{lecture._id}';
+
 div.header Lecture: #{ lecture.name }
 div.content
 	div.menubar
@@ -12,6 +15,11 @@ div.content
 			- each note in notes
 				li
 					a( href = '/note/#{ note._id }' ) #{ note.name }
+					- if (note.public) 
+						|  (Public)
+					- else
+						|  (Private)
+					span( note-id = note._id ).count= counts[ note._id ]
 
 		div
 			span(class='sub_menu')

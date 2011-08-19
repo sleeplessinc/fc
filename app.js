@@ -1,16 +1,33 @@
 /* vim: set ts=2: */
 
-var sys				= require( 'sys' );
-var os				= require( 'os' );
+// Prerequisites
 
-var express		= require( 'express' );
-var mongoose	= require( './db.js' ).mongoose;
-var async			= require( 'async' );
+var sys					= require( 'sys' );
+var os					= require( 'os' );
+var url					= require( 'url' );
 
+var express			= require( 'express' );
+var mongoStore	= require( 'connect-mongo' );
+var async				= require( 'async' );
+
+var db					= require( './db.js' );
+var mongoose		= require( './models.js' ).mongoose;
+
+var connect			= require( 'connect' );
+var Session			= connect.middleware.session.Session;
+var parseCookie = connect.utils.parseCookie;
 
 var log3 = function() {}
 
 var app = module.exports = express.createServer();
+
+// Database
+
+var User		= mongoose.model( 'User' );
+var School	= mongoose.model( 'School' );
+var Course	= mongoose.model( 'Course' );
+var Lecture	= mongoose.model( 'Lecture' );
+var Note		= mongoose.model( 'Note' );
 
 // Configuration
 
@@ -24,49 +41,47 @@ if( serverHost ) {
 	console.log( 'No hostname defined, defaulting to os.hostname(): %s', serverHost );
 }
 
+app.configure( 'development', function() { 
+	app.set( 'errorHandler', express.errorHandler( { dumpExceptions: true, showStack: true } ) );
+
+	app.set( 'dbHost', 'localhost' );
+	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
+});
+
+app.configure( 'production', function() {
+	app.set( 'errorHandler', express.errorHandler() );
+
+	app.set( 'dbHost', 'localhost' );
+	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
+});
+
 app.configure(function(){
-  app.set( 'views', __dirname + '/views' );
-  app.set( 'view engine', 'jade' );
-  app.use( express.bodyParser() );
+	app.set( 'views', __dirname + '/views' );
+	app.set( 'view engine', 'jade' );
+	app.use( express.bodyParser() );
 
 	app.use( express.cookieParser() );
+
+	// sessions
+	app.set( 'sessionStore', new mongoStore( {
+		'url' : app.set( 'dbUri' )
+	}));
+
 	app.use( express.session( {
-		'secret' : 'finalsclub',
-		'maxAge' : new Date(Date.now() + (60 * 60 * 24 * 30 * 1000))
-		//'maxAge' : new Date(Date.now())
-		} ) );
+		'secret'	: 'finalsclub',
+		'maxAge'	: new Date(Date.now() + (60 * 60 * 24 * 30 * 1000)),
+		'store'		: app.set( 'sessionStore' )
+	}));
 
   app.use( express.methodOverride() );
   app.use( app.router );
   app.use( express.static( __dirname + '/public' ) );
+
+	// use the error handler defined earlier
+	var errorHandler = app.set( 'errorHandler' );
+
+	app.use( errorHandler );
 });
-
-app.configure( 'development', function() { 
-	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
-
-	// still using local mongo instances for now; this may change
-	app.set( 'dbUri', 'mongodb://localhost/fc' );
-});
-
-app.configure( 'production', function() {
-	//app.use( express.errorHandler() ); 
-	app.use( express.errorHandler( { dumpExceptions: true, showStack: true } ) ); 
-
-	app.set( 'dbUri', 'mongodb://localhost/fc' );
-});
-
-// db connect
-
-mongoose.connect( app.set( 'dbUri' ) );
-mongoose.connection.db.serverConfig.connection.autoReconnect = true
-
-// Models
-
-var User		= mongoose.model( 'User' );
-var School	= mongoose.model( 'School' );
-var Course	= mongoose.model( 'Course' );
-var Lecture	= mongoose.model( 'Lecture' );
-var Note		= mongoose.model( 'Note' );
 
 // Middleware
 
@@ -86,7 +101,10 @@ function loggedIn( req, res, next ) {
 
 			next();
 		} else {
-			log3("no user, redirect to login page");
+			// stash the original request so we can redirect
+			var path = url.parse( req.url ).pathname;
+			req.session.redirect = path;
+
 			res.redirect( '/login' );
 		}
 	});
@@ -169,6 +187,10 @@ app.dynamicHelpers( {
 
 	'user' : function( req, res ) {
 		return req.user;
+	},
+
+	'session' : function( req, res ) {
+		return req.session;
 	}
 });
 
@@ -189,9 +211,11 @@ app.get( '/', loggedIn, function( req, res ) {
 //				Course.find( { 'school' : school._id, 'users' : userId }, function( err, courses ) {
 					Course.find( { 'school' : school._id }, function( err, courses ) {
 					if( courses.length > 0 ) {
-						schools[ school.name ] = courses;
-					}
-
+            school.courses = courses;
+					} else {
+            school.courses = [];
+          }
+          schools[ school.name ] = school;
 					callback();
 				});
 			},
@@ -200,6 +224,82 @@ app.get( '/', loggedIn, function( req, res ) {
 			}
 		);
 	});
+});
+
+app.get( '/:id/course/new', loggedIn, function( req, res ) {
+  var schoolId = req.params.id;
+
+  School.findById( schoolId, function( err, school ) {
+		if( school ) {
+      res.render( 'course/new', { 'school': school } );
+		} else {
+			req.flash( 'error', 'Invalid note specified!' );
+
+			res.direct( '/' );
+		}
+  })
+});
+
+app.post( '/:id/course/new', loggedIn, function( req, res ) {
+	var schoolId	= req.params.id;
+	var course = new Course;
+  var email = req.body.email;
+  
+  if (!email) {
+    req.flash( 'error', 'Invalid parameters!' )
+    return res.render( 'course/new' );
+  }
+	course.name		= req.body.name;
+	course.description		= req.body.description;
+	course.school	= schoolId;
+  course.instructor = email;
+
+  User.find( { 'email': email }, function( err, user ) {
+    if ( user.length === 0 ) {
+      console.log(err, user)
+      var user = new User;
+
+      user.email = email;
+      user.name = '';
+      user.password = 'asdf';
+      user.affil = 'Instructor';
+      // XXX Put mailchimp integration here
+
+      user.save(function( err ) {
+        if ( err ) {
+          req.flash( 'error', 'Invalid parameters!' )
+          res.render( 'course/new' );
+        } else {
+          course.save( function( err ) {
+            if( err ) {
+              // XXX: better validation
+              req.flash( 'error', 'Invalid parameters!' );
+
+              res.render( 'course/new' );
+            } else {
+              res.redirect( '/' );
+            }
+          });
+        }
+      })
+    } else {
+      if (user.affil === 'Instructor') {
+        course.save( function( err ) {
+          if( err ) {
+            // XXX: better validation
+            req.flash( 'error', 'Invalid parameters!' );
+
+            res.render( 'course/new' );
+          } else {
+            res.redirect( '/' );
+          }
+        });
+      } else {
+        req.flash( 'error', 'The existing user\'s email you entered is not an instructor' );
+        res.render( 'course/new' );
+      }
+    }
+  })
 });
 
 app.get( '/course/:id', loggedIn, loadCourse, function( req, res ) {
@@ -271,7 +371,10 @@ app.get( '/lecture/:id', loggedIn, loadLecture, function( req, res ) {
 	Note.find( { 'lecture' : lecture._id }, function( err, notes ) {
 		res.render( 'lecture/index', {
 			'lecture'			: lecture,
-			'notes'				: notes
+			'notes'				: notes,
+			'counts'			: counts,
+
+			'javascripts'	: [ 'counts.js' ]
 		});
 	});
 });
@@ -289,6 +392,7 @@ app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) 
 	note.name			= req.body.name;
 	note.date			= req.body.date;
 	note.lecture	= lecture._id;
+  note.public   = req.body.public ? true : false;
 
 	note.save( function( err ) {
 		if( err ) {
@@ -316,21 +420,78 @@ app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 			res.redirect( '/' );
 		}
 
-		res.render( 'notes/index', {
-      'layout'      : 'noteLayout',
-			'host'				: serverHost,
-			'note'				: note,
-			'lecture'			: lecture,
-			'stylesheets' : [ 'fc.css' ],
-			'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
+		// pull out our other notes
+		Note.find( { 'lecture' : lecture._id }, function( err, otherNotes ) {
+			res.render( 'notes/index', {
+				'layout'      : 'noteLayout',
+				'host'				: serverHost,
+
+				'note'				: note,
+				'otherNotes'	: otherNotes,
+
+				'lecture'			: lecture,
+				'stylesheets' : [ 'fc.css', 'dropdown.css' ],
+				'javascripts'	: [ 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js', 'dropdown.js' ]
+			});
 		});
 	});
+});
+
+app.get( '/view/:id', loadNote, function( req, res ) {
+  var note = req.note;
+  var lectureId = note.lecture;
+
+  if (!note.public) {
+    var sid = req.sessionID;
+
+    User.findOne( { session : sid }, function( err, user ) {
+      if( user ) {
+        req.user = user;
+
+        return res.redirect( '/note/' + note._id );
+      } else {
+        req.session.redirect = '/note/' + note._id;
+        req.flash( 'error', 'You must be logged in to view this notepad' );
+        return res.redirect( '/login' );
+      }
+    });
+  } else {
+    db.open('mongodb://' + app.set( 'dbHost' ) + '/etherpad/etherpad', function( err, epl ) {
+      epl.findOne( { key: 'pad2readonly:' + note._id }, function(err, record) {
+        var roId = record.value.replace(/"/g, '');
+        Lecture.findById( lectureId, function( err, lecture ) {
+          if( ! lecture ) {
+            req.flash( 'error', 'That notes page is orphaned!' );
+
+            res.redirect( '/' );
+          }
+
+					// pull out our other notes
+					Note.find( { 'lecture' : lecture._id }, function( err, otherNotes ) {
+	          res.render( 'notes/public', {
+	            'layout'      : 'noteLayout',
+	            'host'				: serverHost,
+
+	            'note'				: note,
+							'otherNotes'	: otherNotes,
+
+	            'roId'        : roId,
+	            'lecture'			: lecture,
+	            'stylesheets' : [ 'fc.css', 'dropdown.css' ],
+	            'javascripts'	: [ 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js', 'dropdown.js' ]
+						});
+          });
+        });
+      })
+    })
+  }
 });
 
 // authentication
 
 app.get( '/login', function( req, res ) {
   log3("get login page")
+
 	res.render( 'login' );	
 });
 
@@ -349,8 +510,15 @@ app.post( '/login', function( req, res ) {
 			user.session = sid;
 
 			user.save( function() {
-			  log3("user.save() done") 
-				res.redirect( '/' );
+				var redirect = req.session.redirect;
+
+				// login complete, remember the user's email for next time
+				req.session.email = email;
+
+				console.log( req.session.email );
+
+				// redirect to root if we don't have a stashed request
+				res.redirect( redirect || '/' );
 			});
 		} else {
 			log3("bad login")
@@ -402,129 +570,169 @@ app.post( '/register', function( req, res ) {
 });
 
 app.get( '/logout', function( req, res ) {
-	log3('logout') 
+	var sid = req.sessionID;
+
+	User.findOne( { 'session' : sid }, function( err, user ) {
+		if( user ) {
+			user.session = '';
+
+			user.save( function( err ) {
+				res.redirect( '/' );
+			});
+		} else {
+			res.redirect( '/' );
+		}
+	});
+
+/*
 	req.session.destroy();
 
 	res.redirect( '/' );
+*/
 });
 
 // socket.io server
 
 var io = require( 'socket.io' ).listen( app );
 
+io.set( 'authorization', function( handshake, next ) {
+	var rawCookie = handshake.headers.cookie;
+
+	if( rawCookie ) {
+		handshake.cookie	= parseCookie( rawCookie );
+		handshake.sid			= handshake.cookie[ 'connect.sid' ];
+
+		if( handshake.sid ) {
+			app.set( 'sessionStore' ).get( handshake.sid, function( err, session ) {
+				if( err ) {
+					next( err.message, false );
+				} else {
+					// bake a new session object for full r/w
+					handshake.session = new Session( handshake, session );
+
+					User.findOne( { session : handshake.sid }, function( err, user ) {
+						handshake.user = user;
+
+						next( null, true );
+					});
+				}
+			});
+		} else {
+			return next( 'No session ID found!', false );
+		}
+	} else {
+		return next( 'No cookie found!', false );
+	}
+});
+
 var Post = mongoose.model( 'Post' );
 
-var clients = posts = {};
-
-io.sockets.on('connection', function(socket) {
-	socket.on('subscribe', function(lecture) {
-		var id = socket.id;
-		clients[id] = {
-			socket: socket,
-			lecture: lecture
-		}
-		Post.find({'lecture': lecture}, function(err, res) {
-			posts[lecture] = res ? res : [];
-			socket.json.send({posts: res});
+var backchannel = io
+	.of( '/backchannel' )
+	.on( 'connection', function( socket ) {
+		socket.on('subscribe', function(lecture, cb) {
+  	  socket.join(lecture);
+			Post.find({'lecture': lecture}, function(err, res) {
+	      cb(res);
+			});
 		});
-	});
-	socket.on('post', function(res) {
-		var post = new Post;
-		var _post = res.post;
-		var lecture = res.lecture;
-		post.lecture = lecture;
-		if ( _post.anonymous ) {
-			post.userid		= 0;
-			post.userName	= 'Anonymous';
-			post.userAffil = 'N/A';
-		} else {
-			post.userName = _post.userName;
-			post.userAffil = _post.userAffil;
-		}
-		post.date = new Date();
-		post.body = _post.body;
-		post.votes = [];
-    post.reports = [];
-		post.save(function(err) {
-			if (err) {
-				// XXX some error handling
-				console.log(err);
+
+		socket.on('post', function(res) {
+			var post = new Post;
+			var _post = res.post;
+			var lecture = res.lecture;
+			post.lecture = lecture;
+			if ( _post.anonymous ) {
+				post.userid		= 0;
+				post.userName	= 'Anonymous';
+				post.userAffil = 'N/A';
 			} else {
-				posts[lecture].push(post);
-				publish({post: post}, lecture);
+				post.userName = _post.userName;
+				post.userAffil = _post.userAffil;
 			}
-		});
-	});
 
-	socket.on('vote', function(res) {
-		var vote = res.vote;
-		var lecture = res.lecture;
-		posts[lecture] = posts[lecture].map(function(post) {
-			if(post._id == vote.parentid) {
-        if (post.votes.indexOf(vote.userid) == -1) {
-          post.votes.push(vote.userid);
-          post.save(function(err) {
-            if (err) {
-              // XXX error handling
-            } else {
-              publish({vote: vote}, lecture);
-            }
-          });
-        }
-			}
-			return post;
+			post.public = _post.public;
+			post.date = new Date();
+			post.body = _post.body;
+			post.votes = [];
+	    post.reports = [];
+			post.save(function(err) {
+				if (err) {
+					// XXX some error handling
+					console.log(err);
+				} else {
+	        io.sockets.in(lecture).emit('post', post);
+				}
+			});
 		});
-	});
 
-	socket.on('report', function(res) {
-		var report = res.report;
-		var lecture = res.lecture;
-		posts[lecture] = posts[lecture].map(function(post) {
-			if(post._id == report.parentid) {
-        if (post.reports.indexOf(report.userid) == -1) {
-          post.reports.push(report.userid);
-          post.save(function(err) {
-            if (err) {
-              // XXX error handling
-            } else {
-              publish({report: report}, lecture);
-            }
-          });
-        }
-			}
-			return post;
+		socket.on('vote', function(res) {
+			var vote = res.vote;
+			var lecture = res.lecture;
+	    Post.findById(vote.parentid, function( err, post ) {
+	      if (!err) {
+	        if (post.votes.indexOf(vote.userid) == -1) {
+	          post.votes.push(vote.userid);
+	          post.save(function(err) {
+	            if (err) {
+	              // XXX error handling
+	            } else {
+	              io.sockets.in(lecture).emit('vote', vote);
+	            }
+	          });
+	        }
+	      }
+	    })
 		});
-	});
 
-	socket.on('comment', function(res) {
-		var comment = res.comment;
-		var lecture = res.lecture;
-		console.log('anon', comment.anonymous);
-		if ( comment.anonymous ) {
-			comment.userid		= 0;
-			comment.userName	= 'Anonymous';
-			comment.userAffil = 'N/A';
-		}
-		posts[lecture] = posts[lecture].map(function(post) {
-			if(post._id == comment.parentid) {
-				post.comments.push(comment);
-				post.date = new Date();
-				post.save(function(err) {
-					if (err) {
-						console.log(err);
-					} else {
-						publish({comment: comment}, lecture);
-					}
-				})
-			}
-			return post;
+		socket.on('report', function(res) {
+			var report = res.report;
+			var lecture = res.lecture;
+	    Post.findById(report.parentid, function( err, post ){
+	      if (!err) {
+	        if (post.reports.indexOf(report.userid) == -1) {
+	          post.reports.push(report.userid);
+	          post.save(function(err) {
+	            if (err) {
+	              // XXX error handling
+	            } else {
+	              io.sockets.in(lecture).emit('report', report);
+	            }
+	          });
+	        }
+	      }
+	    })
 		});
+
+		socket.on('comment', function(res) {
+			var comment = res.comment;
+			var lecture = res.lecture;
+			console.log('anon', comment.anonymous);
+			if ( comment.anonymous ) {
+				comment.userid		= 0;
+				comment.userName	= 'Anonymous';
+				comment.userAffil = 'N/A';
+			}
+	    Post.findById(comment.parentid, function( err, post ) {
+	      if (!err) {
+	        post.comments.push(comment);
+	        post.date = new Date();
+	        post.save(function(err) {
+	          if (err) {
+	            console.log(err);
+	          } else {
+	            io.sockets.in(lecture).emit('comment', comment);
+	          }
+	        })
+	      }
+	    })
+		});
+		/*
+		socket.on('disconnect', function() {
+			delete clients[socket.id];
+		});
+	  */
 	});
-	
-	socket.on('disconnect', function() {
-		delete clients[socket.id];
-	});
-});
 
 function publish(data, lecture) {
 	Object.getOwnPropertyNames(clients).forEach(function(id) {
@@ -533,6 +741,92 @@ function publish(data, lecture) {
 		}
 	});
 }
+
+var counters = {};
+
+var counts = io
+	.of( '/counts' )
+	.on( 'connection', function( socket ) {
+		// pull out user/session information etc.
+		var handshake = socket.handshake;
+		var userID		= handshake.user._id;
+
+		var watched		= [];
+		var noteID		= null;
+
+		var timer			= null;
+
+		socket.on( 'join', function( note ) {
+			noteID			= note;
+
+			// XXX: replace by addToSet (once it's implemented in mongoose)
+			Note.findById( noteID, function( err, note ) {
+				if( note ) {
+					if( note.collaborators.indexOf( userID ) == -1 ) {
+						note.collaborators.push( userID );
+
+						note.save();
+					}
+				}
+			});
+		});
+
+		socket.on( 'watch', function( l ) {
+			var sendCounts = function() {
+				var send = {};
+
+				Note.find( { '_id' : { '$in' : watched } }, function( err, notes ) {
+					async.forEach(
+						notes,
+						function( note, callback ) {
+							var id		= note._id;
+							var count	= note.collaborators.length;
+
+							send[ id ] = count;
+
+							callback();
+						}, function() {
+							socket.emit( 'counts', send );
+
+							timer = setTimeout( sendCounts, 5000 );
+						}
+					);
+				});
+			}
+
+			Note.find( { 'lecture' : l }, [ '_id' ], function( err, notes ) {
+				notes.forEach( function( note ) {
+					watched.push( note._id );
+				});
+			});
+
+			sendCounts();
+		});
+
+		socket.on( 'disconnect', function() {
+			clearTimeout( timer );
+
+			// XXX: replace with $pull once it's available
+			if( noteID ) {
+				Note.findById( noteID, function( err, note ) {
+					if( note ) {
+						var index = note.collaborators.indexOf( userID );
+
+						if( index != -1 ) {
+							note.collaborators.splice( index, 1 );
+						}
+
+						note.save();
+					}
+				});
+			}
+		});
+	});
+
+// Launch
+
+mongoose.connect( app.set( 'dbUri' ) );
+mongoose.connection.db.serverConfig.connection.autoReconnect = true
 
 app.listen( 3000 );
 console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
