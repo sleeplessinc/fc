@@ -8,17 +8,23 @@ script
 
 div#wrapper
 	div#header
-		div#breadcrumb
-			div.crumb
-				strong.label Lecture:
-				a( href = '/lecture/#{lecture._id}' )= lecture.name
-			div.crumb
-				strong.label Note:
-				!=partial( 'dropdown' )
-		div#buttons
-			a( href = '/view/#{note._id}', class = 'readonlylink') Read-Only Version
-			button#toggleBC Discussion
-			button#togglePad Editor
+		table
+			tr
+				td.lilogo
+					a(href="/")
+						img.logo(height="30", src="/images/fclogo.png")
+				td
+					div#breadcrumb
+						div.crumb
+							strong.label Lecture:
+							a( href = '/lecture/#{lecture._id}' )= lecture.name
+						div.crumb
+							strong.label Note:
+							!=partial( 'dropdown' )
+					div#buttons
+						a( href = '/view/#{note._id}', class = 'readonlylink') Read-Only Version
+						button#toggleBC Discussion
+						button#togglePad Editor
 	div#sidebar
 		div.container
 			div.userBox

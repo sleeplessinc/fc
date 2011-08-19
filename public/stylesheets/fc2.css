@@ -53,13 +53,18 @@ span.reglink a {
 	font-weight: normal;
 }
 
-table {
+table, td, tr {
 	margin: 0; 
+	padding: 0; 
 }
 
 img.logo {
 	margin: 0 2%;
 	vertical-align: middle;
+}
+
+td.lilogo {
+	padding-right: 2em;
 }
 
 td.menu {
@@ -208,7 +213,7 @@ zmargin-top: 0.2em;
 	position: relative; /* allow position absolute for charsLeftMsg and submit btn */
 	padding: 0.5em 1em;
 	border-bottom: 1px solid #aaa;
-	background-color: #ddb;
+	background-color: #caccd0;
 }
 #userHeader {
 	zmargin: 0 0 0.5em 0;
@@ -249,7 +254,7 @@ color: red;
 #enterUser { display: none; }
 #enterAdmin { display: none; }
 #posts {
-	background: #eec;
+	background: #dde;
 	padding: 1em 1.5em;
   overflow-y: auto;
 }
@@ -373,8 +378,7 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 	width: 100%;
 }
 #posts .flagged {
-  opacity: 0.3;
-  background: #eca;
+  background: #fee;
 }
 #posts .flagged .commentForm {
   display: none;
@@ -566,7 +570,7 @@ div#reportedContainer h1 {
 	font-size: 100%;
 	color:#442;
 	text-align: left;
-	background-color:#ddb;
+	background-color:#caccd0;
 	-moz-border-radius: 0.3em;
 	-webkit-border-radius: 0.3em;
 	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
@@ -582,7 +586,7 @@ div#postsHeader h1 {
 	font-size: 100%;
 	color:#442;
 	text-align: left;
-	background-color:#ddb;
+	background-color:#caccd0;
 	-moz-border-radius: 0.3em;
 	-webkit-border-radius: 0.3em;
 	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
@@ -595,8 +599,10 @@ div#postsHeader h1 {
 }
 
 div.postContainer div.privacy {
-	background: #00f;
+	background: #44a;
 	font-size: 75%;
 	color: #eef;
 	text-align: center;
 }
+
+

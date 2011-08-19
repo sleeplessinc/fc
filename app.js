@@ -195,8 +195,8 @@ app.dynamicHelpers( {
 });
 
 // Routes
-app.get( '/schools', loggedIn, function( req, res ) {
-	var userId = req.user._id;
+app.get( '/schools', function( req, res ) {
+	//var userId = req.user._id;
 
 	var schools = {};
 
@@ -435,7 +435,7 @@ app.get( '/note/:id', loggedIn, loadNote, function( req, res ) {
 				'otherNotes'	: otherNotes,
 
 				'lecture'			: lecture,
-				'stylesheets' : [ 'fc.css', 'dropdown.css' ],
+				'stylesheets' : [ 'fc2.css', 'dropdown.css' ],
 				'javascripts'	: [ 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js', 'dropdown.js' ]
 			});
 		});
@@ -482,7 +482,7 @@ app.get( '/view/:id', loadNote, function( req, res ) {
 
 	            'roId'        : roId,
 	            'lecture'			: lecture,
-	            'stylesheets' : [ 'fc.css', 'dropdown.css' ],
+	            'stylesheets' : [ 'fc2.css', 'dropdown.css' ],
 	            'javascripts'	: [ 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js', 'dropdown.js' ]
 						});
           });
