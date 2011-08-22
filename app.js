@@ -518,10 +518,11 @@ app.get( '/note/:id', loadNote, function( req, res ) {
               'host'				: serverHost,
               'note'				: note,
               'lecture'			: lecture,
+              'otherNotes'  : otherNotes,
               'RO'          : false,
               'roID'        : roID,
-              'stylesheets' : [ 'fc.css' ],
-              'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
+              'stylesheets' : [ 'dropdown.css', 'fc.css' ],
+              'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
             });
           } else {
             if (note.public) {
@@ -530,10 +531,11 @@ app.get( '/note/:id', loadNote, function( req, res ) {
                 'layout'      : 'noteLayout',
                 'host'				: serverHost,
                 'note'				: note,
+                'otherNotes'  : otherNotes,
                 'roID'        : roID,
                 'lecture'			: lecture,
-                'stylesheets' : [ 'fc.css' ],
-                'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
+                'stylesheets' : [ 'dropdown.css', 'fc.css' ],
+                'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
               });
             } else {
               // XXX User is not logged in and is redirected to login because notepad is private
@@ -673,12 +675,12 @@ io.set('authorization', function ( handshake, next ) {
       app.set( 'sessionStore' ).get( handshake.sid, function( err, session ) {
         if( err ) {
           handshake.user = false;
-          return cb(null, true);
+          return next(null, true);
         } else {
           // bake a new session object for full r/w
           handshake.session = new Session( handshake, session );
 
-          User.findOne( { session : data.sid }, function( err, user ) {
+          User.findOne( { session : handshake.sid }, function( err, user ) {
             if( user ) {
               handshake.user = user;
               return next(null, true);
@@ -692,231 +694,234 @@ io.set('authorization', function ( handshake, next ) {
     }
   } else {
     data.user = false;
-    return cb(null, true);
+    return next(null, true);
   }
 });
 
 
 var backchannel = io
-.of( '/backchannel' )
-.on( 'connection', function( socket ) {
+  .of( '/backchannel' )
+  .on( 'connection', function( socket ) {
 
-  socket.on('subscribe', function(lecture, cb) {
-    socket.join(lecture);
-    Post.find({'lecture': lecture}, function(err, posts) {
-      if (socket.handshake.user) {
-        cb(posts);
-      } else {
-        var posts = posts.filter(
-          function(post) {
+    socket.on('subscribe', function(lecture, cb) {
+      socket.join(lecture);
+      Post.find({'lecture': lecture}, function(err, posts) {
+        if (socket.handshake.user) {
+          cb(posts);
+        } else {
+          var posts = posts.filter(
+            function(post) {
             if (post.public)
               return post;
           }
-        )
-        cb(posts)
-      }
+          )
+          cb(posts)
+        }
+      });
     });
-  });
 
-  socket.on('post', function(res) {
-    var post = new Post;
-    var _post = res.post;
-    var lecture = res.lecture;
-    post.lecture = lecture;
-    if ( _post.anonymous ) {
-      post.userid		= 0;
-      post.userName	= 'Anonymous';
-      post.userAffil = 'N/A';
-    } else {
-      post.userName = _post.userName;
-      post.userAffil = _post.userAffil;
+    socket.on('post', function(res) {
+      var post = new Post;
+      var _post = res.post;
+      var lecture = res.lecture;
+      post.lecture = lecture;
+      if ( _post.anonymous ) {
+        post.userid		= 0;
+        post.userName	= 'Anonymous';
+        post.userAffil = 'N/A';
+      } else {
+        post.userName = _post.userName;
+        post.userAffil = _post.userAffil;
+      }
+
+      post.public = _post.public;
+      post.date = new Date();
+      post.body = _post.body;
+      post.votes = [];
+      post.reports = [];
+      post.save(function(err) {
+        if (err) {
+          // XXX some error handling
+          console.log(err);
+        } else {
+          if (post.public) {
+            backchannel.in(lecture).emit('post', post);
+          } else {
+            privateEmit(lecture, 'post', post);
+          }
+        }
+      });
+    });
+
+    socket.on('vote', function(res) {
+      var vote = res.vote;
+      var lecture = res.lecture;
+      Post.findById(vote.parentid, function( err, post ) {
+        if (!err) {
+          if (post.votes.indexOf(vote.userid) == -1) {
+            post.votes.push(vote.userid);
+            post.save(function(err) {
+              if (err) {
+                // XXX error handling
+              } else {
+                if (post.public) {
+                  backchannel.in(lecture).emit('vote', vote);
+                } else {
+                  privteEmit(lecture, 'vote', vote);
+                }
+              }
+            });
+          }
+        }
+      })
+    });
+
+    socket.on('report', function(res) {
+      var report = res.report;
+      var lecture = res.lecture;
+      Post.findById(report.parentid, function( err, post ){
+        if (!err) {
+          if (post.reports.indexOf(report.userid) == -1) {
+            post.reports.push(report.userid);
+            post.save(function(err) {
+              if (err) {
+                // XXX error handling
+              } else {
+                if (post.public) {
+                  backchannel.in(lecture).emit('report', report);
+                } else {
+                  privateEmit(lecture, 'report', report);
+                }
+              }
+            });
+          }
+        }
+      })
+    });
+
+    socket.on('comment', function(res) {
+      var comment = res.comment;
+      var lecture = res.lecture;
+      console.log('anon', comment.anonymous);
+      if ( comment.anonymous ) {
+        comment.userid		= 0;
+        comment.userName	= 'Anonymous';
+        comment.userAffil = 'N/A';
+      }
+      Post.findById(comment.parentid, function( err, post ) {
+        if (!err) {
+          post.comments.push(comment);
+          post.date = new Date();
+          post.save(function(err) {
+            if (err) {
+              console.log(err);
+            } else {
+              if (post.public) {
+                backchannel.in(lecture).emit('comment', comment);
+              } else {
+                privateEmit(lecture, 'comment', comment);
+              }
+            }
+          })
+        }
+      })
+    });
+
+    function privateEmit(lecture, event, data) {
+      backchannel.clients(lecture).forEach(function(socket) {
+        if (socket.handshake.user)
+          socket.emit(event, data);
+      })
     }
 
-    post.public = _post.public;
-    post.date = new Date();
-    post.body = _post.body;
-    post.votes = [];
-    post.reports = [];
-    post.save(function(err) {
-      if (err) {
-        // XXX some error handling
-        console.log(err);
-      } else {
-        if (post.public) {
-          io.sockets.in(lecture).emit('post', post);
-        } else {
-          privateEmit(lecture, 'post', post);
-        }
-      }
+    socket.on('disconnect', function() {
+      //delete clients[socket.id];
     });
   });
-
-	socket.on('vote', function(res) {
-		var vote = res.vote;
-		var lecture = res.lecture;
-    Post.findById(vote.parentid, function( err, post ) {
-      if (!err) {
-        if (post.votes.indexOf(vote.userid) == -1) {
-          post.votes.push(vote.userid);
-          post.save(function(err) {
-            if (err) {
-              // XXX error handling
-            } else {
-              if (post.public) {
-                io.sockets.in(lecture).emit('vote', vote);
-              } else {
-                privteEmit(lecture, 'vote', vote);
-              }
-            }
-          });
-        }
-      }
-    })
-	});
-
-	socket.on('report', function(res) {
-		var report = res.report;
-		var lecture = res.lecture;
-    Post.findById(report.parentid, function( err, post ){
-      if (!err) {
-        if (post.reports.indexOf(report.userid) == -1) {
-          post.reports.push(report.userid);
-          post.save(function(err) {
-            if (err) {
-              // XXX error handling
-            } else {
-              if (post.public) {
-                io.sockets.in(lecture).emit('report', report);
-              } else {
-                privateEmit(lecture, 'report', report);
-              }
-            }
-          });
-        }
-      }
-    })
-	});
-
-	socket.on('comment', function(res) {
-		var comment = res.comment;
-		var lecture = res.lecture;
-		console.log('anon', comment.anonymous);
-		if ( comment.anonymous ) {
-			comment.userid		= 0;
-			comment.userName	= 'Anonymous';
-			comment.userAffil = 'N/A';
-		}
-    Post.findById(comment.parentid, function( err, post ) {
-      if (!err) {
-        post.comments.push(comment);
-        post.date = new Date();
-        post.save(function(err) {
-          if (err) {
-            console.log(err);
-          } else {
-            if (post.public) {
-              io.sockets.in(lecture).emit('comment', comment);
-            } else {
-              privateEmit(lecture, 'comment', comment);
-            }
-          }
-        })
-      }
-    })
-	});
-
-  function privateEmit(lecture, event, data) {
-    io.sockets.clients(lecture).forEach(function(socket) {
-      if (socket.handshake.user)
-        socket.emit(event, data);
-    })
-  }
-
-	socket.on('disconnect', function() {
-		//delete clients[socket.id];
-	});
 
 
 var counters = {};
 
 var counts = io
-	.of( '/counts' )
-	.on( 'connection', function( socket ) {
-		// pull out user/session information etc.
-		var handshake = socket.handshake;
-		var userID		= handshake.user._id;
+.of( '/counts' )
+.on( 'connection', function( socket ) {
+  // pull out user/session information etc.
+  var handshake = socket.handshake;
+  var userID		= handshake.user._id;
 
-		var watched		= [];
-		var noteID		= null;
+  var watched		= [];
+  var noteID		= null;
 
-		var timer			= null;
+  var timer			= null;
 
-		socket.on( 'join', function( note ) {
-			noteID			= note;
+  socket.on( 'join', function( note ) {
+    if (handshake.user === false) {
+      noteID			= note;
+      // XXX: replace by addToSet (once it's implemented in mongoose)
+      Note.findById( noteID, function( err, note ) {
+        if( note ) {
+          if( note.collaborators.indexOf( userID ) == -1 ) {
+            note.collaborators.push( userID );
+            note.save();
+          }
+        }
+      });
+    }
+  });
 
-			// XXX: replace by addToSet (once it's implemented in mongoose)
-			Note.findById( noteID, function( err, note ) {
-				if( note ) {
-					if( note.collaborators.indexOf( userID ) == -1 ) {
-						note.collaborators.push( userID );
+  socket.on( 'watch', function( l ) {
+    var sendCounts = function() {
+      var send = {};
 
-						note.save();
-					}
-				}
-			});
-		});
+      Note.find( { '_id' : { '$in' : watched } }, function( err, notes ) {
+        async.forEach(
+          notes,
+          function( note, callback ) {
+            var id		= note._id;
+            var count	= note.collaborators.length;
 
-		socket.on( 'watch', function( l ) {
-			var sendCounts = function() {
-				var send = {};
+            send[ id ] = count;
 
-				Note.find( { '_id' : { '$in' : watched } }, function( err, notes ) {
-					async.forEach(
-						notes,
-						function( note, callback ) {
-							var id		= note._id;
-							var count	= note.collaborators.length;
+            callback();
+          }, function() {
+            socket.emit( 'counts', send );
 
-							send[ id ] = count;
+            timer = setTimeout( sendCounts, 5000 );
+          }
+        );
+      });
+    }
 
-							callback();
-						}, function() {
-							socket.emit( 'counts', send );
+    Note.find( { 'lecture' : l }, [ '_id' ], function( err, notes ) {
+      notes.forEach( function( note ) {
+        watched.push( note._id );
+      });
+    });
 
-							timer = setTimeout( sendCounts, 5000 );
-						}
-					);
-				});
-			}
+    sendCounts();
+  });
 
-			Note.find( { 'lecture' : l }, [ '_id' ], function( err, notes ) {
-				notes.forEach( function( note ) {
-					watched.push( note._id );
-				});
-			});
+  socket.on( 'disconnect', function() {
+    clearTimeout( timer );
 
-			sendCounts();
-		});
+    if (handshake.user === false) {
+      // XXX: replace with $pull once it's available
+      if( noteID ) {
+        Note.findById( noteID, function( err, note ) {
+          if( note ) {
+            var index = note.collaborators.indexOf( userID );
 
-		socket.on( 'disconnect', function() {
-			clearTimeout( timer );
+            if( index != -1 ) {
+              note.collaborators.splice( index, 1 );
+            }
 
-			// XXX: replace with $pull once it's available
-			if( noteID ) {
-				Note.findById( noteID, function( err, note ) {
-					if( note ) {
-						var index = note.collaborators.indexOf( userID );
-
-						if( index != -1 ) {
-							note.collaborators.splice( index, 1 );
-						}
-
-						note.save();
-					}
-				});
-			}
-		});
-	});
+            note.save();
+          }
+        });
+      }
+    }
+  });
+});
 
 // Launch
 

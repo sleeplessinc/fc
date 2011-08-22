@@ -294,23 +294,6 @@ $(document).ready(function(){
 
   socket = io.connect(url + '/backchannel');
 
-  counts = io.connect( url + '/counts' );
-
-	counts.on( 'connect', function() {
-		counts.emit( 'join', noteID );
-		counts.emit( 'watch', lectureID );
-	});
-
-	counts.on( 'counts', function( c ) {
-		for( id in c ) {
-			var selector = 'div[note-id="' + id + '"] span.count';
-			var target = $( selector );
-
-			if( target ) {
-				target.text( c[ id ] );
-			}
-		}
-	});
 
   // incoming messages are objects with one property whose value is the
   // type of message:
@@ -331,10 +314,8 @@ $(document).ready(function(){
   });
 
   socket.on('post', function(post) {
-    if (!public || (public && post.public)) {
-      posts.push(post);
-      renderPosts(false, post);
-    }
+    posts.push(post);
+    renderPosts(false, post);
   })
 
   socket.on('vote', function(vote) {
