@@ -38,8 +38,6 @@
 }
 		
 #breadcrumb div.crumb {
-	font-size: 21px;
-	line-height: 21px;
 
 	color: white;
 	
@@ -61,6 +59,11 @@ ul.dropdown {
 }
 			
 ul.dropdown > li {
+	background: #889;
+	-moz-border-radius: 0.2em;
+	-webkit-border-radius: 0.2em;
+	padding: 8px;
+
 	position: relative;
 	list-style-type: none;
 	float: left;
@@ -103,6 +106,7 @@ ul.dropdown > li > ul > li {
 	margin: 0;
 
 	display: block;
+	background: #99a;
 		
 	padding-left: 4px;
 	padding-right: 4px;

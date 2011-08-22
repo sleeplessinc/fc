@@ -1,27 +1,32 @@
-div.header Login
 div.content
 	div.container1
+		h1 Login
+		p
+			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx-xxxx xxxx xxxx xxx x xxxxxx xxxxxxxx
+			xxxx. Xxx xxx xxxx xx xxxx xxxx xxxxxx-xxxx x xxxx xxx x xxxxxx.
+			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx xxx xxxx xxxx xxx x xxxxxx xxxxxxxx
+			xxxx.
 		form#credentials( action = '/login', method = 'POST' )
-			div( class = 'row')
-				div( class = 'label')
-					label( for = 'email' ) Email
-				div( class = 'field')
-					input( type = 'text', name = 'email', size='15', value = session.email )
+			div.area 
+				div( class = 'row')
+					div( class = 'label')
+						label( for = 'email' ) Email
+					div( class = 'field')
+						input( type = 'text', name = 'email', size='15', value = session.email )
 
-			div( class = 'row')
-				div( class = 'label')
-					label( for = 'password' ) Password
-				div( class = 'field')
-					input( type = 'password', name = 'password', size='15')
+				div( class = 'row')
+					div( class = 'label')
+						label( for = 'password' ) Password
+					div( class = 'field')
+						input( type = 'password', name = 'password', size='15')
 
-			div( class = 'row')
-				div( class = 'label')
-					&nbsp;
-				div( class = 'field')
-					button Submit
-					&nbsp;
-					&nbsp;
-					a( href = '/register' ) Register
+				div( class = 'row')
+					div( class = 'label')
+						&nbsp;
+					div( class = 'field')
+						button Submit
+						span.reglink
+							a( href = '/register' ) Create an Account
 
 script
 	$( document ).ready( function() {

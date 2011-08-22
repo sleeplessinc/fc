@@ -1,14 +1,13 @@
 script
 	var lectureID = '#{lecture._id}';
 
-div.header Lecture: #{ lecture.name }
 div.content
-	div.menubar
-		- if( user )
-			span(class='sub_menu')
-				a( href='/logout' ) Logout
-
 	div.container1
+
+		h1 #{ lecture.name }
+		p Course: #{ lecture.course.name }
+		p Instructor: #{ lecture.course.instructor }
+
 		h2 Existing Note Pads
 
 		ul

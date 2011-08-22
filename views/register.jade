@@ -1,35 +1,41 @@
-div.header Register
 div.content
 	div.container1
+		h1 Create an Account
+		p
+			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx-xxxx xxxx xxxx xxx x xxxxxx xxxxxxxx
+			xxxx. Xxx xxx xxxx xx xxxx xxxx xxxxxx-xxxx x xxxx xxx x xxxxxx.
+			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx xxx xxxx xxxx xxx x xxxxxx xxxxxxxx
+			xxxx.
 		form#credentials( action = '/register', method = 'POST' )
-			div( class = 'row')
-				div( class = 'label')
-					label( for = 'email' ) Email
-				div( class = 'field')
-					input( type = 'text', name = 'email' )
+			div.area 
+				div( class = 'row')
+					div( class = 'label')
+						label( for = 'email' ) Email
+					div( class = 'field')
+						input( type = 'text', name = 'email' )
 
-			div( class = 'row')
-				div( class = 'label')
-					label( for = 'password' ) Password
-				div( class = 'field')
-					input( type = 'password', name = 'password' )
+				div( class = 'row')
+					div( class = 'label')
+						label( for = 'password' ) Password
+					div( class = 'field')
+						input( type = 'password', name = 'password' )
 
-			div( class = 'row')
-				div( class = 'label')
-					label( for = 'name' ) Name
-				div( class = 'field')
-					input( type = 'text', name = 'name' )
+				div( class = 'row')
+					div( class = 'label')
+						label( for = 'name' ) Name
+					div( class = 'field')
+						input( type = 'text', name = 'name' )
 
-			div( class = 'row')
-				div( class = 'label')
-					label( for = 'affil' ) Affiliation
-				div( class = 'field')
-					select( name = 'affil' )
-						option( value = 'Student' ) Student
-						option( value = 'Teachers Assistant' ) Teachers Assistant
+				div( class = 'row')
+					div( class = 'label')
+						label( for = 'affil' ) Affiliation
+					div( class = 'field')
+						select( name = 'affil' )
+							option( value = 'Student' ) Student
+							option( value = 'Teachers Assistant' ) Teachers Assistant
 
-			div( class = 'row')
-				div( class = 'label')
-					&nbsp;
-				div( class = 'field')
-					button Submit
+				div( class = 'row')
+					div( class = 'label')
+						&nbsp;
+					div( class = 'field')
+						button Submit

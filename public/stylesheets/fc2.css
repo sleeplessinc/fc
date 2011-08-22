@@ -1,18 +1,87 @@
-body {
-	background: #874;
-}
-body, td {
-	font-family: Helvetica, sans-serif;
+body, td { font-family: Helvetica, sans-serif; }
+body { background: #fff; margin: 0; padding: 0; }
+img { border: none; }
+p { color: #444; }
+
+div.logbar {
+	margin: 0 5% 0.1em 5%;
+	background: #456;
 }
 
-body {
-	margin: 0;
-	padding: 0;
+div.navbar {
+	margin: 0.1em 0;
+	background: #333;
+
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#222), to(#333));
+	background-image: -moz-linear-gradient(#222, #333)
+
+	ztext-shadow: black 0 0 0.2em;
+	zborder-bottom: solid 1px #888;
+	font-size: 110%;
+	color: #eee;
+	font-weight: bold;
+	text-align: left;
+	zpadding: 0.5em 1em;
+	vertical-align: top;
 }
 
-img {
-	border: none;
+div.content {
+	margin: 0 5% 0.1em 5%;
+	padding: 1.5em 3%;
+	background: #456;
+	min-height: 40em;
 }
+
+div.contenthome {
+	margin: 0 5% 0.1em 5%;
+	min-height: 40em;
+	overflow: hidden;
+	background: url("/images/home.jpg") no-repeat;
+}
+
+div.contenthome div.tagline {
+	margin: 5em 4em 0 25em;
+	color: #fff;
+	font-weight: bold;
+}
+
+
+
+span.reglink a {
+	color: #00a;
+	font-size: 80%;
+	margin-left: 2em;
+	font-weight: normal;
+}
+
+table, td, tr {
+	margin: 0; 
+	padding: 0; 
+}
+
+img.logo {
+	margin: 0 2%;
+	vertical-align: middle;
+}
+
+td.lilogo {
+	padding-right: 2em;
+}
+
+td.menu {
+	font-size: 90%;
+	width: 100%;
+	text-align: center;
+	padding: 0.5em 2em 0 2em;
+	font-weight: normal;
+}
+
+td.menu a {
+	color: #fff;
+	margin: 0 1em;
+	text-decoration: none;
+}
+
 
 div.header {
 	background: #333;
@@ -37,23 +106,30 @@ div#wrapper div.header div.buttons {
 }
 
 
-div.content {
-	padding: 1em 3%;
-	background: #653;
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#653), to(#874));
-	background-image: -moz-linear-gradient(#653, #874)
-}
-
 div.container1 {
-	background: #e7e4ae;
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#e7e4ae), to(#f7f4ce));
-	background-image: -moz-linear-gradient(#e7e4ae, #f7f4ce)
-	-moz-border-radius: 0.3em;
-	-webkit-border-radius: 0.3em;
+	background: #eee;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#eeeeee));
+	background-image: -moz-linear-gradient(#ffffff, #eeeeee)
+	-moz-border-radius: 0.15em;
+	-webkit-border-radius: 0.15em;
 	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 	padding: 0.8em 3% 2em 3%;
-	margin: 0.5em 0;
+	margin: 0.2em 0;
+}
+
+div.area {
+	-moz-border-radius: 0.15em;
+	-webkit-border-radius: 0.15em;
+	border: solid 1px #888;
+	margin: 1%; 
+	padding: 1%;
+}
+
+div.content h1 {
+	color: #000;
+	text-align: left;
+	font-weight: bold;
 }
 
 #sidebar {
@@ -138,7 +214,7 @@ zmargin-top: 0.2em;
 	position: relative; /* allow position absolute for charsLeftMsg and submit btn */
 	padding: 0.5em 1em;
 	border-bottom: 1px solid #aaa;
-	background-color: #ddb;
+	background-color: #caccd0;
 }
 #userHeader {
 	zmargin: 0 0 0.5em 0;
@@ -179,7 +255,7 @@ color: red;
 #enterUser { display: none; }
 #enterAdmin { display: none; }
 #posts {
-	background: #eec;
+	background: #dde;
 	padding: 1em 1.5em;
   overflow-y: auto;
 }
@@ -290,6 +366,7 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 	width: 50%;
 	text-align: right;
 	display: table-cell;
+	font-weight: bold;
 }
 #loginForm .data {
 	display: table-cell;
@@ -302,8 +379,7 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 	width: 100%;
 }
 #posts .flagged {
-  opacity: 0.3;
-  background: #eca;
+  background: #fee;
 }
 #posts .flagged .commentForm {
   display: none;
@@ -335,11 +411,9 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 
 
 .page a {
-	color:#917139;
 }
 
 a {
-  color:#970;
   font-weight: bold;
   text-decoration: none;
 }
@@ -347,10 +421,10 @@ span.sub_menu{
 	zfloat:right;
 	border-top:  solid 1px #a98;
 	border-bottom:  solid 1px #000;
-	background-color:#917139;
+	background-color:#667;
 	-moz-border-radius: 0.3em;
 	-webkit-border-radius: 0.3em;
-	padding: 0.3em 1em;
+	padding: 0.1em 0.5em;
 	color:#fff;
 	text-align: right;
 	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
@@ -415,11 +489,12 @@ ul{
 	display: table-row;
 }
 .row .label {
-	width: 50%;
+	width: 60%;
 	text-align: right;
 	display: table-cell;
 	padding: 0.8em 3% 0.8em 0%;
 	white-space: nowrap;
+	font-weight: bold;
 }
 .row .field {
 	display: table-cell;
@@ -435,15 +510,23 @@ ul{
 }
 
 div.school {
-	border:  solid 1px #876;
-	-moz-border-radius: 0.2em;
-	-webkit-border-radius: 0.2em;
-	margin: 1.0em 0;
-	padding: 1em 2%;
-	background: #FaF6d3;
-	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
-	-moz-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+
+	-moz-border-radius: 0.15em;
+	-webkit-border-radius: 0.15em;
+	border: solid 1px #888;
+	margin: 1%; 
+	padding: 2%;
+	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .1);
+	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .1);
+
+
 }
+
+ul a {
+	font-weight: normal;
+	color: #00a;
+}
+
 div.menubar {
 	text-align: right;
 }
@@ -488,7 +571,7 @@ div#reportedContainer h1 {
 	font-size: 100%;
 	color:#442;
 	text-align: left;
-	background-color:#ddb;
+	background-color:#caccd0;
 	-moz-border-radius: 0.3em;
 	-webkit-border-radius: 0.3em;
 	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
@@ -504,7 +587,7 @@ div#postsHeader h1 {
 	font-size: 100%;
 	color:#442;
 	text-align: left;
-	background-color:#ddb;
+	background-color:#caccd0;
 	-moz-border-radius: 0.3em;
 	-webkit-border-radius: 0.3em;
 	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
@@ -517,8 +600,10 @@ div#postsHeader h1 {
 }
 
 div.postContainer div.privacy {
-	background: #00f;
+	background: #44a;
 	font-size: 75%;
 	color: #eef;
 	text-align: center;
 }
+
+

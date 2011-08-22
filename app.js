@@ -214,20 +214,17 @@ app.dynamicHelpers( {
 });
 
 // Routes
-
-app.get( '/', loggedIn, function( req, res ) {
-	var userId = req.user._id;
+app.get( '/schools', function( req, res ) {
+	//var userId = req.user._id;
 
 	var schools = {};
 
-	log3("get / page");
+	log3("get /schools page");
 
-//	School.find( { 'users' : userId }, function( err, results ) {
 	School.find( {}, function( err, results ) {
 		async.forEach(
 			results,
 			function( school, callback ) {
-//				Course.find( { 'school' : school._id, 'users' : userId }, function( err, courses ) {
 					Course.find( { 'school' : school._id }, function( err, courses ) {
 					if( courses.length > 0 ) {
             school.courses = courses;
@@ -239,10 +236,18 @@ app.get( '/', loggedIn, function( req, res ) {
 				});
 			},
 			function( err ) {
-				res.render( 'index', { 'schools' : schools } );
+				res.render( 'schools', { 'schools' : schools } );
 			}
 		);
 	});
+});
+
+app.get( '/', loggedIn, function( req, res ) {
+	var userId = req.user._id;
+
+	log3("get / page");
+
+	res.render( 'index', {} );
 });
 
 app.get( '/activate', loggedIn, function( req, res ) {

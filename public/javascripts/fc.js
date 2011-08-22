@@ -2,8 +2,8 @@
 function resizeElems() {
   var ubHeight = public ? -17 : $('.userBox').height();
   var height = $(window).height() - $('.header').height();
-  $('#posts').height( height - ubHeight - 69 );
-  $('#editor').height( height - 20 )
+  $('#posts').height( height - ubHeight - 101 );
+  $('#editor').height( height - 55 )
 }
 
 $( document ).ready( function() {

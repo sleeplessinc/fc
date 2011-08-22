@@ -1,0 +1,19 @@
+div.content
+	div.container1
+		h1 Course Notes
+		p
+			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx-xxxx xxxx xxxx xxx x xxxxxx xxxxxxxx
+			xxxx. Xxx xxx xxxx xx xxxx xxxx xxxxxx-xxxx x xxxx xxx x xxxxxx.
+			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx xxx xxxx xxxx xxx x xxxxxx xxxxxxxx
+			xxxx.
+		- each school, name in schools
+			div(class='school')
+				h2= name
+				ul
+					- each course in school.courses
+						li
+							a( href = 'course/#{ course._id }' ) #{ course.name }
+
+				div
+					span(class='sub_menu')
+						a( href = '/#{ school._id }/course/new' ) New Course
