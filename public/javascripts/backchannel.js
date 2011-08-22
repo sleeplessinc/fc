@@ -291,9 +291,36 @@ $(document).ready(function(){
   var loc = document.location;
   var port = loc.port == '' ? (loc.protocol == 'https:' ? 443 : 80) : loc.port;
   var url = loc.protocol + '//' + loc.hostname + ':' + port;
-  socket = io.connect(url);
 
+  socket = io.connect(url + '/backchannel');
 
+  counts = io.connect( url + '/counts' );
+
+	counts.on( 'connect', function() {
+		counts.emit( 'join', noteID );
+		counts.emit( 'watch', lectureID );
+	});
+
+	counts.on( 'counts', function( c ) {
+		for( id in c ) {
+			var selector = 'div[note-id="' + id + '"] span.count';
+			var target = $( selector );
+
+			if( target ) {
+				target.text( c[ id ] );
+			}
+		}
+	});
+
+  // incoming messages are objects with one property whose value is the
+  // type of message:
+  //   { "posts":    [ <array of Post objects> ] }
+  //   { "recentPosts": [ <array of Post objects> ] }
+  //   { "vote":        [ "postid": <string>, "direction": <"up"|"down"> ] }
+  // Unresolved: whether to send vote messages for local change of display
+  // or new arrays of posts with updated vote counts.  Vote message would not
+  // be adequate if it changed order of posts.  For now, send two new
+  // arrays with updated vote counts and refrain from sending vote message.
   var messagesArrived = 0;
   socket.on('connect', function(){
     socket.emit('subscribe', lectureID, function(_posts) {

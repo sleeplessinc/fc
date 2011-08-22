@@ -12,9 +12,13 @@ var async				= require( 'async' );
 
 var db					= require( './db.js' );
 var mongoose		= require( './models.js' ).mongoose;
-var parseCookie = require('connect').utils.parseCookie;
+
 var aws         = require('aws-lib');
 var hat         = require('hat');
+
+var connect			= require( 'connect' );
+var Session			= connect.middleware.session.Session;
+var parseCookie = connect.utils.parseCookie;
 
 var log3 = function() {}
 
@@ -34,7 +38,6 @@ var serverHost = process.env.SERVER_HOST;
 
 var awsAccessKey = process.env.AWS_ACCESS_KEY;
 var awsSecretKey = process.env.AWS_SECRET_KEY;
-console.log(awsAccessKey, awsSecretKey)
 var ses = aws.createSESClient( awsAccessKey, awsSecretKey );
 
 if( serverHost ) {
@@ -59,18 +62,22 @@ app.configure( 'production', function() {
 	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
 });
 
-var sessionStore = new mongoStore( { 'url' : app.set( 'dbUri' ) } );
-
 app.configure(function(){
 	app.set( 'views', __dirname + '/views' );
 	app.set( 'view engine', 'jade' );
 	app.use( express.bodyParser() );
 
 	app.use( express.cookieParser() );
+
+	// sessions
+	app.set( 'sessionStore', new mongoStore( {
+		'url' : app.set( 'dbUri' )
+	}));
+
 	app.use( express.session( {
 		'secret'	: 'finalsclub',
 		'maxAge'	: new Date(Date.now() + (60 * 60 * 24 * 30 * 1000)),
-		'store'		: sessionStore
+		'store'		: app.set( 'sessionStore' )
 	}));
 
   app.use( express.methodOverride() );
@@ -429,7 +436,10 @@ app.get( '/lecture/:id', loggedIn, loadLecture, function( req, res ) {
 	Note.find( { 'lecture' : lecture._id }, function( err, notes ) {
 		res.render( 'lecture/index', {
 			'lecture'			: lecture,
-			'notes'				: notes
+			'notes'				: notes,
+			'counts'			: counts,
+
+			'javascripts'	: [ 'counts.js' ]
 		});
 	});
 });
@@ -493,50 +503,49 @@ app.get( '/note/:id', loadNote, function( req, res ) {
 
         res.redirect( '/' );
       }
+      Note.find( { 'lecture' : lecture._id }, function( err, otherNotes ) {
+        User.findOne( { session : sid }, function( err, user ) {
+          if( user ) {
+            // XXX User is logged in and sees full notepad
+            req.user = user;
 
-      User.findOne( { session : sid }, function( err, user ) {
-        if( user ) {
-          // XXX User is logged in and sees full notepad
-          req.user = user;
+            if ( !user.activated ) {
+              return res.redirect( '/activate' );
+            }
 
-          if ( !user.activated ) {
-            return res.redirect( '/activate' );
-          }
-
-          res.render( 'notes/index', {
-            'layout'      : 'noteLayout',
-            'host'				: serverHost,
-            'note'				: note,
-            'lecture'			: lecture,
-            'RO'          : false,
-            'roID'        : roID,
-            'stylesheets' : [ 'fc.css' ],
-            'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
-          });
-        } else {
-          if (note.public) {
-            // XXX User is not logged in and sees notepad that is public
-            res.render( 'notes/public', {
+            res.render( 'notes/index', {
               'layout'      : 'noteLayout',
               'host'				: serverHost,
               'note'				: note,
-              'roID'        : roID,
               'lecture'			: lecture,
+              'RO'          : false,
+              'roID'        : roID,
               'stylesheets' : [ 'fc.css' ],
               'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
             });
           } else {
-            // XXX User is not logged in and is redirected to login because notepad is private
-            req.session.redirect = '/note/' + note._id;
-            req.flash( 'error', 'You must be logged in to view this notepad' );
-            res.redirect( '/login' );
+            if (note.public) {
+              // XXX User is not logged in and sees notepad that is public
+              res.render( 'notes/public', {
+                'layout'      : 'noteLayout',
+                'host'				: serverHost,
+                'note'				: note,
+                'roID'        : roID,
+                'lecture'			: lecture,
+                'stylesheets' : [ 'fc.css' ],
+                'javascripts'	: [ 'backchannel.js', 'jquery.tmpl.min.js' ]
+              });
+            } else {
+              // XXX User is not logged in and is redirected to login because notepad is private
+              req.session.redirect = '/note/' + note._id;
+              req.flash( 'error', 'You must be logged in to view this notepad' );
+              res.redirect( '/login' );
+            }
           }
-        }
-      });
+        });
+      })
     });
   }
-
-
 });
 
 // authentication
@@ -654,31 +663,47 @@ var io = require( 'socket.io' ).listen( app );
 
 var Post = mongoose.model( 'Post' );
 
-io.set('authorization', function (data, cb) {
-  if (data.headers.cookie) {
-    data.cookie = parseCookie(data.headers.cookie);
-    data.sessionID = data.cookie['connect.sid'];
-    User.findOne( { session : data.sessionID }, function( err, user ) {
-      if( user ) {
-        data.user = user;
-        return cb(null, true);
-      } else {
-        data.user = false;
-        return cb(null, true);
-        res.redirect( '/login' );
-      }
-    });
+io.set('authorization', function ( handshake, next ) {
+  var rawCookie = handshake.headers.cookie;
+  if (rawCookie) {
+    handshake.cookie = parseCookie(rawCookie);
+    handshake.sid = handshake.cookie['connect.sid'];
+
+    if ( handshake.sid ) {
+      app.set( 'sessionStore' ).get( handshake.sid, function( err, session ) {
+        if( err ) {
+          handshake.user = false;
+          return cb(null, true);
+        } else {
+          // bake a new session object for full r/w
+          handshake.session = new Session( handshake, session );
+
+          User.findOne( { session : data.sid }, function( err, user ) {
+            if( user ) {
+              handshake.user = user;
+              return next(null, true);
+            } else {
+              handshake.user = false;
+              return next(null, true);
+            }
+          });
+        }
+      })
+    }
   } else {
     data.user = false;
     return cb(null, true);
   }
 });
 
-io.sockets.on('connection', function(socket) {
 
-	socket.on('subscribe', function(lecture, cb) {
+var backchannel = io
+.of( '/backchannel' )
+.on( 'connection', function( socket ) {
+
+  socket.on('subscribe', function(lecture, cb) {
     socket.join(lecture);
-		Post.find({'lecture': lecture}, function(err, posts) {
+    Post.find({'lecture': lecture}, function(err, posts) {
       if (socket.handshake.user) {
         cb(posts);
       } else {
@@ -690,41 +715,41 @@ io.sockets.on('connection', function(socket) {
         )
         cb(posts)
       }
-		});
-	});
+    });
+  });
 
-	socket.on('post', function(res) {
-		var post = new Post;
-		var _post = res.post;
-		var lecture = res.lecture;
-		post.lecture = lecture;
-		if ( _post.anonymous ) {
-			post.userid		= 0;
-			post.userName	= 'Anonymous';
-			post.userAffil = 'N/A';
-		} else {
-			post.userName = _post.userName;
-			post.userAffil = _post.userAffil;
-		}
+  socket.on('post', function(res) {
+    var post = new Post;
+    var _post = res.post;
+    var lecture = res.lecture;
+    post.lecture = lecture;
+    if ( _post.anonymous ) {
+      post.userid		= 0;
+      post.userName	= 'Anonymous';
+      post.userAffil = 'N/A';
+    } else {
+      post.userName = _post.userName;
+      post.userAffil = _post.userAffil;
+    }
 
     post.public = _post.public;
-		post.date = new Date();
-		post.body = _post.body;
-		post.votes = [];
+    post.date = new Date();
+    post.body = _post.body;
+    post.votes = [];
     post.reports = [];
-		post.save(function(err) {
-			if (err) {
-				// XXX some error handling
-				console.log(err);
-			} else {
+    post.save(function(err) {
+      if (err) {
+        // XXX some error handling
+        console.log(err);
+      } else {
         if (post.public) {
           io.sockets.in(lecture).emit('post', post);
         } else {
           privateEmit(lecture, 'post', post);
         }
-			}
-		});
-	});
+      }
+    });
+  });
 
 	socket.on('vote', function(res) {
 		var vote = res.vote;
@@ -806,13 +831,92 @@ io.sockets.on('connection', function(socket) {
         socket.emit(event, data);
     })
   }
-	/*
-	socket.on('disconnect', function() {
-		delete clients[socket.id];
-	});
-  */
-});
 
+	socket.on('disconnect', function() {
+		//delete clients[socket.id];
+	});
+
+
+var counters = {};
+
+var counts = io
+	.of( '/counts' )
+	.on( 'connection', function( socket ) {
+		// pull out user/session information etc.
+		var handshake = socket.handshake;
+		var userID		= handshake.user._id;
+
+		var watched		= [];
+		var noteID		= null;
+
+		var timer			= null;
+
+		socket.on( 'join', function( note ) {
+			noteID			= note;
+
+			// XXX: replace by addToSet (once it's implemented in mongoose)
+			Note.findById( noteID, function( err, note ) {
+				if( note ) {
+					if( note.collaborators.indexOf( userID ) == -1 ) {
+						note.collaborators.push( userID );
+
+						note.save();
+					}
+				}
+			});
+		});
+
+		socket.on( 'watch', function( l ) {
+			var sendCounts = function() {
+				var send = {};
+
+				Note.find( { '_id' : { '$in' : watched } }, function( err, notes ) {
+					async.forEach(
+						notes,
+						function( note, callback ) {
+							var id		= note._id;
+							var count	= note.collaborators.length;
+
+							send[ id ] = count;
+
+							callback();
+						}, function() {
+							socket.emit( 'counts', send );
+
+							timer = setTimeout( sendCounts, 5000 );
+						}
+					);
+				});
+			}
+
+			Note.find( { 'lecture' : l }, [ '_id' ], function( err, notes ) {
+				notes.forEach( function( note ) {
+					watched.push( note._id );
+				});
+			});
+
+			sendCounts();
+		});
+
+		socket.on( 'disconnect', function() {
+			clearTimeout( timer );
+
+			// XXX: replace with $pull once it's available
+			if( noteID ) {
+				Note.findById( noteID, function( err, note ) {
+					if( note ) {
+						var index = note.collaborators.indexOf( userID );
+
+						if( index != -1 ) {
+							note.collaborators.splice( index, 1 );
+						}
+
+						note.save();
+					}
+				});
+			}
+		});
+	});
 
 // Launch
 
