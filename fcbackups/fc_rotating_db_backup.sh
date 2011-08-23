@@ -2,7 +2,7 @@
 
 ## cron example 
 ## ## this script handles the daily rotating mongodb backup task for the finalsclub project
-## 30 0 * * * /home/ec2-user/fc/fcbackups/fc_rotating_db_backup.sh > /home/ec2-user/fcbackups/cron_log.txt
+## 30 0 * * * /home/ec2-user/fc/fcbackups/fc_rotating_db_backup.sh > /home/ec2-user/fc/fcbackups/cron_log.txt
 
 ## this script is dependent on the cp2s3 script
 ## http://devblog.famundo.com/articles/2007/03/12/cp2s3-a-command-line-smart-copy-script-into-s3
@@ -15,6 +15,9 @@
 ## exampe usage
 ## cp2s3 -v -b finalsclub_db_backups -r test.txt
 
+
+export AWS_ACCESS_KEY_ID=AKIAIZZIXU6UJZTHBO6A
+export AWS_SECRET_ACCESS_KEY=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
 
 bucket="finalsclub_db_backups"
 curdate=`date +"%Y-%m-%d"`
