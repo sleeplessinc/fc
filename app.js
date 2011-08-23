@@ -112,7 +112,7 @@ function loggedIn( req, res, next ) {
         var path = url.parse( req.url ).pathname;
         req.session.redirect = path;
 
-        if (path === '/activate') {
+        if (/\/activate/.test(path)) {
           next();
         } else {
           res.redirect( '/activate' );
@@ -219,6 +219,25 @@ app.get( '/schools', loggedIn, function( req, res ) {
 
 	log3("get /schools page");
 
+  School.find({}).sort( 'name', '1' ).run( function( err, schools ) {
+    async.forEach(
+      schools,
+      function( school, callback ) {
+        Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
+          if( courses.length > 0 ) {
+            school.courses = courses;
+          } else {
+            school.courses = [];
+          }
+          callback();
+        });
+      },
+      function( err ) {
+        res.render( 'schools', { 'schools' : schools } );
+      }
+    );
+  })
+/*
 	// mongoose's documentation on sort is extremely poor, tread carefully
 	School.find( { 'users' : userId } ).sort( 'name', '1' ).run( function( err, schools ) {
 		if( schools ) {
@@ -242,6 +261,7 @@ app.get( '/schools', loggedIn, function( req, res ) {
 			res.render( 'schools', { 'schools' : [] } );
 		}
 	});
+*/
 });
 
 app.get( '/', loggedIn, function( req, res ) {
@@ -253,7 +273,13 @@ app.get( '/', loggedIn, function( req, res ) {
 });
 
 app.get( '/activate', loggedIn, function( req, res ) {
-  res.render( 'activate', { 'user': req.user });
+  if (req.user.activated) return res.redirect('/');
+  res.render( 'activate', { 'user': req.user, code: '' });
+});
+
+app.get( '/activate/:id', loggedIn, function( req, res ) {
+  var code = req.params.id;
+  res.render( 'activate', { 'user': req.user, code: code });
 });
 
 app.post( '/activate', loggedIn, function( req, res ) {
