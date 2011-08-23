@@ -222,25 +222,6 @@ app.get( '/schools', loggedIn, function( req, res ) {
 
 	log3("get /schools page");
 
-  School.find({}).sort( 'name', '1' ).run( function( err, schools ) {
-    async.forEach(
-      schools,
-      function( school, callback ) {
-        Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
-          if( courses.length > 0 ) {
-            school.courses = courses;
-          } else {
-            school.courses = [];
-          }
-          callback();
-        });
-      },
-      function( err ) {
-        res.render( 'schools', { 'schools' : schools } );
-      }
-    );
-  })
-/*
 	// mongoose's documentation on sort is extremely poor, tread carefully
 	School.find( { 'users' : userId } ).sort( 'name', '1' ).run( function( err, schools ) {
 		if( schools ) {
@@ -264,7 +245,6 @@ app.get( '/schools', loggedIn, function( req, res ) {
 			res.render( 'schools', { 'schools' : [] } );
 		}
 	});
-*/
 });
 
 app.get( '/', loggedIn, function( req, res ) {
