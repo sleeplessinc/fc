@@ -5,7 +5,6 @@ var fs	= require( 'fs' );
 
 // Amazon
 var aws	= require( 'aws-lib' );
-var hat	= require( 'hat' );
 
 // Templating
 var ejs	= require( 'ejs' );
@@ -38,7 +37,7 @@ Mailer.prototype.send = function( msg, callback ) {
 
 	var params = {
 		'Destination.ToAddresses.member.1'	: msg.to,
-		'Message.Body.Test.Charset'					: 'UTF-8',
+		'Message.Body.Text.Charset'					: 'UTF-8',
 		'Message.Body.Text.Data'						: msg.body,
 		'Message.Subject.Charset'						: 'UTF-8',
 		'Message.Subject.Data'							: msg.subject,
@@ -51,7 +50,7 @@ Mailer.prototype.send = function( msg, callback ) {
 		if( result[ '@' ].Error ) {
 			callback( result[ '@' ].Error );
 		} else {
-			callback( result );
+			callback( null, result );
 		}
 	});
 }

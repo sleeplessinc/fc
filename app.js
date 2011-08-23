@@ -361,8 +361,8 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
 						}
 					};
 
-					mailer.send( message, function( result ) {
-						if( result instanceof Error ) {
+					mailer.send( message, function( err, result ) {
+						if( err ) {
 							console.log( 'Error inviting instructor to course!' );
 						} else {
 							console.log( 'Successfully invited instructor to course.' );
@@ -376,7 +376,7 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
 
               res.render( 'course/new' );
             } else {
-              res.redirect( '/' );
+              res.redirect( '/schools' );
             }
           });
         }
@@ -390,7 +390,7 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
 
             res.render( 'course/new' );
           } else {
-            res.redirect( '/' );
+            res.redirect( '/schools' );
           }
         });
       } else {
@@ -667,8 +667,8 @@ app.post( '/register', function( req, res ) {
 			}
 		};
 
-		mailer.send( message, function( result ) {
-			if( result instanceof Error ) {
+		mailer.send( message, function( err, result ) {
+			if( err ) {
 				// XXX: Add route to resend this email
 
 				console.log( 'Error sending user activation email!' );
