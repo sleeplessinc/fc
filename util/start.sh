@@ -5,6 +5,7 @@ cd ~
 export PATH="/usr/local/bin:$PATH"
 
 
+
 cat > .ssh/id_rsa << FIN
 -----BEGIN RSA PRIVATE KEY-----
 MIIEoQIBAAKCAQEArjSBiT01b3b3buA5bRS+LLmLz0BfEQd3tHmyjbKhSL3wCQgY
@@ -36,8 +37,6 @@ HcAEf39Y3DFUBJFAt/Lr+VZJyuI4HYzwcKyPvEivNUgggivHRaDOsL2YT7vQbJ5t
 FIN
 chmod 700 .ssh/id_rsa
 
-
-
 rm -rf fc
 git clone git@github.com:sleeplessinc/fc.git
 cd fc
@@ -50,9 +49,14 @@ cp settings.json etherpad-lite
 
 cd ../bruml
 npm install socket.io
+## mongorestore -d fc ./dump/fc_dev
 
 
-mongorestore -d fc ./dump/fc_dev
+## init fcbackup 
+cd ~/fc/fcbackups
+chmod 775 fcbackup_init.sh
+./fcbackup_init.sh
+
 
 
 cd
@@ -60,6 +64,8 @@ ln -s fc/bruml/log.txt b.log
 ln -s fc/etherpad-lite/node/log.txt e.log
 
 ./restart.sh
+
+
 
 
 

@@ -34,7 +34,10 @@ if test ! -e mongodb.tgz ; then
 	cp -f * /usr/local/bin
 	echo "/usr/local/bin &> /var/log/mongod.log &" >> /etc/rc.local
 	mkdir -p /data/db
-	/usr/local/bin/mongod -v &> /var/log/mongod.log &
+	/usr/local/bin/mongod -v --rest --replSet finalsclubset &> /var/log/mongod.log &
+
+	## optional arbiter start command
+	## /usr/local/bin/mongod -v --dbpath /data/arbiterdb --port 27021 --rest --replSet finalsclubset &> /var/log/mongod-arbiter.log &
 fi
 
 
