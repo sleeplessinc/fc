@@ -6,9 +6,9 @@ div.content
 			xxxx. Xxx xxx xxxx xx xxxx xxxx xxxxxx-xxxx x xxxx xxx x xxxxxx.
 			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx xxx xxxx xxxx xxx x xxxxxx xxxxxxxx
 			xxxx.
-		- each school, name in schools
+		- each school in schools
 			div(class='school')
-				h2= name
+				h2= school.name
 				ul
 					- each course in school.courses
 						li

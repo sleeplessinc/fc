@@ -19,7 +19,7 @@ function salt() {
 
 // user
 
-var User = new Schema( {
+var UserSchema = new Schema( {
 	email					: { type : String, index : { unique : true } },
   name          : String,
   affil         : String,
@@ -30,27 +30,27 @@ var User = new Schema( {
 	session				: String
 });
 
-User.virtual( 'password' )
+UserSchema.virtual( 'password' )
 	.set( function( password ) {
 		this.salt				= salt();
 		this.hashed			= this.encrypt( password );
 	});
 
-User.method( 'encrypt', function( password ) {
+UserSchema.method( 'encrypt', function( password ) {
 	var hmac = crypto.createHmac( 'sha1', this.salt );
 
 	return hmac.update( password ).digest( 'hex' );
 });
 
-User.method( 'authenticate', function( plaintext ) {
+UserSchema.method( 'authenticate', function( plaintext ) {
 	return ( this.encrypt( plaintext ) === this.hashed );
 });
 
-mongoose.model( 'User', User );
+var User = mongoose.model( 'User', UserSchema );
 
 // schools
 
-var School = new Schema( {
+var SchoolSchema = new Schema( {
 	name				: String,
 	description	: String,
 	url					: String,
@@ -60,11 +60,15 @@ var School = new Schema( {
 	users				: Array
 });
 
-mongoose.model( 'School', School );
+SchoolSchema.method( 'authorize', function( user ) {
+	return ( this.users.indexOf( user._id ) != -1 ) ? true : false;
+});
+
+var School = mongoose.model( 'School', SchoolSchema );
 
 // courses
 
-var Course = new Schema( {
+var CourseSchema = new Schema( {
 	name				: String,
 	description	: String,
   instructor  : String,
@@ -77,11 +81,39 @@ var Course = new Schema( {
 	users				: Array
 });
 
-mongoose.model( 'Course', Course );
+CourseSchema.method( 'authorize', function( user ) {
+	School.findById( this.school, function( err, school ) {
+		return school ? school.authorize( user ) : false;
+	});
+});
+
+CourseSchema.method( 'subscribed', function( user ) {
+	return ( this.users.indexOf( user ) > -1 ) ;
+});
+
+CourseSchema.method( 'subscribe', function( user, callback ) {
+	var id = this._id;
+
+	// mongoose issue #404
+	Course.collection.update( { '_id' : id }, { '$addToSet' : { 'users' : user } }, function( err ) {
+		callback( err );
+	});
+});
+
+CourseSchema.method( 'unsubscribe', function( user, callback ) {
+	var id = this._id;
+
+	// mongoose issue #404
+	Course.collection.update( { '_id' : id }, { '$pull' : { 'users' : user } }, function( err ) {
+		callback( err );
+	});
+});
+
+var Course = mongoose.model( 'Course', CourseSchema );
 
 // lectures
 
-var Lecture	= new Schema( {
+var LectureSchema	= new Schema( {
 	name					: String,
 	date					: Date,
 	live					: Boolean,
@@ -89,11 +121,17 @@ var Lecture	= new Schema( {
 	course				: ObjectId
 });
 
-mongoose.model( 'Lecture', Lecture );
+LectureSchema.method( 'authorize', function( user ) {
+	Course.findById( this.course, function( err, course ) {
+		return course ? course.authorize( user ) : false;
+	});
+});
+
+var Lecture = mongoose.model( 'Lecture', LectureSchema );
 
 // notes
 
-var Note = new Schema( {
+var NoteSchema = new Schema( {
 	name					: String,
 	path					: String,
   public        : Boolean,
@@ -104,7 +142,17 @@ var Note = new Schema( {
 	collaborators : Array
 });
 
-mongoose.model( 'Note', Note );
+NoteSchema.method( 'authorize', function( user ) {
+	if( ! this.public ) {
+		Lecture.findById( this.lecture, function( err, lecture ) {
+			return lecture ? lecture.authorize( user ) : false;
+		});
+	} else {
+		return true;
+	}
+});
+
+var Note = mongoose.model( 'Note', NoteSchema );
 
 // comments
 

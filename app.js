@@ -135,27 +135,17 @@ function loadCourse( req, res, next ) {
 
 	Course.findById( courseId, function( err, course ) {
 		if( course ) {
-
-/*
-			var schoolId = course.school;
-
-			// verify that the user is a member of the correct network
-			School.findOne( { '_id' : schoolId, 'users' : userId }, function( err, school ) {
-				if( school ) {
+			if( course.authorize( userId ) ) {
+					console.log( 'authorized' );
+	
 					req.course = course;
 
 					next();
-				} else {
-					req.flash( 'error', 'You do not have permission to access that course.' );
+			} else {
+				req.flash( 'error', 'You do not have permission to access that course.' );
 
-					res.redirect( '/' );
-				}
-			});
-*/
-
-			req.course = course;
-			next();
-
+				res.redirect( '/' );
+			}
 		} else {
 			req.flash( 'error', 'Invalid course specified!' );
 
@@ -165,15 +155,20 @@ function loadCourse( req, res, next ) {
 }
 
 function loadLecture( req, res, next ) {
-	/* XXX: AUTHENTICATION */
-
+	var userId = req.user._id;
 	var lectureId	= req.params.id;
 
 	Lecture.findById( lectureId, function( err, lecture ) {
 		if( lecture ) {
-			req.lecture = lecture;
+			if( lecture.authorize( userId ) ) {
+				req.lecture = lecture;
 
-			next();
+				next();
+			} else {
+				req.flash( 'error', 'You do not have permission to access that lecture.' );
+
+				res.redirect( '/' );
+			}
 		} else {
 			req.flash( 'error', 'Invalid lecture specified!' );
 
@@ -183,15 +178,20 @@ function loadLecture( req, res, next ) {
 }
 
 function loadNote( req, res, next ) {
-	/* XXX: AUTHENTICATION */
-
+	var userId = req.user._id;
 	var noteId = req.params.id;
 
 	Note.findById( noteId, function( err, note ) {
 		if( note ) {
-			req.note = note;
+			if( note.public || note.authorize( userId ) ) {
+				req.note = note;
 
-			next();
+				next();
+			} else {
+				req.flash( 'You do not have permission to access that note.' );
+
+				next();
+			}
 		} else {
 			req.flash( 'error', 'Invalid note specified!' );
 
@@ -214,31 +214,33 @@ app.dynamicHelpers( {
 });
 
 // Routes
-app.get( '/schools', function( req, res ) {
-	//var userId = req.user._id;
-
-	var schools = {};
+app.get( '/schools', loggedIn, function( req, res ) {
+	var userId = req.user._id;
 
 	log3("get /schools page");
 
-	School.find( {}, function( err, results ) {
-		async.forEach(
-			results,
-			function( school, callback ) {
-					Course.find( { 'school' : school._id }, function( err, courses ) {
-					if( courses.length > 0 ) {
-            school.courses = courses;
-					} else {
-            school.courses = [];
-          }
-          schools[ school.name ] = school;
-					callback();
-				});
-			},
-			function( err ) {
-				res.render( 'schools', { 'schools' : schools } );
-			}
-		);
+	// mongoose's documentation on sort is extremely poor, tread carefully
+	School.find( { 'users' : userId } ).sort( 'name', '1' ).run( function( err, schools ) {
+		if( schools ) {
+			async.forEach(
+				schools,
+				function( school, callback ) {
+					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
+						if( courses.length > 0 ) {
+	            school.courses = courses;
+						} else {
+	            school.courses = [];
+  	        }
+						callback();
+					});
+				},
+				function( err ) {
+					res.render( 'schools', { 'schools' : schools } );
+				}
+			);
+		} else {
+			res.render( 'schools', { 'schools' : [] } );
+		}
 	});
 });
 
@@ -377,32 +379,38 @@ app.get( '/course/:id', loggedIn, loadCourse, function( req, res ) {
 	var course = req.course;
 
 	// are we subscribed to this course?
-	var subscribed = ( course.users.indexOf( userId ) > -1 );
+	var subscribed = course.subscribed( userId );
 
 	// pull out our lectures
-	Lecture.find( { 'course' : course._id }, function( err, lectures ) {
+	Lecture.find( { 'course' : course._id } ).sort( 'name', '1' ).run( function( err, lectures ) {
 		res.render( 'course/index', { 'course' : course, 'subscribed' : subscribed, 'lectures' : lectures } );
 	});
 });
 
 // subscribe and unsubscribe to course networks
 app.get( '/course/:id/subscribe', loggedIn, loadCourse, function( req, res ) {
-	var courseId = req.course._id;
+	var course = req.course;
 	var userId = req.user._id;
 
-	// mongoose issue #404
-	Course.collection.update( { '_id' : courseId }, { '$push' : { 'users' : userId } }, function( err ) {
-		res.redirect( '/course/' + courseId );
+	course.subscribe( userId, function( err ) {
+		if( err ) {
+			req.flash( 'error', 'Error subscribing to course!' );
+		}
+
+		res.redirect( '/course/' + course._id );
 	});
 });
 
 app.get( '/course/:id/unsubscribe', loggedIn, loadCourse, function( req, res ) {
-	var courseId = req.course._id;
+	var course = req.course;
 	var userId = req.user._id;
 
-	// mongoose issue #404
-	Course.collection.update( { '_id' : courseId }, { '$pull' : { 'users' : userId } }, function( err ) {
-		res.redirect( '/course/' + courseId );
+	course.unsubscribe( userId, function( err ) {
+		if( err ) {
+			req.flash( 'error', 'Error unsubscribing from course!' );
+		}
+
+		res.redirect( '/course/' + course._id );
 	});
 });
 
@@ -438,7 +446,7 @@ app.get( '/lecture/:id', loggedIn, loadLecture, function( req, res ) {
 	var lecture	= req.lecture;
 
 	// pull out our notes
-	Note.find( { 'lecture' : lecture._id }, function( err, notes ) {
+	Note.find( { 'lecture' : lecture._id } ).sort( 'name', '1' ).run( function( err, notes ) {
 		res.render( 'lecture/index', {
 			'lecture'			: lecture,
 			'notes'				: notes,
@@ -582,8 +590,6 @@ app.post( '/login', function( req, res ) {
 
 				// login complete, remember the user's email for next time
 				req.session.email = email;
-
-				console.log( req.session.email );
 
 				// redirect to root if we don't have a stashed request
 				res.redirect( redirect || '/' );
