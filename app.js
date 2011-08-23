@@ -590,6 +590,16 @@ app.get( '/note/:id', loadNote, function( req, res ) {
   }
 });
 
+// static pages
+
+app.get( '/about', function( req, res ) {
+  res.render( 'about' );
+});
+
+app.get( '/terms', function( req, res ) {
+  res.render( 'terms' );
+});
+
 // authentication
 
 app.get( '/login', function( req, res ) {
