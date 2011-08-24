@@ -106,7 +106,6 @@ function loggedIn( req, res, next ) {
 		log3(user);
 		if( user ) {
 			req.user = user;
-      res.local('user', user);
 
 			log3( 'authenticated user: '+user._id+' / '+user.email+'');
 
