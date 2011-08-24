@@ -83,9 +83,9 @@ app.configure(function(){
 		'store'		: app.set( 'sessionStore' )
 	}));
 
-  app.use( express.methodOverride() );
-  app.use( app.router );
-  app.use( express.static( __dirname + '/public' ) );
+	app.use( express.methodOverride() );
+	app.use( app.router );
+	app.use( express.static( __dirname + '/public' ) );
 
 	// use the error handler defined earlier
 	var errorHandler = app.set( 'errorHandler' );
@@ -109,23 +109,23 @@ function loggedIn( req, res, next ) {
 
 			log3( 'authenticated user: '+user._id+' / '+user.email+'');
 
-      if ( user.activated ) {
-        next();
-      } else {
-        var path = url.parse( req.url ).pathname;
-        req.session.redirect = path;
+			if ( user.activated ) {
+				next();
+			} else {
+				var path = url.parse( req.url ).pathname;
+				req.session.redirect = path;
 
-        if (/\/activate/.test(path)) {
-          next();
-        } else {
-          res.redirect( '/activate' );
-        }
-      }
+				if (/\/activate/.test(path)) {
+					next();
+				} else {
+					res.redirect( '/activate' );
+				}
+			}
 
-    } else if ( req.public ) {
-      // if public, allow through
-      next();
-    } else {
+		} else if ( req.public ) {
+			// if public, allow through
+			next();
+		} else {
 			// stash the original request so we can redirect
 			var path = url.parse( req.url ).pathname;
 			req.session.redirect = path;
@@ -136,8 +136,8 @@ function loggedIn( req, res, next ) {
 }
 
 function public( req, res, next ) {
-  req.public = true;
-  next();
+	req.public = true;
+	next();
 }
 
 function loadCourse( req, res, next ) {
@@ -238,10 +238,10 @@ app.get( '/schools', loggedIn, function( req, res ) {
 				function( school, callback ) {
 					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
 						if( courses.length > 0 ) {
-	            school.courses = courses;
+							school.courses = courses;
 						} else {
-	            school.courses = [];
-  	        }
+							school.courses = [];
+						}
 						callback();
 					});
 				},
@@ -262,98 +262,98 @@ app.get( '/', public, loggedIn, function( req, res ) {
 });
 
 app.get( '/activate', loggedIn, function( req, res ) {
-  if (req.user.activated) return res.redirect('/');
-  res.render( 'activate', { 'user': req.user, code: '' });
+	if (req.user.activated) return res.redirect('/');
+	res.render( 'activate', { 'user': req.user, code: '' });
 });
 
 app.get( '/activate/:id', loggedIn, function( req, res ) {
-  var code = req.params.id;
-  res.render( 'activate', { 'user': req.user, code: code });
+	var code = req.params.id;
+	res.render( 'activate', { 'user': req.user, code: code });
 });
 
 app.post( '/activate', loggedIn, function( req, res ) {
-  var user = req.user;
-  var activateCode = req.body.code;
+	var user = req.user;
+	var activateCode = req.body.code;
 
-  if ( user.affil === 'Instructor' ) {
-    user.password = req.body.password;
-    user.name = req.body.name;
-    if ( user.name === '' ) {
-      req.flash('error', 'Please enter your name');
-      return req.redirect('/activate')
-    }
-  }
+	if ( user.affil === 'Instructor' ) {
+		user.password = req.body.password;
+		user.name = req.body.name;
+		if ( user.name === '' ) {
+			req.flash('error', 'Please enter your name');
+			return req.redirect('/activate')
+		}
+	}
 
-  if (activateCode === user.activateCode) {
-    user.activated = true;
-    user.save(function( err ) {
-      if ( err ) {
-        req.flash('error', 'Invalid parameters!');
-        res.redirect('/activate');
-      } else {
+	if (activateCode === user.activateCode) {
+		user.activated = true;
+		user.save(function( err ) {
+			if ( err ) {
+				req.flash('error', 'Invalid parameters!');
+				res.redirect('/activate');
+			} else {
 				var redirect = req.session.redirect;
-        if ( redirect === '/activate' ) {
-          redirect = '/';
-        }
-        req.flash('info', 'Account has been activated');
+				if ( redirect === '/activate' ) {
+					redirect = '/';
+				}
+				req.flash('info', 'Account has been activated');
 				res.redirect( redirect || '/' );
-      }
-    })
-  } else {
-    req.flash('error', 'The activation code you entered was invalid');
+			}
+		})
+	} else {
+		req.flash('error', 'The activation code you entered was invalid');
 
-    res.redirect( '/activate' );
-  }
+		res.redirect( '/activate' );
+	}
 });
 
 app.get( '/:id/course/new', loggedIn, function( req, res ) {
-  var schoolId = req.params.id;
+	var schoolId = req.params.id;
 
-  School.findById( schoolId, function( err, school ) {
+	School.findById( schoolId, function( err, school ) {
 		if( school ) {
-      res.render( 'course/new', { 'school': school } );
+			res.render( 'course/new', { 'school': school } );
 		} else {
 			req.flash( 'error', 'Invalid note specified!' );
 
 			res.direct( '/' );
 		}
-  })
+	})
 });
 
 app.post( '/:id/course/new', loggedIn, function( req, res ) {
 	var schoolId	= req.params.id;
 	var course = new Course;
-  var instructorEmail = req.body.email;
+	var instructorEmail = req.body.email;
 
-  if (!instructorEmail) {
-    req.flash( 'error', 'Invalid parameters!' )
-    return res.render( 'course/new' );
-  }
+	if (!instructorEmail) {
+		req.flash( 'error', 'Invalid parameters!' )
+		return res.render( 'course/new' );
+	}
 	course.name		= req.body.name;
 	course.description		= req.body.description;
 	course.school	= schoolId;
-  course.instructor = instructorEmail;
+	course.instructor = instructorEmail;
 
-  User.findOne( { 'email': instructorEmail }, function( err, user ) {
-    if ( !user ) {
-      var user          = new User;
+	User.findOne( { 'email': instructorEmail }, function( err, user ) {
+		if ( !user ) {
+			var user					= new User;
 
-      var password      = hat(32);
-      var activateCode  = hat(64);
+			var password			= hat(32);
+			var activateCode	= hat(64);
 
-      user.email        = instructorEmail;
-      user.name         = '';
-      user.password     = password;
-      user.activated    = false;
-      user.activateCode = activateCode;
-      user.affil        = 'Instructor';
-      // XXX Put mailchimp integration here
+			user.email				= instructorEmail;
+			user.name					= '';
+			user.password			= password;
+			user.activated		= false;
+			user.activateCode = activateCode;
+			user.affil				= 'Instructor';
+			// XXX Put mailchimp integration here
 
-      user.save(function( err ) {
-        if ( err ) {
-          req.flash( 'error', 'Invalid parameters!' )
-          res.render( 'course/new' );
-        } else {
+			user.save(function( err ) {
+				if ( err ) {
+					req.flash( 'error', 'Invalid parameters!' )
+					res.render( 'course/new' );
+				} else {
 					var message = {
 						to					: user.email,
 
@@ -375,36 +375,36 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
 						}
 					});
 
-          course.save( function( err ) {
-            if( err ) {
-              // XXX: better validation
-              req.flash( 'error', 'Invalid parameters!' );
+					course.save( function( err ) {
+						if( err ) {
+							// XXX: better validation
+							req.flash( 'error', 'Invalid parameters!' );
 
-              res.render( 'course/new' );
-            } else {
-              res.redirect( '/schools' );
-            }
-          });
-        }
-      })
-    } else {
-      if (user.affil === 'Instructor') {
-        course.save( function( err ) {
-          if( err ) {
-            // XXX: better validation
-            req.flash( 'error', 'Invalid parameters!' );
+							res.render( 'course/new' );
+						} else {
+							res.redirect( '/schools' );
+						}
+					});
+				}
+			})
+		} else {
+			if (user.affil === 'Instructor') {
+				course.save( function( err ) {
+					if( err ) {
+						// XXX: better validation
+						req.flash( 'error', 'Invalid parameters!' );
 
-            res.render( 'course/new' );
-          } else {
-            res.redirect( '/schools' );
-          }
-        });
-      } else {
-        req.flash( 'error', 'The existing user\'s email you entered is not an instructor' );
-        res.render( 'course/new' );
-      }
-    }
-  })
+						res.render( 'course/new' );
+					} else {
+						res.redirect( '/schools' );
+					}
+				});
+			} else {
+				req.flash( 'error', 'The existing user\'s email you entered is not an instructor' );
+				res.render( 'course/new' );
+			}
+		}
+	})
 });
 
 app.get( '/course/:id', loggedIn, loadCourse, function( req, res ) {
@@ -503,7 +503,7 @@ app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) 
 	note.name			= req.body.name;
 	note.date			= req.body.date;
 	note.lecture	= lecture._id;
-  note.public   = req.body.public ? true : false;
+	note.public		= req.body.public ? true : false;
 
 	note.save( function( err ) {
 		if( err ) {
@@ -521,95 +521,103 @@ app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) 
 
 app.get( '/note/:id', loadNote, function( req, res ) {
 	var note = req.note;
-  var roID = note.roID || false;
+	var roID = note.roID || false;
 
 	var lectureId = note.lecture;
 
 	var sid = req.sessionID;
 
-  if (roID) {
-    processReq();
-  } else {
-    db.open('mongodb://' + app.set( 'dbHost' ) + '/etherpad/etherpad', function( err, epl ) {
-      epl.findOne( { key: 'pad2readonly:' + note._id }, function(err, record) {
-        if ( record ) {
-          roID = record.value.replace(/"/g, '');
-        } else {
-          roID = false;
-        }
-        processReq();
-      })
-    })
-  }
+	if (roID) {
+		processReq();
+	} else {
+		db.open('mongodb://' + app.set( 'dbHost' ) + '/etherpad/etherpad', function( err, epl ) {
+			epl.findOne( { key: 'pad2readonly:' + note._id }, function(err, record) {
+				if ( record ) {
+					roID = record.value.replace(/"/g, '');
+				} else {
+					roID = false;
+				}
+				processReq();
+			})
+		})
+	}
 
-  function processReq() {
-    Lecture.findById( lectureId, function( err, lecture ) {
-      if( ! lecture ) {
-        req.flash( 'error', 'That notes page is orphaned!' );
+	function processReq() {
+		Lecture.findById( lectureId, function( err, lecture ) {
+			if( ! lecture ) {
+				req.flash( 'error', 'That notes page is orphaned!' );
 
-        res.redirect( '/' );
-      }
-      Note.find( { 'lecture' : lecture._id }, function( err, otherNotes ) {
-        User.findOne( { session : sid }, function( err, user ) {
-          if( user ) {
-            // XXX User is logged in and sees full notepad
-            req.user = user;
+				res.redirect( '/' );
+			}
+			Note.find( { 'lecture' : lecture._id }, function( err, otherNotes ) {
+				User.findOne( { session : sid }, function( err, user ) {
+					if( user ) {
+						// XXX User is logged in and sees full notepad
+						req.user = user;
 
-            if ( !user.activated ) {
-              return res.redirect( '/activate' );
-            }
+						if ( !user.activated ) {
+							return res.redirect( '/activate' );
+						}
 
-            res.render( 'notes/index', {
-              'layout'      : 'noteLayout',
-              'host'				: serverHost,
-              'note'				: note,
-              'lecture'			: lecture,
-              'otherNotes'  : otherNotes,
-              'RO'          : false,
-              'roID'        : roID,
-              'stylesheets' : [ 'dropdown.css', 'fc.css' ],
-              'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
-            });
-          } else {
-            if (note.public) {
-              // XXX User is not logged in and sees notepad that is public
-              res.render( 'notes/public', {
-                'layout'      : 'noteLayout',
-                'host'				: serverHost,
-                'note'				: note,
-                'otherNotes'  : otherNotes,
-                'roID'        : roID,
-                'lecture'			: lecture,
-                'stylesheets' : [ 'dropdown.css', 'fc.css' ],
-                'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
-              });
-            } else {
-              // XXX User is not logged in and is redirected to login because notepad is private
-              req.session.redirect = '/note/' + note._id;
-              req.flash( 'error', 'You must be logged in to view this notepad' );
-              res.redirect( '/login' );
-            }
-          }
-        });
-      })
-    });
-  }
+						res.render( 'notes/index', {
+							'layout'			: 'noteLayout',
+							'host'				: serverHost,
+							'note'				: note,
+							'lecture'			: lecture,
+							'otherNotes'	: otherNotes,
+							'RO'					: false,
+							'roID'				: roID,
+							'stylesheets' : [ 'dropdown.css', 'fc.css' ],
+							'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
+						});
+					} else {
+						if (note.public) {
+							// XXX User is not logged in and sees notepad that is public
+							res.render( 'notes/public', {
+								'layout'			: 'noteLayout',
+								'host'				: serverHost,
+								'note'				: note,
+								'otherNotes'	: otherNotes,
+								'roID'				: roID,
+								'lecture'			: lecture,
+								'stylesheets' : [ 'dropdown.css', 'fc.css' ],
+								'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
+							});
+						} else {
+							// XXX User is not logged in and is redirected to login because notepad is private
+							req.session.redirect = '/note/' + note._id;
+							req.flash( 'error', 'You must be logged in to view this notepad' );
+							res.redirect( '/login' );
+						}
+					}
+				});
+			})
+		});
+	}
 });
 
 // static pages
 
 app.get( '/about', public, loggedIn, function( req, res ) {
-  res.render( 'about' );
+	res.render( 'about' );
 });
 
 app.get( '/terms', public, loggedIn, function( req, res ) {
-  res.render( 'terms' );
+	res.render( 'terms' );
+});
+
+app.get( '/contact', public, loggedIn, function( req, res ) {
+	res.render( 'contact' );
+});
+
+app.get( '/privacy', public, loggedIn, function( req, res ) {
+	res.render( 'privacy' );
 });
 
 // authentication
 
 app.get( '/login', function( req, res ) {
-  log3("get login page")
+	log3("get login page")
 
 	res.render( 'login' );	
 });
@@ -617,7 +625,7 @@ app.get( '/login', function( req, res ) {
 app.post( '/login', function( req, res ) {
 	var email		 = req.body.email;
 	var password = req.body.password;
-  log3("post login ...")
+	log3("post login ...")
 
 	User.findOne( { 'email' : email }, function( err, user ) {
 		log3(err) 
@@ -647,7 +655,7 @@ app.post( '/login', function( req, res ) {
 });
 
 app.get( '/resetpw', function( req, res ) {
-  log3("get resetpw page");
+	log3("get resetpw page");
 	res.render( 'resetpw' );
 });
 
@@ -693,13 +701,11 @@ app.post( '/resetpw', function( req, res ) {
 			res.render( 'resetpw-error', { 'email' : email } );
 		}
 	});
-
-	
 });
 
 
 app.get( '/register', function( req, res ) {
-  log3("get reg page");
+	log3("get reg page");
 	res.render( 'register' );
 });
 
@@ -707,17 +713,17 @@ app.post( '/register', function( req, res ) {
 	var sid = req.sessionId;
 
 	var user = new User;
-  log3("post reg ");
+	log3("post reg ");
 	log3(user)
-  
-	user.email        = req.body.email;
-	user.password     = req.body.password;
-	user.session      = sid;
-  user.name         = req.body.name;
-  user.affil        = req.body.affil;
-  user.activated    = false;
-  user.activateCode = hat(64);
-	log3('register '+user.email+"/"+user.password+" "+user.session) 
+
+	user.email				= req.body.email;
+	user.password			= req.body.password;
+	user.session			= sid;
+	user.name					= req.body.name;
+	user.affil				= req.body.affil;
+	user.activated		= false;
+	user.activateCode = hat(64);
+	log3('register '+user.email+"/"+user.password+" "+user.session)
 	log3(user)
 
 	user.save( function( err ) {
@@ -751,7 +757,7 @@ app.post( '/register', function( req, res ) {
 				school.users.push( user._id );
 
 				school.save( function( err ) {
-				  log3('school.save() done');
+					log3('school.save() done');
 					req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network.' );
 				});
 			}
@@ -790,178 +796,178 @@ var io = require( 'socket.io' ).listen( app );
 var Post = mongoose.model( 'Post' );
 
 io.set('authorization', function ( handshake, next ) {
-  var rawCookie = handshake.headers.cookie;
-  if (rawCookie) {
-    handshake.cookie = parseCookie(rawCookie);
-    handshake.sid = handshake.cookie['connect.sid'];
+	var rawCookie = handshake.headers.cookie;
+	if (rawCookie) {
+		handshake.cookie = parseCookie(rawCookie);
+		handshake.sid = handshake.cookie['connect.sid'];
 
-    if ( handshake.sid ) {
-      app.set( 'sessionStore' ).get( handshake.sid, function( err, session ) {
-        if( err ) {
-          handshake.user = false;
-          return next(null, true);
-        } else {
-          // bake a new session object for full r/w
-          handshake.session = new Session( handshake, session );
+		if ( handshake.sid ) {
+			app.set( 'sessionStore' ).get( handshake.sid, function( err, session ) {
+				if( err ) {
+					handshake.user = false;
+					return next(null, true);
+				} else {
+					// bake a new session object for full r/w
+					handshake.session = new Session( handshake, session );
 
-          User.findOne( { session : handshake.sid }, function( err, user ) {
-            if( user ) {
-              handshake.user = user;
-              return next(null, true);
-            } else {
-              handshake.user = false;
-              return next(null, true);
-            }
-          });
-        }
-      })
-    }
-  } else {
-    data.user = false;
-    return next(null, true);
-  }
+					User.findOne( { session : handshake.sid }, function( err, user ) {
+						if( user ) {
+							handshake.user = user;
+							return next(null, true);
+						} else {
+							handshake.user = false;
+							return next(null, true);
+						}
+					});
+				}
+			})
+		}
+	} else {
+		data.user = false;
+		return next(null, true);
+	}
 });
 
 
 var backchannel = io
-  .of( '/backchannel' )
-  .on( 'connection', function( socket ) {
+	.of( '/backchannel' )
+	.on( 'connection', function( socket ) {
 
-    socket.on('subscribe', function(lecture, cb) {
-      socket.join(lecture);
-      Post.find({'lecture': lecture}, function(err, posts) {
-        if (socket.handshake.user) {
-          cb(posts);
-        } else {
-          var posts = posts.filter(
-            function(post) {
-            if (post.public)
-              return post;
-          }
-          )
-          cb(posts)
-        }
-      });
-    });
+		socket.on('subscribe', function(lecture, cb) {
+			socket.join(lecture);
+			Post.find({'lecture': lecture}, function(err, posts) {
+				if (socket.handshake.user) {
+					cb(posts);
+				} else {
+					var posts = posts.filter(
+						function(post) {
+						if (post.public)
+							return post;
+					}
+					)
+					cb(posts)
+				}
+			});
+		});
 
-    socket.on('post', function(res) {
-      var post = new Post;
-      var _post = res.post;
-      var lecture = res.lecture;
-      post.lecture = lecture;
-      if ( _post.anonymous ) {
-        post.userid		= 0;
-        post.userName	= 'Anonymous';
-        post.userAffil = 'N/A';
-      } else {
-        post.userName = _post.userName;
-        post.userAffil = _post.userAffil;
-      }
+		socket.on('post', function(res) {
+			var post = new Post;
+			var _post = res.post;
+			var lecture = res.lecture;
+			post.lecture = lecture;
+			if ( _post.anonymous ) {
+				post.userid		= 0;
+				post.userName	= 'Anonymous';
+				post.userAffil = 'N/A';
+			} else {
+				post.userName = _post.userName;
+				post.userAffil = _post.userAffil;
+			}
 
-      post.public = _post.public;
-      post.date = new Date();
-      post.body = _post.body;
-      post.votes = [];
-      post.reports = [];
-      post.save(function(err) {
-        if (err) {
-          // XXX some error handling
-          console.log(err);
-        } else {
-          if (post.public) {
-            backchannel.in(lecture).emit('post', post);
-          } else {
-            privateEmit(lecture, 'post', post);
-          }
-        }
-      });
-    });
+			post.public = _post.public;
+			post.date = new Date();
+			post.body = _post.body;
+			post.votes = [];
+			post.reports = [];
+			post.save(function(err) {
+				if (err) {
+					// XXX some error handling
+					console.log(err);
+				} else {
+					if (post.public) {
+						backchannel.in(lecture).emit('post', post);
+					} else {
+						privateEmit(lecture, 'post', post);
+					}
+				}
+			});
+		});
 
-    socket.on('vote', function(res) {
-      var vote = res.vote;
-      var lecture = res.lecture;
-      Post.findById(vote.parentid, function( err, post ) {
-        if (!err) {
-          if (post.votes.indexOf(vote.userid) == -1) {
-            post.votes.push(vote.userid);
-            post.save(function(err) {
-              if (err) {
-                // XXX error handling
-              } else {
-                if (post.public) {
-                  backchannel.in(lecture).emit('vote', vote);
-                } else {
-                  privteEmit(lecture, 'vote', vote);
-                }
-              }
-            });
-          }
-        }
-      })
-    });
+		socket.on('vote', function(res) {
+			var vote = res.vote;
+			var lecture = res.lecture;
+			Post.findById(vote.parentid, function( err, post ) {
+				if (!err) {
+					if (post.votes.indexOf(vote.userid) == -1) {
+						post.votes.push(vote.userid);
+						post.save(function(err) {
+							if (err) {
+								// XXX error handling
+							} else {
+								if (post.public) {
+									backchannel.in(lecture).emit('vote', vote);
+								} else {
+									privteEmit(lecture, 'vote', vote);
+								}
+							}
+						});
+					}
+				}
+			})
+		});
 
-    socket.on('report', function(res) {
-      var report = res.report;
-      var lecture = res.lecture;
-      Post.findById(report.parentid, function( err, post ){
-        if (!err) {
-          if (post.reports.indexOf(report.userid) == -1) {
-            post.reports.push(report.userid);
-            post.save(function(err) {
-              if (err) {
-                // XXX error handling
-              } else {
-                if (post.public) {
-                  backchannel.in(lecture).emit('report', report);
-                } else {
-                  privateEmit(lecture, 'report', report);
-                }
-              }
-            });
-          }
-        }
-      })
-    });
+		socket.on('report', function(res) {
+			var report = res.report;
+			var lecture = res.lecture;
+			Post.findById(report.parentid, function( err, post ){
+				if (!err) {
+					if (post.reports.indexOf(report.userid) == -1) {
+						post.reports.push(report.userid);
+						post.save(function(err) {
+							if (err) {
+								// XXX error handling
+							} else {
+								if (post.public) {
+									backchannel.in(lecture).emit('report', report);
+								} else {
+									privateEmit(lecture, 'report', report);
+								}
+							}
+						});
+					}
+				}
+			})
+		});
 
-    socket.on('comment', function(res) {
-      var comment = res.comment;
-      var lecture = res.lecture;
-      console.log('anon', comment.anonymous);
-      if ( comment.anonymous ) {
-        comment.userid		= 0;
-        comment.userName	= 'Anonymous';
-        comment.userAffil = 'N/A';
-      }
-      Post.findById(comment.parentid, function( err, post ) {
-        if (!err) {
-          post.comments.push(comment);
-          post.date = new Date();
-          post.save(function(err) {
-            if (err) {
-              console.log(err);
-            } else {
-              if (post.public) {
-                backchannel.in(lecture).emit('comment', comment);
-              } else {
-                privateEmit(lecture, 'comment', comment);
-              }
-            }
-          })
-        }
-      })
-    });
+		socket.on('comment', function(res) {
+			var comment = res.comment;
+			var lecture = res.lecture;
+			console.log('anon', comment.anonymous);
+			if ( comment.anonymous ) {
+				comment.userid		= 0;
+				comment.userName	= 'Anonymous';
+				comment.userAffil = 'N/A';
+			}
+			Post.findById(comment.parentid, function( err, post ) {
+				if (!err) {
+					post.comments.push(comment);
+					post.date = new Date();
+					post.save(function(err) {
+						if (err) {
+							console.log(err);
+						} else {
+							if (post.public) {
+								backchannel.in(lecture).emit('comment', comment);
+							} else {
+								privateEmit(lecture, 'comment', comment);
+							}
+						}
+					})
+				}
+			})
+		});
 
-    function privateEmit(lecture, event, data) {
-      backchannel.clients(lecture).forEach(function(socket) {
-        if (socket.handshake.user)
-          socket.emit(event, data);
-      })
-    }
+		function privateEmit(lecture, event, data) {
+			backchannel.clients(lecture).forEach(function(socket) {
+				if (socket.handshake.user)
+					socket.emit(event, data);
+			})
+		}
 
-    socket.on('disconnect', function() {
-      //delete clients[socket.id];
-    });
-  });
+		socket.on('disconnect', function() {
+			//delete clients[socket.id];
+		});
+	});
 
 
 var counters = {};
@@ -969,82 +975,82 @@ var counters = {};
 var counts = io
 .of( '/counts' )
 .on( 'connection', function( socket ) {
-  // pull out user/session information etc.
-  var handshake = socket.handshake;
-  var userID		= handshake.user._id;
+	// pull out user/session information etc.
+	var handshake = socket.handshake;
+	var userID		= handshake.user._id;
 
-  var watched		= [];
-  var noteID		= null;
+	var watched		= [];
+	var noteID		= null;
 
-  var timer			= null;
+	var timer			= null;
 
-  socket.on( 'join', function( note ) {
-    if (handshake.user === false) {
-      noteID			= note;
-      // XXX: replace by addToSet (once it's implemented in mongoose)
-      Note.findById( noteID, function( err, note ) {
-        if( note ) {
-          if( note.collaborators.indexOf( userID ) == -1 ) {
-            note.collaborators.push( userID );
-            note.save();
-          }
-        }
-      });
-    }
-  });
+	socket.on( 'join', function( note ) {
+		if (handshake.user === false) {
+			noteID			= note;
+			// XXX: replace by addToSet (once it's implemented in mongoose)
+			Note.findById( noteID, function( err, note ) {
+				if( note ) {
+					if( note.collaborators.indexOf( userID ) == -1 ) {
+						note.collaborators.push( userID );
+						note.save();
+					}
+				}
+			});
+		}
+	});
 
-  socket.on( 'watch', function( l ) {
-    var sendCounts = function() {
-      var send = {};
+	socket.on( 'watch', function( l ) {
+		var sendCounts = function() {
+			var send = {};
 
-      Note.find( { '_id' : { '$in' : watched } }, function( err, notes ) {
-        async.forEach(
-          notes,
-          function( note, callback ) {
-            var id		= note._id;
-            var count	= note.collaborators.length;
+			Note.find( { '_id' : { '$in' : watched } }, function( err, notes ) {
+				async.forEach(
+					notes,
+					function( note, callback ) {
+						var id		= note._id;
+						var count	= note.collaborators.length;
 
-            send[ id ] = count;
+						send[ id ] = count;
 
-            callback();
-          }, function() {
-            socket.emit( 'counts', send );
+						callback();
+					}, function() {
+						socket.emit( 'counts', send );
 
-            timer = setTimeout( sendCounts, 5000 );
-          }
-        );
-      });
-    }
+						timer = setTimeout( sendCounts, 5000 );
+					}
+				);
+			});
+		}
 
-    Note.find( { 'lecture' : l }, [ '_id' ], function( err, notes ) {
-      notes.forEach( function( note ) {
-        watched.push( note._id );
-      });
-    });
+		Note.find( { 'lecture' : l }, [ '_id' ], function( err, notes ) {
+			notes.forEach( function( note ) {
+				watched.push( note._id );
+			});
+		});
 
-    sendCounts();
-  });
+		sendCounts();
+	});
 
-  socket.on( 'disconnect', function() {
-    clearTimeout( timer );
+	socket.on( 'disconnect', function() {
+		clearTimeout( timer );
 
-    if (handshake.user === false) {
-      // XXX: replace with $pull once it's available
-      if( noteID ) {
-        Note.findById( noteID, function( err, note ) {
-          if( note ) {
-            var index = note.collaborators.indexOf( userID );
+		if (handshake.user === false) {
+			// XXX: replace with $pull once it's available
+			if( noteID ) {
+				Note.findById( noteID, function( err, note ) {
+					if( note ) {
+						var index = note.collaborators.indexOf( userID );
 
-            if( index != -1 ) {
-              note.collaborators.splice( index, 1 );
-            }
+						if( index != -1 ) {
+							note.collaborators.splice( index, 1 );
+						}
 
-            note.save();
-          }
-        });
-      }
-    }
-  });
+						note.save();
+					}
+				});
+			}
+		}
+	});
 });
 
 // Launch
