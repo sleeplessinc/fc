@@ -106,6 +106,7 @@ function loggedIn( req, res, next ) {
 		log3(user);
 		if( user ) {
 			req.user = user;
+      res.local('user', user);
 
 			log3( 'authenticated user: '+user._id+' / '+user.email+'');
 
@@ -122,7 +123,10 @@ function loggedIn( req, res, next ) {
         }
       }
 
-		} else {
+    } else if ( req.public ) {
+      // if public, allow through
+      next();
+    } else {
 			// stash the original request so we can redirect
 			var path = url.parse( req.url ).pathname;
 			req.session.redirect = path;
@@ -130,6 +134,11 @@ function loggedIn( req, res, next ) {
 			res.redirect( '/login' );
 		}
 	});
+}
+
+function public( req, res, next ) {
+  req.public = true;
+  next();
 }
 
 function loadCourse( req, res, next ) {
@@ -247,9 +256,7 @@ app.get( '/schools', loggedIn, function( req, res ) {
 	});
 });
 
-app.get( '/', loggedIn, function( req, res ) {
-	var userId = req.user._id;
-
+app.get( '/', public, loggedIn, function( req, res ) {
 	log3("get / page");
 
 	res.render( 'index', {} );
@@ -592,11 +599,11 @@ app.get( '/note/:id', loadNote, function( req, res ) {
 
 // static pages
 
-app.get( '/about', function( req, res ) {
+app.get( '/about', public, loggedIn, function( req, res ) {
   res.render( 'about' );
 });
 
-app.get( '/terms', function( req, res ) {
+app.get( '/terms', public, loggedIn, function( req, res ) {
   res.render( 'terms' );
 });
 
