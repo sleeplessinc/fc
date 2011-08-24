@@ -8,8 +8,10 @@ div.content
 			xxxx.
 		div.area 
 			span.texterror
-				P Error - We were unable to find a user matching the email of #{ email }.  
-				
+				- if ( typeof(verify) != 'undefined' && verify )  	
+					P Error - We were unable to reset the password for the email of #{ email }.  Please try again.
+				- else 
+					P Error - We were unable to find a user matching the email of #{ email }.  
 
 script
 	$( document ).ready( function() {

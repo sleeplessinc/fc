@@ -20,14 +20,16 @@ function salt() {
 // user
 
 var UserSchema = new Schema( {
-	email					: { type : String, index : { unique : true } },
-  name          : String,
-  affil         : String,
-	hashed				: String,
-  activated     : Boolean,
-  activateCode  : String,
-	salt					: String,
-	session				: String
+	email			: { type : String, index : { unique : true } },
+	name			: String,
+	affil			: String,
+	hashed			: String,
+	activated		: Boolean,
+	activateCode	: String,
+	resetPassCode	: String,
+	resetPassDate	: Date,
+	salt			: String,
+	session			: String
 });
 
 UserSchema.virtual( 'password' )
@@ -46,7 +48,6 @@ UserSchema.method( 'authenticate', function( plaintext ) {
 	return ( this.encrypt( plaintext ) === this.hashed );
 });
 
-
 UserSchema.method('genRandomPassword', function () {
 	// this function generates the random password, it does not keep or save it.
 	var plaintext = '';
@@ -59,6 +60,41 @@ UserSchema.method('genRandomPassword', function () {
 	}
 
 	return plaintext;
+});
+
+UserSchema.method( 'setResetPassCode', function ( code ) {
+	this.resetPassCode = code;
+	this.resetPassDate = new Date();
+	return this.resetPassCode;
+});
+
+UserSchema.method( 'canResetPassword', function ( code ) {
+	// ensure the passCode is valid, matches and the date has not yet expired, lets say 2 weeks for good measure.
+	var value = false;
+
+	var expDate = new Date();
+	expDate.setDate(expDate.getDate() - 14);
+
+	// we have a valid code and date
+	if (this.resetPassCode != null && this.resetPassDate != null && this.resetPassDate >= expDate && this.resetPassCode == code) {
+		value = true;
+	}
+
+	return value;
+});
+
+UserSchema.method( 'resetPassword', function ( code, newPass1,  newPass2) {
+	// ensure the date has not expired, lets say 2 weeks for good measure.
+
+	var success = false;
+	if (this.canResetPassword(code) && newPass1 != null && newPass1.length > 0 && newPass1 == newPass2) {
+		this.password = newPass1;
+		this.resetPassCode = null;
+		this.resetPassDate = null;
+		success = true;
+	}
+
+	return success;
 });
 
 var User = mongoose.model( 'User', UserSchema );

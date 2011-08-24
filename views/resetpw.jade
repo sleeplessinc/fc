@@ -6,17 +6,35 @@ div.content
 			xxxx. Xxx xxx xxxx xx xxxx xxxx xxxxxx-xxxx x xxxx xxx x xxxxxx.
 			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx xxx xxxx xxxx xxx x xxxxxx xxxxxxxx
 			xxxx.
-		form#resetpw( action = '/resetpw', method = 'POST' )
+
+		- url = "/resetpw";
+		- if ( typeof(verify) != 'undefined' && verify ) { url += "/" + resetPassCode; }
+
+		form#resetpw( action = '#{ url }', method = 'POST' )
 			div.area 
 				span.text
+				- if ( typeof(verify) != 'undefined' && verify )  	
+					P To verify and reset your password, type the full email address and your new password twice, then click submit. 
+				- else 
 					P To reset your password, type the full email address you use to sign in to your account and click Submit. An email will be sent to you with the new password.
-
 
 				div( class = 'row')
 					div( class = 'label')
 						label( for = 'email' ) Email
 					div( class = 'field')
 						input( type = 'text', name = 'email', size='15', value = session.email )
+
+				- if ( typeof(verify) != 'undefined' && verify )  	
+					div( class = 'row')
+						div( class = 'label')
+							label( for = 'pass1' ) New Password
+						div( class = 'field')
+							input( type = 'password', name = 'pass1', size='15' )
+					div( class = 'row')
+						div( class = 'label')
+							label( for = 'pass2' ) Repeat Password
+						div( class = 'field')
+							input( type = 'password', name = 'pass2', size='15' )
 
 				div( class = 'row')
 					div( class = 'label')

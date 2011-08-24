@@ -121,11 +121,11 @@ function loggedIn( req, res, next ) {
           res.redirect( '/activate' );
         }
       }
-
     } else if ( req.public ) {
       // if public, allow through
       next();
-    } else {
+
+		} else {
 			// stash the original request so we can redirect
 			var path = url.parse( req.url ).pathname;
 			req.session.redirect = path;
@@ -134,7 +134,6 @@ function loggedIn( req, res, next ) {
 		}
 	});
 }
-
 function public( req, res, next ) {
   req.public = true;
   next();
@@ -256,6 +255,7 @@ app.get( '/schools', loggedIn, function( req, res ) {
 });
 
 app.get( '/', public, loggedIn, function( req, res ) {
+
 	log3("get / page");
 
 	res.render( 'index', {} );
@@ -647,20 +647,26 @@ app.post( '/login', function( req, res ) {
 });
 
 app.get( '/resetpw', function( req, res ) {
-  log3("get resetpw page");
+	log3("get resetpw page");
 	res.render( 'resetpw' );
+});
+
+app.get( '/resetpw/:id', function( req, res ) {
+	var resetPassCode = req.params.id
+	res.render( 'resetpw', { 'verify': true, 'resetPassCode' : resetPassCode } );
 });
 
 app.post( '/resetpw', function( req, res ) {
 	log3("post resetpw");
 	var email = req.body.email
 
-
 	User.findOne( { 'email' : email }, function( err, user ) {
 		if( user ) {
 
-			var plaintext = user.genRandomPassword();
-			user.password = plaintext;		
+			var resetPassCode = hat(64);
+			user.setResetPassCode(resetPassCode);
+
+			var resetPassUrl = 'http://' + serverHost + ((app.address().port != 80)? ':'+app.address().port: '') + '/resetpw/' + resetPassCode;
 
 			user.save( function( err ) {
 				log3('save '+user.email);
@@ -672,7 +678,9 @@ app.post( '/resetpw', function( req, res ) {
 
 					'template'	: 'userPasswordReset',
 						'locals'		: {
-							'plaintext'			: plaintext
+							'resetPassCode'		: resetPassCode,
+							'resetPassUrl'		: resetPassUrl
+
 					}
 				};
 
@@ -685,18 +693,39 @@ app.post( '/resetpw', function( req, res ) {
 						console.log( 'Successfully sent user password reset email.' );
 					}
 
-				}); 
+				});  
 
-				res.render( 'resetpw-success', { 'email' : email } );
+				res.render( 'resetpw-success', { 'email' : email } );		
 			});			
 		} else {
 			res.render( 'resetpw-error', { 'email' : email } );
 		}
 	});
-
-	
 });
 
+app.post( '/resetpw/:id', function( req, res ) {
+	log3("post resetpw.code");
+	var resetPassCode = req.params.id
+	var email = req.body.email
+	var pass1 = req.body.pass1
+	var pass2 = req.body.pass2
+
+	User.findOne( { 'email' : email }, function( err, user ) {
+		var valid = false;
+		if( user ) {
+			var valid = user.resetPassword(resetPassCode, pass1, pass2);
+			if (valid) {
+				user.save( function( err ) {
+					res.render( 'resetpw-success', { 'verify' : true, 'email' : email, 'resetPassCode' : resetPassCode } );		
+				});			
+			}
+		} 
+
+		if (!valid) {
+			res.render( 'resetpw-error', { 'verify' : true, 'email' : email } );
+		}
+	});
+});
 
 app.get( '/register', function( req, res ) {
   log3("get reg page");
