@@ -640,6 +640,58 @@ app.post( '/login', function( req, res ) {
 	});
 });
 
+app.get( '/resetpw', function( req, res ) {
+  log3("get resetpw page");
+	res.render( 'resetpw' );
+});
+
+app.post( '/resetpw', function( req, res ) {
+	log3("post resetpw");
+	var email = req.body.email
+
+
+	User.findOne( { 'email' : email }, function( err, user ) {
+		if( user ) {
+
+			var plaintext = user.genRandomPassword();
+			user.password = plaintext;		
+
+			user.save( function( err ) {
+				log3('save '+user.email);
+
+				var message = {
+					'to'				: user.email,
+
+					'subject'		: 'Your FinalsClub.org Password has been Reset!',
+
+					'template'	: 'userPasswordReset',
+						'locals'		: {
+							'plaintext'			: plaintext
+					}
+				};
+
+				mailer.send( message, function( err, result ) {
+					if( err ) {
+						// XXX: Add route to resend this email
+
+						console.log( 'Error sending user password reset email!' );
+					} else {
+						console.log( 'Successfully sent user password reset email.' );
+					}
+
+				}); 
+
+				res.render( 'resetpw-success', { 'email' : email } );
+			});			
+		} else {
+			res.render( 'resetpw-error', { 'email' : email } );
+		}
+	});
+
+	
+});
+
+
 app.get( '/register', function( req, res ) {
   log3("get reg page");
 	res.render( 'register' );

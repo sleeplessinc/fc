@@ -46,6 +46,21 @@ UserSchema.method( 'authenticate', function( plaintext ) {
 	return ( this.encrypt( plaintext ) === this.hashed );
 });
 
+
+UserSchema.method('genRandomPassword', function () {
+	// this function generates the random password, it does not keep or save it.
+	var plaintext = '';
+
+	var len = 8;
+	var charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	for (var i = 0; i < len; i++) {
+		var randomPoz = Math.floor(Math.random() * charSet.length);
+		plaintext += charSet.substring(randomPoz, randomPoz + 1);
+	}
+
+	return plaintext;
+});
+
 var User = mongoose.model( 'User', UserSchema );
 
 // schools
