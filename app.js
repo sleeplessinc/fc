@@ -51,8 +51,8 @@ app.configure( 'development', function() {
 	app.set( 'dbHost', 'localhost' );
 	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
 
-	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY );
-	app.set( 'awsSecretKey', process.env.AWS_SECRET_KEY );
+	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY_ID );
+	app.set( 'awsSecretKey', process.env.AWS_SECRET_ACCESS_KEY );
 });
 
 app.configure( 'production', function() {
@@ -61,8 +61,8 @@ app.configure( 'production', function() {
 	app.set( 'dbHost', 'localhost' );
 	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
 
-	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY );
-	app.set( 'awsSecretKey', process.env.AWS_SECRET_KEY );
+	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY_ID );
+	app.set( 'awsSecretKey', process.env.AWS_SECRET_ACCESS_KEY );
 });
 
 app.configure(function(){
