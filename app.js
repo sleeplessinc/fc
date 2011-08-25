@@ -142,6 +142,7 @@ function loggedIn( req, res, next ) {
 
 function public( req, res, next ) {
 	req.public = true;
+
 	next();
 }
 
@@ -615,8 +616,8 @@ app.post( '/login', function( req, res ) {
 						// login complete, remember the user's email for next time
 						req.session.email = email;
 
-						// redirect to root if we don't have a stashed request
-						res.redirect( redirect || '/' );
+						// redirect to profile if we don't have a stashed request
+						res.redirect( redirect || '/profile' );
 					});
 				}
 			}
