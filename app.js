@@ -842,7 +842,7 @@ app.post( '/profile', loggedIn, function( req, res ) {
 			if( err ) {
 				req.flash( 'error', 'Unable to save user profile!' );
 			} else {
-				if( ( user.isComplete ) && ( ! isComplete ) ) {
+				if( ( user.isComplete ) && ( ! wasComplete ) ) {
 					req.flash( 'info', 'Your account is now fully activated. Thank you for joining FinalsClub!' );
 				}
 			}
