@@ -83,7 +83,7 @@ var SchoolSchema = new Schema( {
 });
 
 SchoolSchema.method( 'authorize', function( user ) {
-	return ( this.users.indexOf( user._id ) != -1 ) ? true : false;
+	return ( this.users.indexOf( user ) !== -1 ) ? true : false;
 });
 
 var School = mongoose.model( 'School', SchoolSchema );
@@ -103,9 +103,9 @@ var CourseSchema = new Schema( {
 	users				: Array
 });
 
-CourseSchema.method( 'authorize', function( user ) {
+CourseSchema.method( 'authorize', function( user, cb ) {
 	School.findById( this.school, function( err, school ) {
-		return school ? school.authorize( user ) : false;
+		return cb(school ? school.authorize( user ) : false);
 	});
 });
 
@@ -143,9 +143,15 @@ var LectureSchema	= new Schema( {
 	course				: ObjectId
 });
 
-LectureSchema.method( 'authorize', function( user ) {
+LectureSchema.method( 'authorize', function( user, cb ) {
 	Course.findById( this.course, function( err, course ) {
-		return course ? course.authorize( user ) : false;
+		if (course) {
+			course.authorize( user, function( res ) {
+				return cb( res );
+			})
+		} else {
+		 return cb( false );
+		}
 	});
 });
 
@@ -164,14 +170,16 @@ var NoteSchema = new Schema( {
 	collaborators : Array
 });
 
-NoteSchema.method( 'authorize', function( user ) {
-	if( ! this.public ) {
-		Lecture.findById( this.lecture, function( err, lecture ) {
-			return lecture ? lecture.authorize( user ) : false;
-		});
-	} else {
-		return true;
-	}
+NoteSchema.method( 'authorize', function( user, cb ) {
+	Lecture.findById( this.lecture, function( err, lecture ) {
+		if (lecture) {
+			lecture.authorize( user, function( res ) {
+				return cb( res );
+			})
+		} else {
+			return cb( false );
+		}
+	});
 });
 
 var Note = mongoose.model( 'Note', NoteSchema );
