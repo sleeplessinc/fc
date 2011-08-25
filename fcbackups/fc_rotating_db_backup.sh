@@ -16,8 +16,8 @@
 ## cp2s3 -v -b finalsclub.org_db_backups -r test.txt
 
 
-export AWS_ACCESS_KEY_ID=AKIAIZZIXU6UJZTHBO6A
-export AWS_SECRET_ACCESS_KEY=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
+export AWS_ACCESS_KEY_ID=AKIAICBRWVQYVNIOBZAQ
+export AWS_SECRET_ACCESS_KEY=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
 
 bucket="finalsclub.org_db_backups"
 curdate=`date +"%Y-%m-%d"`
