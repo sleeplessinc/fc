@@ -592,21 +592,30 @@ app.post( '/login', function( req, res ) {
 	User.findOne( { 'email' : email }, function( err, user ) {
 		log3(err) 
 		log3(user) 
-		if( user && user.authenticate( password ) ) {
-			log3("pass ok") 
-			var sid = req.sessionID;
 
-			user.session = sid;
+		if( user ) {
+			if( ! user.activated ) {
+				req.flash( 'error', 'This account has not been activated! Check your email for the activation URL.' );
 
-			user.save( function() {
-				var redirect = req.session.redirect;
+				res.render( 'login' );
+			} else {
+				if( user.authenticate( password ) ) {
+					log3("pass ok") 
+					var sid = req.sessionID;
 
-				// login complete, remember the user's email for next time
-				req.session.email = email;
+					user.session = sid;
 
-				// redirect to root if we don't have a stashed request
-				res.redirect( redirect || '/' );
-			});
+					user.save( function() {
+						var redirect = req.session.redirect;
+	
+						// login complete, remember the user's email for next time
+						req.session.email = email;
+
+						// redirect to root if we don't have a stashed request
+						res.redirect( redirect || '/' );
+					});
+				}
+			}
 		} else {
 			log3("bad login")
 			req.flash( 'error', 'Invalid login!' );
