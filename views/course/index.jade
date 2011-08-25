@@ -6,9 +6,12 @@ div.content
 
 		h2 Existing Lectures 
 		ul
-			- each lecture in lectures
-				li
-					a( href = '/lecture/#{ lecture._id }' ) #{ lecture.name }
+			- if ( lectures.length > 0 )
+				- each lecture in lectures
+					li
+						a( href = '/lecture/#{ lecture._id }' ) #{ lecture.name }
+			- else
+				li None found.
 		div
 			span(class='sub_menu')
 				a( href = '/course/#{ course._id }/lecture/new' ) New Lecture

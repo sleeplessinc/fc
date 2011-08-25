@@ -20,22 +20,27 @@ function salt() {
 // user
 
 var UserSchema = new Schema( {
-	email			: { type : String, index : { unique : true } },
-	name			: String,
-	affil			: String,
-	hashed			: String,
-	activated		: Boolean,
-	activateCode	: String,
-	resetPassCode	: String,
-	resetPassDate	: Date,
-	salt			: String,
-	session			: String
+	email					: { type : String, require: true, index : { unique : true } },
+  name          : String,
+  affil         : String,
+	hashed				: String,
+  activated     : Boolean,
+  activateCode  : String,
+	salt					: String,
+	session				: String
 });
 
 UserSchema.virtual( 'password' )
 	.set( function( password ) {
 		this.salt				= salt();
 		this.hashed			= this.encrypt( password );
+	});
+
+UserSchema.virtual( 'isComplete' )
+	.get( function() {
+		// build on this as the schema develops
+
+		return ( this.name && this.affil && this.hashed );
 	});
 
 UserSchema.method( 'encrypt', function( password ) {
@@ -47,6 +52,7 @@ UserSchema.method( 'encrypt', function( password ) {
 UserSchema.method( 'authenticate', function( plaintext ) {
 	return ( this.encrypt( plaintext ) === this.hashed );
 });
+
 
 UserSchema.method('genRandomPassword', function () {
 	// this function generates the random password, it does not keep or save it.
@@ -62,47 +68,12 @@ UserSchema.method('genRandomPassword', function () {
 	return plaintext;
 });
 
-UserSchema.method( 'setResetPassCode', function ( code ) {
-	this.resetPassCode = code;
-	this.resetPassDate = new Date();
-	return this.resetPassCode;
-});
-
-UserSchema.method( 'canResetPassword', function ( code ) {
-	// ensure the passCode is valid, matches and the date has not yet expired, lets say 2 weeks for good measure.
-	var value = false;
-
-	var expDate = new Date();
-	expDate.setDate(expDate.getDate() - 14);
-
-	// we have a valid code and date
-	if (this.resetPassCode != null && this.resetPassDate != null && this.resetPassDate >= expDate && this.resetPassCode == code) {
-		value = true;
-	}
-
-	return value;
-});
-
-UserSchema.method( 'resetPassword', function ( code, newPass1,  newPass2) {
-	// ensure the date has not expired, lets say 2 weeks for good measure.
-
-	var success = false;
-	if (this.canResetPassword(code) && newPass1 != null && newPass1.length > 0 && newPass1 == newPass2) {
-		this.password = newPass1;
-		this.resetPassCode = null;
-		this.resetPassDate = null;
-		success = true;
-	}
-
-	return success;
-});
-
 var User = mongoose.model( 'User', UserSchema );
 
 // schools
 
 var SchoolSchema = new Schema( {
-	name				: String,
+	name				: { type : String, required : true },
 	description	: String,
 	url					: String,
 
@@ -112,7 +83,7 @@ var SchoolSchema = new Schema( {
 });
 
 SchoolSchema.method( 'authorize', function( user ) {
-	return ( this.users.indexOf( user._id ) != -1 ) ? true : false;
+	return ( this.users.indexOf( user ) !== -1 ) ? true : false;
 });
 
 var School = mongoose.model( 'School', SchoolSchema );
@@ -120,7 +91,7 @@ var School = mongoose.model( 'School', SchoolSchema );
 // courses
 
 var CourseSchema = new Schema( {
-	name				: String,
+	name				: { type : String, required : true },
 	description	: String,
   instructor  : String,
 	// courses are tied to one school
@@ -132,9 +103,9 @@ var CourseSchema = new Schema( {
 	users				: Array
 });
 
-CourseSchema.method( 'authorize', function( user ) {
+CourseSchema.method( 'authorize', function( user, cb ) {
 	School.findById( this.school, function( err, school ) {
-		return school ? school.authorize( user ) : false;
+		return cb(school ? school.authorize( user ) : false);
 	});
 });
 
@@ -165,16 +136,22 @@ var Course = mongoose.model( 'Course', CourseSchema );
 // lectures
 
 var LectureSchema	= new Schema( {
-	name					: String,
-	date					: Date,
+	name					: { type : String, required : true },
+	date					: { type : Date, default: Date.now },
 	live					: Boolean,
 
 	course				: ObjectId
 });
 
-LectureSchema.method( 'authorize', function( user ) {
+LectureSchema.method( 'authorize', function( user, cb ) {
 	Course.findById( this.course, function( err, course ) {
-		return course ? course.authorize( user ) : false;
+		if (course) {
+			course.authorize( user, function( res ) {
+				return cb( res );
+			})
+		} else {
+		 return cb( false );
+		}
 	});
 });
 
@@ -183,7 +160,7 @@ var Lecture = mongoose.model( 'Lecture', LectureSchema );
 // notes
 
 var NoteSchema = new Schema( {
-	name					: String,
+	name					: { type : String, required : true },
 	path					: String,
   public        : Boolean,
   roID          : String,
@@ -193,36 +170,38 @@ var NoteSchema = new Schema( {
 	collaborators : Array
 });
 
-NoteSchema.method( 'authorize', function( user ) {
-	if( ! this.public ) {
-		Lecture.findById( this.lecture, function( err, lecture ) {
-			return lecture ? lecture.authorize( user ) : false;
-		});
-	} else {
-		return true;
-	}
+NoteSchema.method( 'authorize', function( user, cb ) {
+	Lecture.findById( this.lecture, function( err, lecture ) {
+		if (lecture) {
+			lecture.authorize( user, function( res ) {
+				return cb( res );
+			})
+		} else {
+			return cb( false );
+		}
+	});
 });
 
 var Note = mongoose.model( 'Note', NoteSchema );
 
 // comments
 
-var Post = new Schema({
-  date      : Date,
+var PostSchema = new Schema({
+  date      : { type : Date, default : Date.now },
   body      : String,
   votes     : Array,
   reports   : Array,
   public    : Boolean,
 
-  userid    : String,//ObjectId,
+  userid    : String, // ObjectId,
   userName  : String,
   userAffil : String,
 
   comments   : Array,
 
-  lecture   : String//ObjectId
+  lecture   : String // ObjectId
 })
 
-mongoose.model( 'Post', Post );
+mongoose.model( 'Post', PostSchema );
 
 module.exports.mongoose = mongoose;

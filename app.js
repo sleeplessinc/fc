@@ -83,9 +83,9 @@ app.configure(function(){
 		'store'		: app.set( 'sessionStore' )
 	}));
 
-  app.use( express.methodOverride() );
-  app.use( app.router );
-  app.use( express.static( __dirname + '/public' ) );
+	app.use( express.methodOverride() );
+	app.use( app.router );
+	app.use( express.static( __dirname + '/public' ) );
 
 	// use the error handler defined earlier
 	var errorHandler = app.set( 'errorHandler' );
@@ -107,24 +107,29 @@ function loggedIn( req, res, next ) {
 		if( user ) {
 			req.user = user;
 
-			log3( 'authenticated user: '+user._id+' / '+user.email+'');
+			log3( 'authenticated user: '+req.user._id+' / '+req.user.email+'');
 
-      if ( user.activated ) {
-        next();
+      if( req.user.activated ) {
+				// is the user's profile complete? if not, redirect to their profile
+				if( ! req.user.isComplete ) {
+					if( url.parse( req.url ).pathname != '/profile' ) {
+						req.flash( 'info', 'Your profile is incomplete. Please complete your profile to fully activate your account.' );
+
+						res.redirect( '/profile' );
+					} else {
+						next();
+					}
+				} else {
+        	next();
+				}
       } else {
-        var path = url.parse( req.url ).pathname;
-        req.session.redirect = path;
+				req.flash( 'info', 'This account has not been activated. Check your email for the activation URL.' );
 
-        if (/\/activate/.test(path)) {
-          next();
-        } else {
-          res.redirect( '/activate' );
-        }
+				res.redirect( '/' );
       }
-    } else if ( req.public ) {
-      // if public, allow through
-      next();
-
+		} else if ( req.public ) {
+			// if public, allow through
+			next();
 		} else {
 			// stash the original request so we can redirect
 			var path = url.parse( req.url ).pathname;
@@ -134,9 +139,10 @@ function loggedIn( req, res, next ) {
 		}
 	});
 }
+
 function public( req, res, next ) {
-  req.public = true;
-  next();
+	req.public = true;
+	next();
 }
 
 function loadCourse( req, res, next ) {
@@ -145,17 +151,19 @@ function loadCourse( req, res, next ) {
 
 	Course.findById( courseId, function( err, course ) {
 		if( course ) {
-			if( course.authorize( userId ) ) {
+			course.authorize( userId, function( res )  {
+				if( res ) {
 					console.log( 'authorized' );
-	
+
 					req.course = course;
 
 					next();
-			} else {
-				req.flash( 'error', 'You do not have permission to access that course.' );
+				} else {
+					req.flash( 'error', 'You do not have permission to access that course.' );
 
-				res.redirect( '/' );
-			}
+					res.redirect( '/' );
+				}
+			})
 		} else {
 			req.flash( 'error', 'Invalid course specified!' );
 
@@ -170,15 +178,17 @@ function loadLecture( req, res, next ) {
 
 	Lecture.findById( lectureId, function( err, lecture ) {
 		if( lecture ) {
-			if( lecture.authorize( userId ) ) {
-				req.lecture = lecture;
+			lecture.authorize( userId, function( res ) {
+				if( res ) {
+					req.lecture = lecture;
 
-				next();
-			} else {
-				req.flash( 'error', 'You do not have permission to access that lecture.' );
+					next();
+				} else {
+					req.flash( 'error', 'You do not have permission to access that lecture.' );
 
-				res.redirect( '/' );
-			}
+					res.redirect( '/' );
+				}
+			})
 		} else {
 			req.flash( 'error', 'Invalid lecture specified!' );
 
@@ -188,24 +198,40 @@ function loadLecture( req, res, next ) {
 }
 
 function loadNote( req, res, next ) {
-	var userId = req.user._id;
+	var userId = req.user ? req.user._id : false;
 	var noteId = req.params.id;
 
 	Note.findById( noteId, function( err, note ) {
-		if( note ) {
-			if( note.public || note.authorize( userId ) ) {
-				req.note = note;
+		if( note && userId ) {
+			note.authorize( userId, function( auth ) {
+				if( auth ) {
+					req.note = note;
 
-				next();
-			} else {
-				req.flash( 'You do not have permission to access that note.' );
+					next();
+				} else if ( note.public ) {
+					req.RO = true;
+					req.note = note;
 
-				next();
-			}
+					next();
+				} else {
+					req.flash( 'error', 'You do not have permission to access that note.' );
+
+					res.redirect( '/' );
+				}
+			})
+		} else if ( note && note.public ) {
+			req.note = note;
+			req.RO = true;
+
+			next();
+		} else if ( note && !note.public ) {
+			req.session.redirect = '/note/' + note._id;
+			req.flash( 'error', 'You must be logged in to view that note.' );
+			res.redirect( '/login' );
 		} else {
 			req.flash( 'error', 'Invalid note specified!' );
 
-			res.direct( '/' );
+			res.redirect( '/login' );
 		}
 	});
 }
@@ -224,6 +250,15 @@ app.dynamicHelpers( {
 });
 
 // Routes
+
+app.get( '/', loggedIn, function( req, res ) {
+	var userId = req.user._id;
+
+	log3("get / page");
+
+	res.render( 'index' );
+});
+
 app.get( '/schools', loggedIn, function( req, res ) {
 	var userId = req.user._id;
 
@@ -237,10 +272,10 @@ app.get( '/schools', loggedIn, function( req, res ) {
 				function( school, callback ) {
 					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
 						if( courses.length > 0 ) {
-	            school.courses = courses;
+							school.courses = courses;
 						} else {
-	            school.courses = [];
-  	        }
+							school.courses = [];
+						}
 						callback();
 					});
 				},
@@ -254,100 +289,47 @@ app.get( '/schools', loggedIn, function( req, res ) {
 	});
 });
 
-app.get( '/', public, loggedIn, function( req, res ) {
-
-	log3("get / page");
-
-	res.render( 'index', {} );
-});
-
-app.get( '/activate', loggedIn, function( req, res ) {
-  if (req.user.activated) return res.redirect('/');
-  res.render( 'activate', { 'user': req.user, code: '' });
-});
-
-app.get( '/activate/:id', loggedIn, function( req, res ) {
-  var code = req.params.id;
-  res.render( 'activate', { 'user': req.user, code: code });
-});
-
-app.post( '/activate', loggedIn, function( req, res ) {
-  var user = req.user;
-  var activateCode = req.body.code;
-
-  if ( user.affil === 'Instructor' ) {
-    user.password = req.body.password;
-    user.name = req.body.name;
-    if ( user.name === '' ) {
-      req.flash('error', 'Please enter your name');
-      return req.redirect('/activate')
-    }
-  }
-
-  if (activateCode === user.activateCode) {
-    user.activated = true;
-    user.save(function( err ) {
-      if ( err ) {
-        req.flash('error', 'Invalid parameters!');
-        res.redirect('/activate');
-      } else {
-				var redirect = req.session.redirect;
-        if ( redirect === '/activate' ) {
-          redirect = '/';
-        }
-        req.flash('info', 'Account has been activated');
-				res.redirect( redirect || '/' );
-      }
-    })
-  } else {
-    req.flash('error', 'The activation code you entered was invalid');
-
-    res.redirect( '/activate' );
-  }
-});
-
 app.get( '/:id/course/new', loggedIn, function( req, res ) {
-  var schoolId = req.params.id;
+	var schoolId = req.params.id;
 
-  School.findById( schoolId, function( err, school ) {
+	School.findById( schoolId, function( err, school ) {
 		if( school ) {
-      res.render( 'course/new', { 'school': school } );
+			res.render( 'course/new', { 'school': school } );
 		} else {
 			req.flash( 'error', 'Invalid note specified!' );
 
 			res.direct( '/' );
 		}
-  })
+	})
 });
 
 app.post( '/:id/course/new', loggedIn, function( req, res ) {
 	var schoolId	= req.params.id;
 	var course = new Course;
-  var instructorEmail = req.body.email;
+	var instructorEmail = req.body.email;
 
   if (!instructorEmail) {
     req.flash( 'error', 'Invalid parameters!' )
     return res.render( 'course/new' );
   }
-	course.name		= req.body.name;
-	course.description		= req.body.description;
-	course.school	= schoolId;
-  course.instructor = instructorEmail;
 
-  User.findOne( { 'email': instructorEmail }, function( err, user ) {
+	course.name					= req.body.name;
+	course.description	= req.body.description;
+	course.school				= schoolId;
+  course.instructor		= instructorEmail;
+
+	// find our instructor or invite them if necessary
+  User.findOne( { 'email' : instructorEmail }, function( err, user ) {
     if ( !user ) {
       var user          = new User;
 
-      var password      = hat(32);
       var activateCode  = hat(64);
 
       user.email        = instructorEmail;
-      user.name         = '';
-      user.password     = password;
+
       user.activated    = false;
       user.activateCode = activateCode;
       user.affil        = 'Instructor';
-      // XXX Put mailchimp integration here
 
       user.save(function( err ) {
         if ( err ) {
@@ -357,13 +339,13 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
 					var message = {
 						to					: user.email,
 
-						'subject'		: 'You have been registered as a course instructor on FinalsClub.org',
+						'subject'		: 'You have been registered as a course instructor on FinalsClub.org!',
 	
 						'template'	: 'instructorInvite',
 						'locals'		: {
-							'course'		: course,
-							'user'			: user,
-							'password'	: password
+							'course'			: course,
+							'user'				: user,
+							'serverHost'	: serverHost
 						}
 					};
 
@@ -375,36 +357,36 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
 						}
 					});
 
-          course.save( function( err ) {
-            if( err ) {
-              // XXX: better validation
-              req.flash( 'error', 'Invalid parameters!' );
+					course.save( function( err ) {
+						if( err ) {
+							// XXX: better validation
+							req.flash( 'error', 'Invalid parameters!' );
 
-              res.render( 'course/new' );
-            } else {
-              res.redirect( '/schools' );
-            }
-          });
-        }
-      })
-    } else {
-      if (user.affil === 'Instructor') {
-        course.save( function( err ) {
-          if( err ) {
-            // XXX: better validation
-            req.flash( 'error', 'Invalid parameters!' );
+							res.render( 'course/new' );
+						} else {
+							res.redirect( '/schools' );
+						}
+					});
+				}
+			})
+		} else {
+			if (user.affil === 'Instructor') {
+				course.save( function( err ) {
+					if( err ) {
+						// XXX: better validation
+						req.flash( 'error', 'Invalid parameters!' );
 
-            res.render( 'course/new' );
-          } else {
-            res.redirect( '/schools' );
-          }
-        });
-      } else {
-        req.flash( 'error', 'The existing user\'s email you entered is not an instructor' );
-        res.render( 'course/new' );
-      }
-    }
-  })
+						res.render( 'course/new' );
+					} else {
+						res.redirect( '/schools' );
+					}
+				});
+			} else {
+				req.flash( 'error', 'The existing user\'s email you entered is not an instructor' );
+				res.render( 'course/new' );
+			}
+		}
+	})
 });
 
 app.get( '/course/:id', loggedIn, loadCourse, function( req, res ) {
@@ -503,7 +485,7 @@ app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) 
 	note.name			= req.body.name;
 	note.date			= req.body.date;
 	note.lecture	= lecture._id;
-  note.public   = req.body.public ? true : false;
+	note.public		= req.body.public ? true : false;
 
 	note.save( function( err ) {
 		if( err ) {
@@ -519,97 +501,89 @@ app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) 
 
 // notes
 
-app.get( '/note/:id', loadNote, function( req, res ) {
+app.get( '/note/:id', public, loggedIn, loadNote, function( req, res ) {
 	var note = req.note;
-  var roID = note.roID || false;
+	var roID = note.roID || false;
 
 	var lectureId = note.lecture;
 
-	var sid = req.sessionID;
+	if (roID) {
+		processReq();
+	} else {
+		db.open('mongodb://' + app.set( 'dbHost' ) + '/etherpad/etherpad', function( err, epl ) {
+			epl.findOne( { key: 'pad2readonly:' + note._id }, function(err, record) {
+				if ( record ) {
+					roID = record.value.replace(/"/g, '');
+				} else {
+					roID = false;
+				}
+				processReq();
+			})
+		})
+	}
 
-  if (roID) {
-    processReq();
-  } else {
-    db.open('mongodb://' + app.set( 'dbHost' ) + '/etherpad/etherpad', function( err, epl ) {
-      epl.findOne( { key: 'pad2readonly:' + note._id }, function(err, record) {
-        if ( record ) {
-          roID = record.value.replace(/"/g, '');
-        } else {
-          roID = false;
-        }
-        processReq();
-      })
-    })
-  }
+	function processReq() {
+		Lecture.findById( lectureId, function( err, lecture ) {
+			if( ! lecture ) {
+				req.flash( 'error', 'That notes page is orphaned!' );
 
-  function processReq() {
-    Lecture.findById( lectureId, function( err, lecture ) {
-      if( ! lecture ) {
-        req.flash( 'error', 'That notes page is orphaned!' );
+				res.redirect( '/' );
+			}
+			Note.find( { 'lecture' : lecture._id }, function( err, otherNotes ) {
+				if( !req.RO ) {
+					// XXX User is logged in and sees full notepad
 
-        res.redirect( '/' );
-      }
-      Note.find( { 'lecture' : lecture._id }, function( err, otherNotes ) {
-        User.findOne( { session : sid }, function( err, user ) {
-          if( user ) {
-            // XXX User is logged in and sees full notepad
-            req.user = user;
-
-            if ( !user.activated ) {
-              return res.redirect( '/activate' );
-            }
-
-            res.render( 'notes/index', {
-              'layout'      : 'noteLayout',
-              'host'				: serverHost,
-              'note'				: note,
-              'lecture'			: lecture,
-              'otherNotes'  : otherNotes,
-              'RO'          : false,
-              'roID'        : roID,
-              'stylesheets' : [ 'dropdown.css', 'fc.css' ],
-              'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
-            });
-          } else {
-            if (note.public) {
-              // XXX User is not logged in and sees notepad that is public
-              res.render( 'notes/public', {
-                'layout'      : 'noteLayout',
-                'host'				: serverHost,
-                'note'				: note,
-                'otherNotes'  : otherNotes,
-                'roID'        : roID,
-                'lecture'			: lecture,
-                'stylesheets' : [ 'dropdown.css', 'fc.css' ],
-                'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
-              });
-            } else {
-              // XXX User is not logged in and is redirected to login because notepad is private
-              req.session.redirect = '/note/' + note._id;
-              req.flash( 'error', 'You must be logged in to view this notepad' );
-              res.redirect( '/login' );
-            }
-          }
-        });
-      })
-    });
-  }
+					res.render( 'notes/index', {
+						'layout'			: 'noteLayout',
+						'host'				: serverHost,
+						'note'				: note,
+						'lecture'			: lecture,
+						'otherNotes'	: otherNotes,
+						'RO'					: false,
+						'roID'				: roID,
+						'stylesheets' : [ 'dropdown.css', 'fc2.css' ],
+						'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
+					});
+				} else {
+					// XXX User is not logged in and sees notepad that is public
+					res.render( 'notes/public', {
+						'layout'			: 'noteLayout',
+						'host'				: serverHost,
+						'note'				: note,
+						'otherNotes'	: otherNotes,
+						'roID'				: roID,
+						'lecture'			: lecture,
+						'stylesheets' : [ 'dropdown.css', 'fc2.css' ],
+						'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
+					});
+				}
+			});
+		});
+	}
 });
 
 // static pages
 
-app.get( '/about', public, loggedIn, function( req, res ) {
-  res.render( 'about' );
+app.get( '/about', function( req, res ) {
+  res.render( 'static/about' );
 });
 
-app.get( '/terms', public, loggedIn, function( req, res ) {
-  res.render( 'terms' );
+app.get( '/terms', function( req, res ) {
+  res.render( 'static/terms' );
+});
+
+app.get( '/contact', public, loggedIn, function( req, res ) {
+	res.render( 'static/contact' );
+});
+
+app.get( '/privacy', public, loggedIn, function( req, res ) {
+	res.render( 'static/privacy' );
 });
 
 // authentication
 
 app.get( '/login', function( req, res ) {
-  log3("get login page")
+	log3("get login page")
 
 	res.render( 'login' );	
 });
@@ -617,26 +591,35 @@ app.get( '/login', function( req, res ) {
 app.post( '/login', function( req, res ) {
 	var email		 = req.body.email;
 	var password = req.body.password;
-  log3("post login ...")
+	log3("post login ...")
 
 	User.findOne( { 'email' : email }, function( err, user ) {
 		log3(err) 
 		log3(user) 
-		if( user && user.authenticate( password ) ) {
-			log3("pass ok") 
-			var sid = req.sessionID;
 
-			user.session = sid;
+		if( user ) {
+			if( ! user.activated ) {
+				req.flash( 'error', 'This account has not been activated! Check your email for the activation URL.' );
 
-			user.save( function() {
-				var redirect = req.session.redirect;
+				res.render( 'login' );
+			} else {
+				if( user.authenticate( password ) ) {
+					log3("pass ok") 
+					var sid = req.sessionID;
 
-				// login complete, remember the user's email for next time
-				req.session.email = email;
+					user.session = sid;
 
-				// redirect to root if we don't have a stashed request
-				res.redirect( redirect || '/' );
-			});
+					user.save( function() {
+						var redirect = req.session.redirect;
+	
+						// login complete, remember the user's email for next time
+						req.session.email = email;
+
+						// redirect to root if we don't have a stashed request
+						res.redirect( redirect || '/' );
+					});
+				}
+			}
 		} else {
 			log3("bad login")
 			req.flash( 'error', 'Invalid login!' );
@@ -651,22 +634,16 @@ app.get( '/resetpw', function( req, res ) {
 	res.render( 'resetpw' );
 });
 
-app.get( '/resetpw/:id', function( req, res ) {
-	var resetPassCode = req.params.id
-	res.render( 'resetpw', { 'verify': true, 'resetPassCode' : resetPassCode } );
-});
-
 app.post( '/resetpw', function( req, res ) {
 	log3("post resetpw");
 	var email = req.body.email
 
+
 	User.findOne( { 'email' : email }, function( err, user ) {
 		if( user ) {
 
-			var resetPassCode = hat(64);
-			user.setResetPassCode(resetPassCode);
-
-			var resetPassUrl = 'http://' + serverHost + ((app.address().port != 80)? ':'+app.address().port: '') + '/resetpw/' + resetPassCode;
+			var plaintext = user.genRandomPassword();
+			user.password = plaintext;		
 
 			user.save( function( err ) {
 				log3('save '+user.email);
@@ -678,9 +655,7 @@ app.post( '/resetpw', function( req, res ) {
 
 					'template'	: 'userPasswordReset',
 						'locals'		: {
-							'resetPassCode'		: resetPassCode,
-							'resetPassUrl'		: resetPassUrl
-
+							'plaintext'			: plaintext
 					}
 				};
 
@@ -693,9 +668,9 @@ app.post( '/resetpw', function( req, res ) {
 						console.log( 'Successfully sent user password reset email.' );
 					}
 
-				});  
+				}); 
 
-				res.render( 'resetpw-success', { 'email' : email } );		
+				res.render( 'resetpw-success', { 'email' : email } );
 			});			
 		} else {
 			res.render( 'resetpw-error', { 'email' : email } );
@@ -703,32 +678,9 @@ app.post( '/resetpw', function( req, res ) {
 	});
 });
 
-app.post( '/resetpw/:id', function( req, res ) {
-	log3("post resetpw.code");
-	var resetPassCode = req.params.id
-	var email = req.body.email
-	var pass1 = req.body.pass1
-	var pass2 = req.body.pass2
-
-	User.findOne( { 'email' : email }, function( err, user ) {
-		var valid = false;
-		if( user ) {
-			var valid = user.resetPassword(resetPassCode, pass1, pass2);
-			if (valid) {
-				user.save( function( err ) {
-					res.render( 'resetpw-success', { 'verify' : true, 'email' : email, 'resetPassCode' : resetPassCode } );		
-				});			
-			}
-		} 
-
-		if (!valid) {
-			res.render( 'resetpw-error', { 'verify' : true, 'email' : email } );
-		}
-	});
-});
 
 app.get( '/register', function( req, res ) {
-  log3("get reg page");
+	log3("get reg page");
 	res.render( 'register' );
 });
 
@@ -736,8 +688,6 @@ app.post( '/register', function( req, res ) {
 	var sid = req.sessionId;
 
 	var user = new User;
-  log3("post reg ");
-	log3(user)
   
 	user.email        = req.body.email;
 	user.password     = req.body.password;
@@ -746,8 +696,8 @@ app.post( '/register', function( req, res ) {
   user.affil        = req.body.affil;
   user.activated    = false;
   user.activateCode = hat(64);
+
 	log3('register '+user.email+"/"+user.password+" "+user.session) 
-	log3(user)
 
 	user.save( function( err ) {
 		var hostname = user.email.split( '@' ).pop();
@@ -759,8 +709,9 @@ app.post( '/register', function( req, res ) {
 			'subject'		: 'Welcome to FinalsClub.org!',
 
 			'template'	: 'userActivation',
-				'locals'		: {
-					'user'			: user
+			'locals'		: {
+				'user'				: user,
+				'serverHost'	: serverHost
 			}
 		};
 
@@ -780,13 +731,49 @@ app.post( '/register', function( req, res ) {
 				school.users.push( user._id );
 
 				school.save( function( err ) {
-				  log3('school.save() done');
+					log3('school.save() done');
 					req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network.' );
 				});
 			}
 
 			res.redirect( '/' );
 		});
+	});
+});
+
+app.get( '/activate/:code', function( req, res ) {
+	var code = req.params.code;
+
+	// could break this out into a middleware
+	if( ! code ) {
+		res.redirect( '/' );
+	}
+
+	User.findOne( { 'activateCode' : code }, function( err, user ) {
+		if( err || ! user ) {
+			req.flash( 'error', 'Invalid activation code!' );
+
+			res.redirect( '/' );
+		} else {
+			user.activated = true;
+
+			// regenerate our session and log in as the new user
+			req.session.regenerate( function() {
+				user.session = req.sessionID;
+
+				user.save( function( err ) {
+					if( err ) {
+						req.flash( 'error', 'Unable to activate user!' );
+
+						res.redirect( '/' );
+					} else {
+						req.flash( 'info', 'Successfully activated!' );
+
+						res.redirect( '/profile' );
+					}
+				});
+			});
+		}
 	});
 });
 
@@ -804,12 +791,71 @@ app.get( '/logout', function( req, res ) {
 			res.redirect( '/' );
 		}
 	});
+});
 
-/*
-	req.session.destroy();
+app.get( '/profile', loggedIn, function( req, res ) {
+	var user = req.user;
+	
+	res.render( 'profile/index', { 'user' : user } );
+});
 
-	res.redirect( '/' );
-*/
+app.post( '/profile', loggedIn, function( req, res ) {
+	var user		= req.user;
+	var fields	= req.body;
+
+	var error				= false;
+	var wasComplete	= user.isComplete;
+
+	if( ! fields.name ) {
+		req.flash( 'error', 'Please enter a valid name!' );
+
+		error = true;
+	} else {
+		user.name = fields.name;
+	}
+
+	if( [ 'Student', 'Teachers Assistant' ].indexOf( fields.affiliation ) == -1 ) {
+		req.flash( 'error', 'Please select a valid affiliation!' );
+
+		error = true;
+	} else {
+		user.affil = fields.affiliation;
+	}
+
+	if( fields.existingPassword || fields.newPassword || fields.newPasswordConfirm ) {
+		// changing password
+		if( ( ! user.hashed ) || user.authenticate( fields.existingPassword ) ) {
+			if( fields.newPassword === fields.newPasswordConfirm ) {
+				// test password strength?
+
+				user.password = fields.newPassword;
+			} else {
+				req.flash( 'error', 'Mismatch in new password!' );
+
+				error = true;
+			}
+		} else {
+			req.flash( 'error', 'Please supply your existing password.' );
+
+			error = true;
+		}
+	}
+
+	if( ! error ) {
+		user.save( function( err ) {
+			if( err ) {
+				req.flash( 'error', 'Unable to save user profile!' );
+			} else {
+				if( ( user.isComplete ) && ( ! wasComplete ) ) {
+					req.flash( 'info', 'Your account is now fully activated. Thank you for joining FinalsClub!' );
+				}
+			}
+
+			res.redirect( '/' );
+		});
+	} else {
+		res.render( 'profile/index', { 'user' : user } );
+	}
 });
 
 // socket.io server
@@ -819,178 +865,178 @@ var io = require( 'socket.io' ).listen( app );
 var Post = mongoose.model( 'Post' );
 
 io.set('authorization', function ( handshake, next ) {
-  var rawCookie = handshake.headers.cookie;
-  if (rawCookie) {
-    handshake.cookie = parseCookie(rawCookie);
-    handshake.sid = handshake.cookie['connect.sid'];
+	var rawCookie = handshake.headers.cookie;
+	if (rawCookie) {
+		handshake.cookie = parseCookie(rawCookie);
+		handshake.sid = handshake.cookie['connect.sid'];
 
-    if ( handshake.sid ) {
-      app.set( 'sessionStore' ).get( handshake.sid, function( err, session ) {
-        if( err ) {
-          handshake.user = false;
-          return next(null, true);
-        } else {
-          // bake a new session object for full r/w
-          handshake.session = new Session( handshake, session );
+		if ( handshake.sid ) {
+			app.set( 'sessionStore' ).get( handshake.sid, function( err, session ) {
+				if( err ) {
+					handshake.user = false;
+					return next(null, true);
+				} else {
+					// bake a new session object for full r/w
+					handshake.session = new Session( handshake, session );
 
-          User.findOne( { session : handshake.sid }, function( err, user ) {
-            if( user ) {
-              handshake.user = user;
-              return next(null, true);
-            } else {
-              handshake.user = false;
-              return next(null, true);
-            }
-          });
-        }
-      })
-    }
-  } else {
-    data.user = false;
-    return next(null, true);
-  }
+					User.findOne( { session : handshake.sid }, function( err, user ) {
+						if( user ) {
+							handshake.user = user;
+							return next(null, true);
+						} else {
+							handshake.user = false;
+							return next(null, true);
+						}
+					});
+				}
+			})
+		}
+	} else {
+		data.user = false;
+		return next(null, true);
+	}
 });
 
 
 var backchannel = io
-  .of( '/backchannel' )
-  .on( 'connection', function( socket ) {
+	.of( '/backchannel' )
+	.on( 'connection', function( socket ) {
 
-    socket.on('subscribe', function(lecture, cb) {
-      socket.join(lecture);
-      Post.find({'lecture': lecture}, function(err, posts) {
-        if (socket.handshake.user) {
-          cb(posts);
-        } else {
-          var posts = posts.filter(
-            function(post) {
-            if (post.public)
-              return post;
-          }
-          )
-          cb(posts)
-        }
-      });
-    });
+		socket.on('subscribe', function(lecture, cb) {
+			socket.join(lecture);
+			Post.find({'lecture': lecture}, function(err, posts) {
+				if (socket.handshake.user) {
+					cb(posts);
+				} else {
+					var posts = posts.filter(
+						function(post) {
+						if (post.public)
+							return post;
+					}
+					)
+					cb(posts)
+				}
+			});
+		});
 
-    socket.on('post', function(res) {
-      var post = new Post;
-      var _post = res.post;
-      var lecture = res.lecture;
-      post.lecture = lecture;
-      if ( _post.anonymous ) {
-        post.userid		= 0;
-        post.userName	= 'Anonymous';
-        post.userAffil = 'N/A';
-      } else {
-        post.userName = _post.userName;
-        post.userAffil = _post.userAffil;
-      }
+		socket.on('post', function(res) {
+			var post = new Post;
+			var _post = res.post;
+			var lecture = res.lecture;
+			post.lecture = lecture;
+			if ( _post.anonymous ) {
+				post.userid		= 0;
+				post.userName	= 'Anonymous';
+				post.userAffil = 'N/A';
+			} else {
+				post.userName = _post.userName;
+				post.userAffil = _post.userAffil;
+			}
 
-      post.public = _post.public;
-      post.date = new Date();
-      post.body = _post.body;
-      post.votes = [];
-      post.reports = [];
-      post.save(function(err) {
-        if (err) {
-          // XXX some error handling
-          console.log(err);
-        } else {
-          if (post.public) {
-            backchannel.in(lecture).emit('post', post);
-          } else {
-            privateEmit(lecture, 'post', post);
-          }
-        }
-      });
-    });
+			post.public = _post.public;
+			post.date = new Date();
+			post.body = _post.body;
+			post.votes = [];
+			post.reports = [];
+			post.save(function(err) {
+				if (err) {
+					// XXX some error handling
+					console.log(err);
+				} else {
+					if (post.public) {
+						backchannel.in(lecture).emit('post', post);
+					} else {
+						privateEmit(lecture, 'post', post);
+					}
+				}
+			});
+		});
 
-    socket.on('vote', function(res) {
-      var vote = res.vote;
-      var lecture = res.lecture;
-      Post.findById(vote.parentid, function( err, post ) {
-        if (!err) {
-          if (post.votes.indexOf(vote.userid) == -1) {
-            post.votes.push(vote.userid);
-            post.save(function(err) {
-              if (err) {
-                // XXX error handling
-              } else {
-                if (post.public) {
-                  backchannel.in(lecture).emit('vote', vote);
-                } else {
-                  privteEmit(lecture, 'vote', vote);
-                }
-              }
-            });
-          }
-        }
-      })
-    });
+		socket.on('vote', function(res) {
+			var vote = res.vote;
+			var lecture = res.lecture;
+			Post.findById(vote.parentid, function( err, post ) {
+				if (!err) {
+					if (post.votes.indexOf(vote.userid) == -1) {
+						post.votes.push(vote.userid);
+						post.save(function(err) {
+							if (err) {
+								// XXX error handling
+							} else {
+								if (post.public) {
+									backchannel.in(lecture).emit('vote', vote);
+								} else {
+									privteEmit(lecture, 'vote', vote);
+								}
+							}
+						});
+					}
+				}
+			})
+		});
 
-    socket.on('report', function(res) {
-      var report = res.report;
-      var lecture = res.lecture;
-      Post.findById(report.parentid, function( err, post ){
-        if (!err) {
-          if (post.reports.indexOf(report.userid) == -1) {
-            post.reports.push(report.userid);
-            post.save(function(err) {
-              if (err) {
-                // XXX error handling
-              } else {
-                if (post.public) {
-                  backchannel.in(lecture).emit('report', report);
-                } else {
-                  privateEmit(lecture, 'report', report);
-                }
-              }
-            });
-          }
-        }
-      })
-    });
+		socket.on('report', function(res) {
+			var report = res.report;
+			var lecture = res.lecture;
+			Post.findById(report.parentid, function( err, post ){
+				if (!err) {
+					if (post.reports.indexOf(report.userid) == -1) {
+						post.reports.push(report.userid);
+						post.save(function(err) {
+							if (err) {
+								// XXX error handling
+							} else {
+								if (post.public) {
+									backchannel.in(lecture).emit('report', report);
+								} else {
+									privateEmit(lecture, 'report', report);
+								}
+							}
+						});
+					}
+				}
+			})
+		});
 
-    socket.on('comment', function(res) {
-      var comment = res.comment;
-      var lecture = res.lecture;
-      console.log('anon', comment.anonymous);
-      if ( comment.anonymous ) {
-        comment.userid		= 0;
-        comment.userName	= 'Anonymous';
-        comment.userAffil = 'N/A';
-      }
-      Post.findById(comment.parentid, function( err, post ) {
-        if (!err) {
-          post.comments.push(comment);
-          post.date = new Date();
-          post.save(function(err) {
-            if (err) {
-              console.log(err);
-            } else {
-              if (post.public) {
-                backchannel.in(lecture).emit('comment', comment);
-              } else {
-                privateEmit(lecture, 'comment', comment);
-              }
-            }
-          })
-        }
-      })
-    });
+		socket.on('comment', function(res) {
+			var comment = res.comment;
+			var lecture = res.lecture;
+			console.log('anon', comment.anonymous);
+			if ( comment.anonymous ) {
+				comment.userid		= 0;
+				comment.userName	= 'Anonymous';
+				comment.userAffil = 'N/A';
+			}
+			Post.findById(comment.parentid, function( err, post ) {
+				if (!err) {
+					post.comments.push(comment);
+					post.date = new Date();
+					post.save(function(err) {
+						if (err) {
+							console.log(err);
+						} else {
+							if (post.public) {
+								backchannel.in(lecture).emit('comment', comment);
+							} else {
+								privateEmit(lecture, 'comment', comment);
+							}
+						}
+					})
+				}
+			})
+		});
 
-    function privateEmit(lecture, event, data) {
-      backchannel.clients(lecture).forEach(function(socket) {
-        if (socket.handshake.user)
-          socket.emit(event, data);
-      })
-    }
+		function privateEmit(lecture, event, data) {
+			backchannel.clients(lecture).forEach(function(socket) {
+				if (socket.handshake.user)
+					socket.emit(event, data);
+			})
+		}
 
-    socket.on('disconnect', function() {
-      //delete clients[socket.id];
-    });
-  });
+		socket.on('disconnect', function() {
+			//delete clients[socket.id];
+		});
+	});
 
 
 var counters = {};
@@ -998,82 +1044,82 @@ var counters = {};
 var counts = io
 .of( '/counts' )
 .on( 'connection', function( socket ) {
-  // pull out user/session information etc.
-  var handshake = socket.handshake;
-  var userID		= handshake.user._id;
+	// pull out user/session information etc.
+	var handshake = socket.handshake;
+	var userID		= handshake.user._id;
 
-  var watched		= [];
-  var noteID		= null;
+	var watched		= [];
+	var noteID		= null;
 
-  var timer			= null;
+	var timer			= null;
 
-  socket.on( 'join', function( note ) {
-    if (handshake.user === false) {
-      noteID			= note;
-      // XXX: replace by addToSet (once it's implemented in mongoose)
-      Note.findById( noteID, function( err, note ) {
-        if( note ) {
-          if( note.collaborators.indexOf( userID ) == -1 ) {
-            note.collaborators.push( userID );
-            note.save();
-          }
-        }
-      });
-    }
-  });
+	socket.on( 'join', function( note ) {
+		if (handshake.user === false) {
+			noteID			= note;
+			// XXX: replace by addToSet (once it's implemented in mongoose)
+			Note.findById( noteID, function( err, note ) {
+				if( note ) {
+					if( note.collaborators.indexOf( userID ) == -1 ) {
+						note.collaborators.push( userID );
+						note.save();
+					}
+				}
+			});
+		}
+	});
 
-  socket.on( 'watch', function( l ) {
-    var sendCounts = function() {
-      var send = {};
+	socket.on( 'watch', function( l ) {
+		var sendCounts = function() {
+			var send = {};
 
-      Note.find( { '_id' : { '$in' : watched } }, function( err, notes ) {
-        async.forEach(
-          notes,
-          function( note, callback ) {
-            var id		= note._id;
-            var count	= note.collaborators.length;
+			Note.find( { '_id' : { '$in' : watched } }, function( err, notes ) {
+				async.forEach(
+					notes,
+					function( note, callback ) {
+						var id		= note._id;
+						var count	= note.collaborators.length;
 
-            send[ id ] = count;
+						send[ id ] = count;
 
-            callback();
-          }, function() {
-            socket.emit( 'counts', send );
+						callback();
+					}, function() {
+						socket.emit( 'counts', send );
 
-            timer = setTimeout( sendCounts, 5000 );
-          }
-        );
-      });
-    }
+						timer = setTimeout( sendCounts, 5000 );
+					}
+				);
+			});
+		}
 
-    Note.find( { 'lecture' : l }, [ '_id' ], function( err, notes ) {
-      notes.forEach( function( note ) {
-        watched.push( note._id );
-      });
-    });
+		Note.find( { 'lecture' : l }, [ '_id' ], function( err, notes ) {
+			notes.forEach( function( note ) {
+				watched.push( note._id );
+			});
+		});
 
-    sendCounts();
-  });
+		sendCounts();
+	});
 
-  socket.on( 'disconnect', function() {
-    clearTimeout( timer );
+	socket.on( 'disconnect', function() {
+		clearTimeout( timer );
 
-    if (handshake.user === false) {
-      // XXX: replace with $pull once it's available
-      if( noteID ) {
-        Note.findById( noteID, function( err, note ) {
-          if( note ) {
-            var index = note.collaborators.indexOf( userID );
+		if (handshake.user === false) {
+			// XXX: replace with $pull once it's available
+			if( noteID ) {
+				Note.findById( noteID, function( err, note ) {
+					if( note ) {
+						var index = note.collaborators.indexOf( userID );
 
-            if( index != -1 ) {
-              note.collaborators.splice( index, 1 );
-            }
+						if( index != -1 ) {
+							note.collaborators.splice( index, 1 );
+						}
 
-            note.save();
-          }
-        });
-      }
-    }
-  });
+						note.save();
+					}
+				});
+			}
+		}
+	});
 });
 
 // Launch
@@ -1082,9 +1128,6 @@ mongoose.connect( app.set( 'dbUri' ) );
 mongoose.connection.db.serverConfig.connection.autoReconnect = true
 
 var mailer = new Mailer( app.set( 'awsAccessKey' ), app.set( 'awsSecretKey' ) );
-
-console.log( mailer );
-
 
 app.listen( 3000 );
 console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
