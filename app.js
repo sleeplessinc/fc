@@ -146,17 +146,19 @@ function loadCourse( req, res, next ) {
 
 	Course.findById( courseId, function( err, course ) {
 		if( course ) {
-			if( course.authorize( userId ) ) {
+			course.authorize( userId, function( res )  {
+				if( res ) {
 					console.log( 'authorized' );
-	
+
 					req.course = course;
 
 					next();
-			} else {
-				req.flash( 'error', 'You do not have permission to access that course.' );
+				} else {
+					req.flash( 'error', 'You do not have permission to access that course.' );
 
-				res.redirect( '/' );
-			}
+					res.redirect( '/' );
+				}
+			})
 		} else {
 			req.flash( 'error', 'Invalid course specified!' );
 
@@ -171,15 +173,17 @@ function loadLecture( req, res, next ) {
 
 	Lecture.findById( lectureId, function( err, lecture ) {
 		if( lecture ) {
-			if( lecture.authorize( userId ) ) {
-				req.lecture = lecture;
+			lecture.authorize( userId, function( res ) {
+				if( res ) {
+					req.lecture = lecture;
 
-				next();
-			} else {
-				req.flash( 'error', 'You do not have permission to access that lecture.' );
+					next();
+				} else {
+					req.flash( 'error', 'You do not have permission to access that lecture.' );
 
-				res.redirect( '/' );
-			}
+					res.redirect( '/' );
+				}
+			})
 		} else {
 			req.flash( 'error', 'Invalid lecture specified!' );
 
@@ -189,24 +193,40 @@ function loadLecture( req, res, next ) {
 }
 
 function loadNote( req, res, next ) {
-	var userId = req.user._id;
+	var userId = req.user ? req.user._id : false;
 	var noteId = req.params.id;
 
 	Note.findById( noteId, function( err, note ) {
-		if( note ) {
-			if( note.public || note.authorize( userId ) ) {
-				req.note = note;
+		if( note && userId ) {
+			note.authorize( userId, function( auth ) {
+				if( auth ) {
+					req.note = note;
 
-				next();
-			} else {
-				req.flash( 'You do not have permission to access that note.' );
+					next();
+				} else if ( note.public ) {
+					req.RO = true;
+					req.note = note;
 
-				next();
-			}
+					next();
+				} else {
+					req.flash( 'error', 'You do not have permission to access that note.' );
+
+					res.redirect( '/' );
+				}
+			})
+		} else if ( note && note.public ) {
+			req.note = note;
+			req.RO = true;
+
+			next();
+		} else if ( note && !note.public ) {
+			req.session.redirect = '/note/' + note._id;
+			req.flash( 'error', 'You must be logged in to view that note.' );
+			res.redirect( '/login' );
 		} else {
 			req.flash( 'error', 'Invalid note specified!' );
 
-			res.direct( '/' );
+			res.redirect( '/login' );
 		}
 	});
 }
@@ -519,13 +539,11 @@ app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) 
 
 // notes
 
-app.get( '/note/:id', loadNote, function( req, res ) {
+app.get( '/note/:id', public, loggedIn, loadNote, function( req, res ) {
 	var note = req.note;
 	var roID = note.roID || false;
 
 	var lectureId = note.lecture;
-
-	var sid = req.sessionID;
 
 	if (roID) {
 		processReq();
@@ -550,48 +568,34 @@ app.get( '/note/:id', loadNote, function( req, res ) {
 				res.redirect( '/' );
 			}
 			Note.find( { 'lecture' : lecture._id }, function( err, otherNotes ) {
-				User.findOne( { session : sid }, function( err, user ) {
-					if( user ) {
-						// XXX User is logged in and sees full notepad
-						req.user = user;
+				if( !req.RO ) {
+					// XXX User is logged in and sees full notepad
 
-						if ( !user.activated ) {
-							return res.redirect( '/activate' );
-						}
-
-						res.render( 'notes/index', {
-							'layout'			: 'noteLayout',
-							'host'				: serverHost,
-							'note'				: note,
-							'lecture'			: lecture,
-							'otherNotes'	: otherNotes,
-							'RO'					: false,
-							'roID'				: roID,
-							'stylesheets' : [ 'dropdown.css', 'fc.css' ],
-							'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
-						});
-					} else {
-						if (note.public) {
-							// XXX User is not logged in and sees notepad that is public
-							res.render( 'notes/public', {
-								'layout'			: 'noteLayout',
-								'host'				: serverHost,
-								'note'				: note,
-								'otherNotes'	: otherNotes,
-								'roID'				: roID,
-								'lecture'			: lecture,
-								'stylesheets' : [ 'dropdown.css', 'fc.css' ],
-								'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
-							});
-						} else {
-							// XXX User is not logged in and is redirected to login because notepad is private
-							req.session.redirect = '/note/' + note._id;
-							req.flash( 'error', 'You must be logged in to view this notepad' );
-							res.redirect( '/login' );
-						}
-					}
-				});
-			})
+					res.render( 'notes/index', {
+						'layout'			: 'noteLayout',
+						'host'				: serverHost,
+						'note'				: note,
+						'lecture'			: lecture,
+						'otherNotes'	: otherNotes,
+						'RO'					: false,
+						'roID'				: roID,
+						'stylesheets' : [ 'dropdown.css', 'fc2.css' ],
+						'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
+					});
+				} else {
+					// XXX User is not logged in and sees notepad that is public
+					res.render( 'notes/public', {
+						'layout'			: 'noteLayout',
+						'host'				: serverHost,
+						'note'				: note,
+						'otherNotes'	: otherNotes,
+						'roID'				: roID,
+						'lecture'			: lecture,
+						'stylesheets' : [ 'dropdown.css', 'fc2.css' ],
+						'javascripts'	: [ 'dropdown.js', 'counts.js', 'backchannel.js', 'jquery.tmpl.min.js' ]
+					});
+				}
+			});
 		});
 	}
 });
