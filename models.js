@@ -20,7 +20,7 @@ function salt() {
 // user
 
 var UserSchema = new Schema( {
-	email					: { type : String, index : { unique : true } },
+	email					: { type : String, require: true, index : { unique : true } },
   name          : String,
   affil         : String,
 	hashed				: String,
@@ -34,6 +34,13 @@ UserSchema.virtual( 'password' )
 	.set( function( password ) {
 		this.salt				= salt();
 		this.hashed			= this.encrypt( password );
+	});
+
+UserSchema.virtual( 'isComplete' )
+	.get( function() {
+		// build on this as the schema develops
+
+		return ( this.name && this.affil && this.hashed );
 	});
 
 UserSchema.method( 'encrypt', function( password ) {
@@ -66,7 +73,7 @@ var User = mongoose.model( 'User', UserSchema );
 // schools
 
 var SchoolSchema = new Schema( {
-	name				: String,
+	name				: { type : String, required : true },
 	description	: String,
 	url					: String,
 
@@ -84,7 +91,7 @@ var School = mongoose.model( 'School', SchoolSchema );
 // courses
 
 var CourseSchema = new Schema( {
-	name				: String,
+	name				: { type : String, required : true },
 	description	: String,
   instructor  : String,
 	// courses are tied to one school
@@ -129,8 +136,8 @@ var Course = mongoose.model( 'Course', CourseSchema );
 // lectures
 
 var LectureSchema	= new Schema( {
-	name					: String,
-	date					: Date,
+	name					: { type : String, required : true },
+	date					: { type : Date, default: Date.now },
 	live					: Boolean,
 
 	course				: ObjectId
@@ -153,7 +160,7 @@ var Lecture = mongoose.model( 'Lecture', LectureSchema );
 // notes
 
 var NoteSchema = new Schema( {
-	name					: String,
+	name					: { type : String, required : true },
 	path					: String,
   public        : Boolean,
   roID          : String,
@@ -179,22 +186,22 @@ var Note = mongoose.model( 'Note', NoteSchema );
 
 // comments
 
-var Post = new Schema({
-  date      : Date,
+var PostSchema = new Schema({
+  date      : { type : Date, default : Date.now },
   body      : String,
   votes     : Array,
   reports   : Array,
   public    : Boolean,
 
-  userid    : String,//ObjectId,
+  userid    : String, // ObjectId,
   userName  : String,
   userAffil : String,
 
   comments   : Array,
 
-  lecture   : String//ObjectId
+  lecture   : String // ObjectId
 })
 
-mongoose.model( 'Post', Post );
+mongoose.model( 'Post', PostSchema );
 
 module.exports.mongoose = mongoose;

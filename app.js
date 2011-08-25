@@ -107,21 +107,26 @@ function loggedIn( req, res, next ) {
 		if( user ) {
 			req.user = user;
 
-			log3( 'authenticated user: '+user._id+' / '+user.email+'');
+			log3( 'authenticated user: '+req.user._id+' / '+req.user.email+'');
 
-			if ( user.activated ) {
-				next();
-			} else {
-				var path = url.parse( req.url ).pathname;
-				req.session.redirect = path;
+      if( req.user.activated ) {
+				// is the user's profile complete? if not, redirect to their profile
+				if( ! req.user.isComplete ) {
+					if( url.parse( req.url ).pathname != '/profile' ) {
+						req.flash( 'info', 'Your profile is incomplete. Please complete your profile to fully activate your account.' );
 
-				if (/\/activate/.test(path)) {
-					next();
+						res.redirect( '/profile' );
+					} else {
+						next();
+					}
 				} else {
-					res.redirect( '/activate' );
+        	next();
 				}
-			}
+      } else {
+				req.flash( 'info', 'This account has not been activated. Check your email for the activation URL.' );
 
+				res.redirect( '/' );
+      }
 		} else if ( req.public ) {
 			// if public, allow through
 			next();
@@ -245,6 +250,15 @@ app.dynamicHelpers( {
 });
 
 // Routes
+
+app.get( '/', loggedIn, function( req, res ) {
+	var userId = req.user._id;
+
+	log3("get / page");
+
+	res.render( 'index' );
+});
+
 app.get( '/schools', loggedIn, function( req, res ) {
 	var userId = req.user._id;
 
@@ -275,57 +289,6 @@ app.get( '/schools', loggedIn, function( req, res ) {
 	});
 });
 
-app.get( '/', public, loggedIn, function( req, res ) {
-	log3("get / page");
-
-	res.render( 'index', {} );
-});
-
-app.get( '/activate', loggedIn, function( req, res ) {
-	if (req.user.activated) return res.redirect('/');
-	res.render( 'activate', { 'user': req.user, code: '' });
-});
-
-app.get( '/activate/:id', loggedIn, function( req, res ) {
-	var code = req.params.id;
-	res.render( 'activate', { 'user': req.user, code: code });
-});
-
-app.post( '/activate', loggedIn, function( req, res ) {
-	var user = req.user;
-	var activateCode = req.body.code;
-
-	if ( user.affil === 'Instructor' ) {
-		user.password = req.body.password;
-		user.name = req.body.name;
-		if ( user.name === '' ) {
-			req.flash('error', 'Please enter your name');
-			return req.redirect('/activate')
-		}
-	}
-
-	if (activateCode === user.activateCode) {
-		user.activated = true;
-		user.save(function( err ) {
-			if ( err ) {
-				req.flash('error', 'Invalid parameters!');
-				res.redirect('/activate');
-			} else {
-				var redirect = req.session.redirect;
-				if ( redirect === '/activate' ) {
-					redirect = '/';
-				}
-				req.flash('info', 'Account has been activated');
-				res.redirect( redirect || '/' );
-			}
-		})
-	} else {
-		req.flash('error', 'The activation code you entered was invalid');
-
-		res.redirect( '/activate' );
-	}
-});
-
 app.get( '/:id/course/new', loggedIn, function( req, res ) {
 	var schoolId = req.params.id;
 
@@ -345,45 +308,44 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
 	var course = new Course;
 	var instructorEmail = req.body.email;
 
-	if (!instructorEmail) {
-		req.flash( 'error', 'Invalid parameters!' )
-		return res.render( 'course/new' );
-	}
-	course.name		= req.body.name;
-	course.description		= req.body.description;
-	course.school	= schoolId;
-	course.instructor = instructorEmail;
+  if (!instructorEmail) {
+    req.flash( 'error', 'Invalid parameters!' )
+    return res.render( 'course/new' );
+  }
 
-	User.findOne( { 'email': instructorEmail }, function( err, user ) {
-		if ( !user ) {
-			var user					= new User;
+	course.name					= req.body.name;
+	course.description	= req.body.description;
+	course.school				= schoolId;
+  course.instructor		= instructorEmail;
 
-			var password			= hat(32);
-			var activateCode	= hat(64);
+	// find our instructor or invite them if necessary
+  User.findOne( { 'email' : instructorEmail }, function( err, user ) {
+    if ( !user ) {
+      var user          = new User;
 
-			user.email				= instructorEmail;
-			user.name					= '';
-			user.password			= password;
-			user.activated		= false;
-			user.activateCode = activateCode;
-			user.affil				= 'Instructor';
-			// XXX Put mailchimp integration here
+      var activateCode  = hat(64);
 
-			user.save(function( err ) {
-				if ( err ) {
-					req.flash( 'error', 'Invalid parameters!' )
-					res.render( 'course/new' );
-				} else {
+      user.email        = instructorEmail;
+
+      user.activated    = false;
+      user.activateCode = activateCode;
+      user.affil        = 'Instructor';
+
+      user.save(function( err ) {
+        if ( err ) {
+          req.flash( 'error', 'Invalid parameters!' )
+          res.render( 'course/new' );
+        } else {
 					var message = {
 						to					: user.email,
 
-						'subject'		: 'You have been registered as a course instructor on FinalsClub.org',
+						'subject'		: 'You have been registered as a course instructor on FinalsClub.org!',
 	
 						'template'	: 'instructorInvite',
 						'locals'		: {
-							'course'		: course,
-							'user'			: user,
-							'password'	: password
+							'course'			: course,
+							'user'				: user,
+							'serverHost'	: serverHost
 						}
 					};
 
@@ -602,20 +564,20 @@ app.get( '/note/:id', public, loggedIn, loadNote, function( req, res ) {
 
 // static pages
 
-app.get( '/about', public, loggedIn, function( req, res ) {
-	res.render( 'about' );
+app.get( '/about', function( req, res ) {
+  res.render( 'static/about' );
 });
 
-app.get( '/terms', public, loggedIn, function( req, res ) {
-	res.render( 'terms' );
+app.get( '/terms', function( req, res ) {
+  res.render( 'static/terms' );
 });
 
 app.get( '/contact', public, loggedIn, function( req, res ) {
-	res.render( 'contact' );
+	res.render( 'static/contact' );
 });
 
 app.get( '/privacy', public, loggedIn, function( req, res ) {
-	res.render( 'privacy' );
+	res.render( 'static/privacy' );
 });
 
 // authentication
@@ -634,21 +596,30 @@ app.post( '/login', function( req, res ) {
 	User.findOne( { 'email' : email }, function( err, user ) {
 		log3(err) 
 		log3(user) 
-		if( user && user.authenticate( password ) ) {
-			log3("pass ok") 
-			var sid = req.sessionID;
 
-			user.session = sid;
+		if( user ) {
+			if( ! user.activated ) {
+				req.flash( 'error', 'This account has not been activated! Check your email for the activation URL.' );
 
-			user.save( function() {
-				var redirect = req.session.redirect;
+				res.render( 'login' );
+			} else {
+				if( user.authenticate( password ) ) {
+					log3("pass ok") 
+					var sid = req.sessionID;
 
-				// login complete, remember the user's email for next time
-				req.session.email = email;
+					user.session = sid;
 
-				// redirect to root if we don't have a stashed request
-				res.redirect( redirect || '/' );
-			});
+					user.save( function() {
+						var redirect = req.session.redirect;
+	
+						// login complete, remember the user's email for next time
+						req.session.email = email;
+
+						// redirect to root if we don't have a stashed request
+						res.redirect( redirect || '/' );
+					});
+				}
+			}
 		} else {
 			log3("bad login")
 			req.flash( 'error', 'Invalid login!' );
@@ -717,18 +688,16 @@ app.post( '/register', function( req, res ) {
 	var sid = req.sessionId;
 
 	var user = new User;
-	log3("post reg ");
-	log3(user)
+  
+	user.email        = req.body.email;
+	user.password     = req.body.password;
+	user.session      = sid;
+  user.name         = req.body.name;
+  user.affil        = req.body.affil;
+  user.activated    = false;
+  user.activateCode = hat(64);
 
-	user.email				= req.body.email;
-	user.password			= req.body.password;
-	user.session			= sid;
-	user.name					= req.body.name;
-	user.affil				= req.body.affil;
-	user.activated		= false;
-	user.activateCode = hat(64);
-	log3('register '+user.email+"/"+user.password+" "+user.session)
-	log3(user)
+	log3('register '+user.email+"/"+user.password+" "+user.session) 
 
 	user.save( function( err ) {
 		var hostname = user.email.split( '@' ).pop();
@@ -740,8 +709,9 @@ app.post( '/register', function( req, res ) {
 			'subject'		: 'Welcome to FinalsClub.org!',
 
 			'template'	: 'userActivation',
-				'locals'		: {
-					'user'			: user
+			'locals'		: {
+				'user'				: user,
+				'serverHost'	: serverHost
 			}
 		};
 
@@ -771,6 +741,42 @@ app.post( '/register', function( req, res ) {
 	});
 });
 
+app.get( '/activate/:code', function( req, res ) {
+	var code = req.params.code;
+
+	// could break this out into a middleware
+	if( ! code ) {
+		res.redirect( '/' );
+	}
+
+	User.findOne( { 'activateCode' : code }, function( err, user ) {
+		if( err || ! user ) {
+			req.flash( 'error', 'Invalid activation code!' );
+
+			res.redirect( '/' );
+		} else {
+			user.activated = true;
+
+			// regenerate our session and log in as the new user
+			req.session.regenerate( function() {
+				user.session = req.sessionID;
+
+				user.save( function( err ) {
+					if( err ) {
+						req.flash( 'error', 'Unable to activate user!' );
+
+						res.redirect( '/' );
+					} else {
+						req.flash( 'info', 'Successfully activated!' );
+
+						res.redirect( '/profile' );
+					}
+				});
+			});
+		}
+	});
+});
+
 app.get( '/logout', function( req, res ) {
 	var sid = req.sessionID;
 
@@ -785,12 +791,71 @@ app.get( '/logout', function( req, res ) {
 			res.redirect( '/' );
 		}
 	});
+});
 
-/*
-	req.session.destroy();
+app.get( '/profile', loggedIn, function( req, res ) {
+	var user = req.user;
+	
+	res.render( 'profile/index', { 'user' : user } );
+});
 
-	res.redirect( '/' );
-*/
+app.post( '/profile', loggedIn, function( req, res ) {
+	var user		= req.user;
+	var fields	= req.body;
+
+	var error				= false;
+	var wasComplete	= user.isComplete;
+
+	if( ! fields.name ) {
+		req.flash( 'error', 'Please enter a valid name!' );
+
+		error = true;
+	} else {
+		user.name = fields.name;
+	}
+
+	if( [ 'Student', 'Teachers Assistant' ].indexOf( fields.affiliation ) == -1 ) {
+		req.flash( 'error', 'Please select a valid affiliation!' );
+
+		error = true;
+	} else {
+		user.affil = fields.affiliation;
+	}
+
+	if( fields.existingPassword || fields.newPassword || fields.newPasswordConfirm ) {
+		// changing password
+		if( ( ! user.hashed ) || user.authenticate( fields.existingPassword ) ) {
+			if( fields.newPassword === fields.newPasswordConfirm ) {
+				// test password strength?
+
+				user.password = fields.newPassword;
+			} else {
+				req.flash( 'error', 'Mismatch in new password!' );
+
+				error = true;
+			}
+		} else {
+			req.flash( 'error', 'Please supply your existing password.' );
+
+			error = true;
+		}
+	}
+
+	if( ! error ) {
+		user.save( function( err ) {
+			if( err ) {
+				req.flash( 'error', 'Unable to save user profile!' );
+			} else {
+				if( ( user.isComplete ) && ( ! wasComplete ) ) {
+					req.flash( 'info', 'Your account is now fully activated. Thank you for joining FinalsClub!' );
+				}
+			}
+
+			res.redirect( '/' );
+		});
+	} else {
+		res.render( 'profile/index', { 'user' : user } );
+	}
 });
 
 // socket.io server
@@ -1063,9 +1128,6 @@ mongoose.connect( app.set( 'dbUri' ) );
 mongoose.connection.db.serverConfig.connection.autoReconnect = true
 
 var mailer = new Mailer( app.set( 'awsAccessKey' ), app.set( 'awsSecretKey' ) );
-
-console.log( mailer );
-
 
 app.listen( 3000 );
 console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );

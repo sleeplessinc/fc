@@ -1,11 +1,7 @@
 Hello,
 
-A user at FinalsClub.org has indicated that you are an instructor of the course <%- course.name %>. If this is correct please go to FinalsClub.org and log in with your email and newly generated password:
+A user at FinalsClub.org has indicated that you are an instructor of the course <%- course.name %>. If this is correct please visit the following URL to get started:
 
-<%- password %>
-
-After logging in you will need to activate your account. Please enter this code when prompted:
-
-<%- user.activateCode %>
+http://<%- serverHost %>/activate/<%- user.activateCode %>
 
 Thank you!
