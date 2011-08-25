@@ -1,13 +1,17 @@
 div.content
 	div.container1
-		h1 Login
+		h1 Password Reset
 		p
 			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx-xxxx xxxx xxxx xxx x xxxxxx xxxxxxxx
 			xxxx. Xxx xxx xxxx xx xxxx xxxx xxxxxx-xxxx x xxxx xxx x xxxxxx.
 			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx xxx xxxx xxxx xxx x xxxxxx xxxxxxxx
 			xxxx.
-		form#credentials( action = '/login', method = 'POST' )
+		form#resetpw( action = '/resetpw', method = 'POST' )
 			div.area 
+				span.text
+					P To reset your password, type the full email address you use to sign in to your account and click Submit. An email will be sent to you with the new password.
+
+
 				div( class = 'row')
 					div( class = 'label')
 						label( for = 'email' ) Email
@@ -16,23 +20,10 @@ div.content
 
 				div( class = 'row')
 					div( class = 'label')
-						label( for = 'password' ) Password
-					div( class = 'field')
-						input( type = 'password', name = 'password', size='15')
-
-				div( class = 'row')
-					div( class = 'label')
 						&nbsp;
-					div( class = 'field')
+					div( class = 'field', style = 'min-width: 200px' )
 						button Submit
-						span.reglink
-							a( href = '/register' ) Create an Account
-				div( class = 'row')
-					div( class = 'label')
-						&nbsp;
-					div( class = 'field')
-						span.reglink
-							a( href = '/resetpw' ) Forgot your Password
+				
 
 script
 	$( document ).ready( function() {

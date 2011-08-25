@@ -54,6 +54,19 @@ span.reglink a {
 	font-weight: normal;
 }
 
+span.hint {
+	font-size: 80%;
+	margin-left: 2em;
+	font-weight: normal;
+}
+
+span.text p {
+}
+
+span.texterror p {
+	color: #f00;
+}
+
 table, td, tr {
 	margin: 0; 
 	padding: 0; 
@@ -82,6 +95,16 @@ td.menu a {
 	text-decoration: none;
 }
 
+div.footer {
+	font-size: 70%;
+	width: 100%;
+	text-align: center;
+}
+
+div.footer a {
+	padding: 0.5em 0.5em 0 0.5em;
+	font-weight: normal;
+}
 
 div.header {
 	background: #333;
