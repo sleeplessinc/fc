@@ -13,13 +13,13 @@
 ## sudo gem install aws-s3
 ## sudo cp cp2s3.rb /usr/bin/cp2s3
 ## exampe usage
-## cp2s3 -v -b finalsclub_db_backups -r test.txt
+## cp2s3 -v -b finalsclub.org_db_backups -r test.txt
 
 
 export AWS_ACCESS_KEY_ID=AKIAIZZIXU6UJZTHBO6A
 export AWS_SECRET_ACCESS_KEY=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
 
-bucket="finalsclub_db_backups"
+bucket="finalsclub.org_db_backups"
 curdate=`date +"%Y-%m-%d"`
 yearlydate=`date +"%Y-__-__"`
 monthlydate=`date +"____-%m-__"`
@@ -47,13 +47,13 @@ rm -rf $curdate
 
 ## rename and copy the latest dump archive up to s3, using the yeary, weekly and daily naming conventions
 mv db-dump_$curdate.tgz db-dump_$yearlydate.tgz
-cp2s3 -v -b finalsclub_db_backups/yearly -r db-dump_$yearlydate.tgz
+cp2s3 -v -b $bucket/yearly -r db-dump_$yearlydate.tgz
 
 mv db-dump_$yearlydate.tgz db-dump_$monthlydate.tgz
-cp2s3 -v -b finalsclub_db_backups/monthly -r db-dump_$monthlydate.tgz
+cp2s3 -v -b $bucket/monthly -r db-dump_$monthlydate.tgz
 
 mv db-dump_$monthlydate.tgz db-dump_$dailydate.tgz
-cp2s3 -v -b finalsclub_db_backups/daily -r db-dump_$dailydate.tgz
+cp2s3 -v -b $bucket/daily -r db-dump_$dailydate.tgz
 ## NOTE: we are keeping the last 31 daily backups on disk.
 
 ## restore previous working dir
