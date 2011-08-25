@@ -95,6 +95,16 @@ td.menu a {
 	text-decoration: none;
 }
 
+div.footer {
+	font-size: 70%;
+	width: 100%;
+	text-align: center;
+}
+
+div.footer a {
+	padding: 0.5em 0.5em 0 0.5em;
+	font-weight: normal;
+}
 
 div.header {
 	background: #333;

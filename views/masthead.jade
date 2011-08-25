@@ -8,13 +8,9 @@ div.masthead
 						img.logo(src="/images/fclogo.png")
 				td.menu
 					a(href="/") Home
-					- if ( user )
+					- if( user )
 						a(href="/schools") Courses
 						a(href="/profile") Profile
-					a(href="/about") About
-					a(href="/terms") Terms
-
-					- if( user )
 						span(class='sub_menu')
 							a( href='/logout' ) Logout
 					- else
