@@ -16,8 +16,9 @@
 ## cp2s3 -v -b finalsclub.org_db_backups -r test.txt
 
 
-export AWS_ACCESS_KEY_ID=AKIAICBRWVQYVNIOBZAQ
-export AWS_SECRET_ACCESS_KEY=R17wKW6/uF+37sHrtmPDiJH9Vjix78KdGGFFXduC
+## this scripts expects these vars to be set
+## export AWS_ACCESS_KEY_ID=<YOUR_AWS_ACCESS_KEY_ID>
+## export AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET_ACCESS_KEY>
 
 bucket="finalsclub.org_db_backups"
 curdate=`date +"%Y-%m-%d"`
