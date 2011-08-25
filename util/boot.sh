@@ -37,6 +37,7 @@ if test ! -e mongodb.tgz ; then
 	/usr/local/bin/mongod -v --rest --replSet finalsclubset &> /var/log/mongod.log &
 
 	## optional arbiter start command
+	## mkdir -p /data/arbiterdb
 	## /usr/local/bin/mongod -v --dbpath /data/arbiterdb --port 27021 --rest --replSet finalsclubset &> /var/log/mongod-arbiter.log &
 fi
 
