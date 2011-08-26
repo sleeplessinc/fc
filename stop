@@ -3,13 +3,8 @@
 ps waux | grep node | grep -v grep
 
 echo "stopping ..."
-#cd ~/fc
 kill -9 `cat /tmp/shell.pid`
 
-#cd ~/fc/bruml
-#kill -9 `cat /tmp/bruml.pid`
-
-#cd etherpad-lite/node
 kill -9 `cat /tmp/epl.pid`
 
 sleep 3

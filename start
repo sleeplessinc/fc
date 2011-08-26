@@ -3,7 +3,6 @@
 ps waux | grep node | grep -v grep
 
 echo "starting ..."
-#cd ~/fc
 node app.js &> log.txt &
 echo "$!" > /tmp/shell.pid
 
@@ -15,8 +14,4 @@ cd ../..
 
 sleep 3
 ps waux | grep node | grep -v grep
-
-#cd ~/fc/etherpad-lite
-#./bin/run.sh &> log.txt &
-#echo "$!" > /tmp/epl.pid
 
