@@ -41,6 +41,7 @@ rm -rf fc
 git clone git@github.com:sleeplessinc/fc.git
 cd fc
 git checkout dev
+git submodule init && git submodule update
 npm install
 cd etherpad-lite
 npm install

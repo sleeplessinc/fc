@@ -5,7 +5,7 @@ cd /root
 if test ! -e "reset.sh" ; then
 cat > "reset.sh" << FIN
 #!/bin/bash
-curl https://s3.amazonaws.com/finalsclub/boot.sh | sh
+curl https://s3.amazonaws.com/finalsclub.org/boot.sh | sh
 FIN
 chmod 500 reset.sh
 fi
@@ -37,6 +37,7 @@ if test ! -e mongodb.tgz ; then
 	/usr/local/bin/mongod -v --rest --replSet finalsclubset &> /var/log/mongod.log &
 
 	## optional arbiter start command
+	## mkdir -p /data/arbiterdb
 	## /usr/local/bin/mongod -v --dbpath /data/arbiterdb --port 27021 --rest --replSet finalsclubset &> /var/log/mongod-arbiter.log &
 fi
 
@@ -63,5 +64,5 @@ fi
 npm install nodemon -g
 
 
-curl https://s3.amazonaws.com/finalsclub/start.sh | sudo -u ec2-user sh
+curl https://s3.amazonaws.com/finalsclub.org/start.sh | sudo -u ec2-user sh
 
