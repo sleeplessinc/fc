@@ -19,8 +19,8 @@
 ## this scripts expects these vars to be set
 ## export AWS_ACCESS_KEY_ID=<YOUR_AWS_ACCESS_KEY_ID>
 ## export AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET_ACCESS_KEY>
-if test -e .fcbackuprc ; then
-	source .fcbackuprc
+if test -e .fcbackup.env ; then
+	source .fcbackup.env
 fi
 
 
