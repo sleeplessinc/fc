@@ -20,6 +20,7 @@ div.content
 						- else
 							|  (Private)
 						span( note-id = note._id ).count= counts[ note._id ]
+						span  Visits: #{note.visits}
 			- else
 				li None found.
 

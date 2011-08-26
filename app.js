@@ -206,7 +206,7 @@ function loadNote( req, res, next ) {
 			note.authorize( userId, function( auth ) {
 				if( auth ) {
 					req.note = note;
-
+http://help.github.com/remove-sensitive-data/
 					next();
 				} else if ( note.public ) {
 					req.RO = true;
@@ -507,6 +507,17 @@ app.get( '/note/:id', public, loggedIn, loadNote, function( req, res ) {
 
 	var lectureId = note.lecture;
 
+	if ( req.session.visited ) {
+			if ( req.session.visited.indexOf( note._id.toString() ) == -1 ) {
+					req.session.visited.push( note._id );
+					note.addVisit();
+			}
+	} else {
+		req.session.visited = [];
+		req.session.visited.push( note._id );
+		note.addVisit();
+	}
+
 	if (roID) {
 		processReq();
 	} else {
@@ -564,11 +575,11 @@ app.get( '/note/:id', public, loggedIn, loadNote, function( req, res ) {
 
 // static pages
 
-app.get( '/about', function( req, res ) {
+app.get( '/about', public, loggedIn, function( req, res ) {
   res.render( 'static/about' );
 });
 
-app.get( '/terms', function( req, res ) {
+app.get( '/terms', public, loggedIn, function( req, res ) {
   res.render( 'static/terms' );
 });
 

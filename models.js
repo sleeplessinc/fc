@@ -164,10 +164,11 @@ var NoteSchema = new Schema( {
 	path					: String,
   public        : Boolean,
   roID          : String,
+	visits				: Number,
 
 	lecture				: ObjectId,
 
-	collaborators : Array
+	collaborators : [String]
 });
 
 NoteSchema.method( 'authorize', function( user, cb ) {
@@ -182,6 +183,12 @@ NoteSchema.method( 'authorize', function( user, cb ) {
 	});
 });
 
+NoteSchema.method( 'addVisit', function() {
+	var id = this._id;
+
+	Note.collection.update( { '_id' : id }, { '$inc' : { 'visits' : 1 } } );
+});
+
 var Note = mongoose.model( 'Note', NoteSchema );
 
 // comments
@@ -189,8 +196,8 @@ var Note = mongoose.model( 'Note', NoteSchema );
 var PostSchema = new Schema({
   date      : { type : Date, default : Date.now },
   body      : String,
-  votes     : Array,
-  reports   : Array,
+  votes     : [String],
+  reports   : [String],
   public    : Boolean,
 
   userid    : String, // ObjectId,
