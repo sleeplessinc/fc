@@ -33,60 +33,13 @@ var defaultOptions = {host: '127.0.0.1',
  */
 
 var MongoStore = module.exports = function MongoStore(options, callback) {
+  var self = this;
+
   options = options || {};
   Store.call(this, options);
 
-  if(options.url) {
-    var db_url = url.parse(options.url);
-
-    if (db_url.port) {
-      options.port = db_url.port;
-    }
-    
-    if (db_url.pathname != undefined) {
-      var pathname = db_url.pathname.split('/');
-
-      if (pathname.length >= 2) {
-        options.db = pathname[1];
-      }
-      
-      if (pathname.length >= 3) {
-        options.collection = pathname[2];
-      }
-    }
-    
-    if (db_url.hostname != undefined) {
-      options.host = db_url.hostname;
-    }
-
-    if (db_url.auth != undefined) {
-      var auth = db_url.auth.split(':');
-
-      if (auth.length >= 1) {
-        options.username = auth[0];
-      }
-      
-      if (auth.length >= 2) {
-        options.password = auth[1];
-      }
-    }
-  }
-  
-  if(!options.db) {
-    throw new Error('Required MongoStore option `db` missing');
-  }
-  
-  this.db = new mongo.Db(options.db,
-                         new mongo.Server(options.host || defaultOptions.host,
-                                          options.port || defaultOptions.port, 
-                                          {
-                                            auto_reconnect: options.auto_reconnect ||
-                                              defaultOptions.auto_reconnect
-                                          }));
-  
   this.db_collection_name = options.collection || defaultOptions.collection;
 
-  var self = this;
   this._get_collection = function(callback) {
     if (self.collection) {
       callback && callback(self.collection);
@@ -109,21 +62,75 @@ var MongoStore = module.exports = function MongoStore(options, callback) {
       });    
     }
   };
-  
-  this.db.open(function(err, db) {
-    if (err) {
-      throw new Error('Error connecting to database');
-    }
 
-    if (options.username && options.password) {
-      db.authenticate(options.username, options.password, function () {
-        self._get_collection(callback);
-      });
-    } else {
-      self._get_collection(callback);
+  if( ! options.connection ) {
+    if(options.url) {
+      var db_url = url.parse(options.url);
+
+      if (db_url.port) {
+        options.port = db_url.port;
+      }
+    
+      if (db_url.pathname != undefined) {
+        var pathname = db_url.pathname.split('/');
+
+        if (pathname.length >= 2) {
+          options.db = pathname[1];
+        }
+      
+        if (pathname.length >= 3) {
+          options.collection = pathname[2];
+        }
+      }
+    
+      if (db_url.hostname != undefined) {
+        options.host = db_url.hostname;
+      }
+
+      if (db_url.auth != undefined) {
+        var auth = db_url.auth.split(':');
+
+        if (auth.length >= 1) {
+          options.username = auth[0];
+        }
+      
+        if (auth.length >= 2) {
+          options.password = auth[1];
+        }
+      }
     }
-  });
-};
+  
+    if(!options.db) {
+      throw new Error('Required MongoStore option `db` missing');
+    }
+  
+    this.db = new mongo.Db(options.db,
+                           new mongo.Server(options.host || defaultOptions.host,
+                                            options.port || defaultOptions.port, 
+                                            {
+                                              auto_reconnect: options.auto_reconnect ||
+                                                defaultOptions.auto_reconnect
+                                            }));
+
+    this.db.open(function(err, db) {
+      if (err) {
+        throw new Error('Error connecting to database');
+      }
+
+      if (options.username && options.password) {
+        db.authenticate(options.username, options.password, function () {
+          self._get_collection(callback);
+        });
+      } else {
+        self._get_collection(callback);
+      }
+    });
+  } else {
+    this.db = options.connection;
+
+    self._get_collection( callback );
+  }
+}
 
 /**
  * Inherit from `Store`.
