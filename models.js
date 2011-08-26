@@ -21,6 +21,7 @@ function salt() {
 
 var UserSchema = new Schema( {
 	email					: { type : String, require: true, index : { unique : true } },
+	school				: String,
   name          : String,
   affil         : String,
 	hashed				: String,

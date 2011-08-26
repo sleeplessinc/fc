@@ -15,8 +15,6 @@ var mongoose		= require( './models.js' ).mongoose;
 
 var Mailer			= require( './mailer.js' );
 
-var hat					= require('hat');
-
 var connect			= require( 'connect' );
 var Session			= connect.middleware.session.Session;
 var parseCookie = connect.utils.parseCookie;
@@ -34,6 +32,8 @@ var Lecture	= mongoose.model( 'Lecture' );
 var Note		= mongoose.model( 'Note' );
 
 // Configuration
+
+var ADMIN_EMAIL = 'admin@finalsclub.org';
 
 var serverHost = process.env.SERVER_HOST;
 
@@ -350,7 +350,7 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
     if ( !user ) {
       var user          = new User;
 
-      var activateCode  = hat(64);
+      var activateCode  = user.encrypt( user._id.toString() );
 
       user.email        = instructorEmail;
 
@@ -358,6 +358,10 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
       user.activateCode = activateCode;
       user.affil        = 'Instructor';
 
+			if ( ( user.email === '' ) || ( !isValidEmail( user.email ) ) ) {
+				req.flash( 'error', 'Please enter a valid email' );
+				return res.redirect( '/register' );
+			}
       user.save(function( err ) {
         if ( err ) {
           req.flash( 'error', 'Invalid parameters!' )
@@ -719,7 +723,10 @@ app.post( '/resetpw', function( req, res ) {
 
 app.get( '/register', function( req, res ) {
 	log3("get reg page");
-	res.render( 'register' );
+
+	School.find( {} ).sort( 'name', '1' ).run( function( err, schools ) {
+		res.render( 'register', { 'schools' : schools } );
+	})
 });
 
 app.post( '/register', function( req, res ) {
@@ -730,12 +737,20 @@ app.post( '/register', function( req, res ) {
 	user.email        = req.body.email;
 	user.password     = req.body.password;
 	user.session      = sid;
+	user.school				= req.body.school;
   user.name         = req.body.name;
   user.affil        = req.body.affil;
   user.activated    = false;
-  user.activateCode = hat(64);
+  user.activateCode = user.encrypt( user._id.toString() );
 
-	log3('register '+user.email+"/"+user.password+" "+user.session) 
+	if ( ( user.email === '' ) || ( !isValidEmail( user.email ) ) ) {
+		req.flash( 'error', 'Please enter a valid email' );
+		return res.redirect( '/register' );
+	}
+	if ( req.body.password.length < 8 ) {
+		req.flash( 'error', 'Please enter a password longer than eight characters' );
+		return res.redirect( '/register' );
+	}
 
 	user.save( function( err ) {
 		var hostname = user.email.split( '@' ).pop();
@@ -757,7 +772,7 @@ app.post( '/register', function( req, res ) {
 			if( err ) {
 				// XXX: Add route to resend this email
 
-				console.log( 'Error sending user activation email!' );
+				console.log( 'Error sending user activation email\nError Message: '+err.Message );
 			} else {
 				console.log( 'Successfully sent user activation email.' );
 			}
@@ -772,6 +787,26 @@ app.post( '/register', function( req, res ) {
 					log3('school.save() done');
 					req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network.' );
 				});
+			} else {
+				var message = {
+					'to'       : ADMIN_EMAIL,
+
+					'subject'  : 'FC User Registration : Email did not match any schools',
+
+					'template' : 'userNoSchool',
+					'locals'   : {
+						'user'   : user
+					}
+				}
+
+				mailer.send( message, function( err, result ) {
+					if ( err ) {
+					
+						console.log( 'Error sending user has no school email to admin\nError Message: '+err.Message );
+					} else {
+						console.log( 'Successfully sent user has no school email to admin.' );
+					}
+				})
 			}
 
 			res.redirect( '/' );
@@ -1184,7 +1219,12 @@ if( mongoSet ) {
 	mongoose.connection.db.serverConfig.connection.autoReconnect = true;
 }
 
-var mailer = new Mailer( app.set( 'awsAccessKey' ), app.set( 'awsSecretKey' ) );
+var mailer = new Mailer( awsAccessKey, awsSecretKey );
 
 app.listen( 3000 );
 console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
+
+function isValidEmail(email) {
+	var re = /[a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+	return email.match(re);
+}

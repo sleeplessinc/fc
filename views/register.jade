@@ -20,6 +20,16 @@ div.content
 					div( class = 'field')
 						input( type = 'password', name = 'password' )
 
+				- if ( schools.length > 0 )
+					div( class = 'row')
+						div( class = 'label')
+							label( for = 'school' ) School
+						div( class = 'field')
+							select( name = 'school' )
+								- each school in schools
+									option( value = '#{school.name}' ) #{ school.name }
+								option( value = 'Not Listed' ) Not Listed
+
 				div( class = 'row')
 					div( class = 'label')
 						label( for = 'name' ) Name

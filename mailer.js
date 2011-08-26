@@ -47,8 +47,8 @@ Mailer.prototype.send = function( msg, callback ) {
 	this.client.call( 'SendEmail', params, function( result ) {
 		console.log( result );
 
-		if( result[ '@' ].Error ) {
-			callback( result[ '@' ].Error );
+		if( result.Error ) {
+			callback( result.Error );
 		} else {
 			callback( null, result );
 		}
