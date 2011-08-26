@@ -737,7 +737,8 @@ app.post( '/register', function( req, res ) {
 	user.email        = req.body.email;
 	user.password     = req.body.password;
 	user.session      = sid;
-	user.school				= req.body.school;
+	user.school				= req.body.school === 'Other' ? req.body.otherSchool : req.body.school;
+	console.log(user.school)
   user.name         = req.body.name;
   user.affil        = req.body.affil;
   user.activated    = false;

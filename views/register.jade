@@ -1,3 +1,13 @@
+script.
+	$(function() {
+		$( '[name=school]' ).change(function() {
+			if ( $(this).val() === 'Other' ) {
+				$(this).parent().append('<div class="field" id="otherSchool"><input type="text" name="otherSchool"></div>');
+			} else {
+				if ( $( '#otherSchool' ) ) $( '#otherSchool' ).remove();
+			}
+		})
+	});
 div.content
 	div.container1
 		h1 Create an Account
@@ -28,7 +38,7 @@ div.content
 							select( name = 'school' )
 								- each school in schools
 									option( value = '#{school.name}' ) #{ school.name }
-								option( value = 'Not Listed' ) Not Listed
+								option( value = 'Other' ) Other
 
 				div( class = 'row')
 					div( class = 'label')
