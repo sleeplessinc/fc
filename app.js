@@ -46,63 +46,37 @@ if( serverHost ) {
 	console.log( 'No hostname defined, defaulting to os.hostname(): %s', serverHost );
 }
 
-var mongoHost	= process.env.MONGO_HOST;
-var mongoSet	= false;
-
-if( mongoHost ) {
-	if( mongoHost.split( ',' ).count > 1 ) {
-		// we're dealing with a replication set
-
-		mongoSet = mongoHost;
-	}
-} else {
-	// default
-	mongoHost = 'mongodb://localhost/fc';
-
-	console.log( 'No database information defined, using default values: %s', mongoHost );
-}
-
-var awsAccessKey = process.env.AWS_ACCESS_KEY_ID;
-var awsSecretKey = process.env.AWS_SECRET_ACCESS_KEY;
-
-if( ( ! awsAccessKey ) || ( ! awsSecretKey ) ) {
-	throw( new Error( 'Invalid or no AWS keys defined!' ) );
-}
-
 app.configure( 'development', function() { 
 	app.set( 'errorHandler', express.errorHandler( { dumpExceptions: true, showStack: true } ) );
 
-/*
 	app.set( 'dbHost', 'localhost' );
 	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
-*/
+
+	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY_ID );
+	app.set( 'awsSecretKey', process.env.AWS_SECRET_ACCESS_KEY );
 });
 
 app.configure( 'production', function() {
 	app.set( 'errorHandler', express.errorHandler() );
 
-/*
 	app.set( 'dbHost', 'localhost' );
 	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
-*/
+
+	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY_ID );
+	app.set( 'awsSecretKey', process.env.AWS_SECRET_ACCESS_KEY );
 });
 
-app.configure( function() {
+app.configure(function(){
 	app.set( 'views', __dirname + '/views' );
 	app.set( 'view engine', 'jade' );
 	app.use( express.bodyParser() );
 
 	app.use( express.cookieParser() );
 
-	db.open( mongoSet || mongoHost, function( err, connection ) {
-		if( err ) {
-			throw( err );
-		} else {
-			app.set( 'sessionStore', new mongoStore( {
-				'connection' : connection
-			}));
-		}
-	});
+	// sessions
+	app.set( 'sessionStore', new mongoStore( {
+		'url' : app.set( 'dbUri' )
+	}));
 
 	app.use( express.session( {
 		'secret'	: 'finalsclub',
@@ -553,7 +527,7 @@ app.get( '/note/:id', public, loggedIn, loadNote, function( req, res ) {
 	if (roID) {
 		processReq();
 	} else {
-		db.open( mongoSet || mongoHost, 'etherpad', 'etherpad', function( err, epl ) {
+		db.open('mongodb://' + app.set( 'dbHost' ) + '/etherpad/etherpad', function( err, epl ) {
 			epl.findOne( { key: 'pad2readonly:' + note._id }, function(err, record) {
 				if ( record ) {
 					roID = record.value.replace(/"/g, '');
@@ -1229,27 +1203,8 @@ var counts = io
 
 // Launch
 
-if( mongoSet ) {
-	console.log( 'Connecting to Mongo replica set.' );
-
-	mongoose.connectSet( mongoSet, function( err ) {
-		if( err ) {
-			throw( err );
-		}
-	});;
-
-	mongoose.connection.db.serverConfig.connection.autoReconnect = true;
-} else {
-	console.log( 'Connecting to Mongo instance.' );
-
-	mongoose.connect( mongoHost, function( err ) {
-		if( err ) {
-			throw( err );
-		}
-	});
-
-	mongoose.connection.db.serverConfig.connection.autoReconnect = true;
-}
+mongoose.connect( app.set( 'dbUri' ) );
+mongoose.connection.db.serverConfig.connection.autoReconnect = true
 
 var mailer = new Mailer( awsAccessKey, awsSecretKey );
 
