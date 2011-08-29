@@ -33,6 +33,7 @@ curdate=`date +"%Y-%m-%d"`
 yearlydate=`date +"%Y-__-__"`
 monthlydate=`date +"____-%m-__"`
 dailydate=`date +"____-__-%d"`
+mongodump=/usr/local/bin/mongodump
 
 bakdir=db-backups/$curdate
 
@@ -43,7 +44,7 @@ mkdir -p $bakdir
 cd $bakdir
 
 ## do the db dump into the temp date dir
-mongodump --host localhost
+$mongodump --host localhost
 
 ## create an archive from the dump dir
 cd ../
