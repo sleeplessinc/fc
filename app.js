@@ -49,7 +49,7 @@ if( serverHost ) {
 app.configure( 'development', function() { 
 	app.set( 'errorHandler', express.errorHandler( { dumpExceptions: true, showStack: true } ) );
 
-	app.set( 'dbHost', 'localhost' );
+	app.set( 'dbHost', process.env.MONGO_HOST || 'localhost' );
 	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
 
 	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY_ID );
@@ -59,7 +59,7 @@ app.configure( 'development', function() {
 app.configure( 'production', function() {
 	app.set( 'errorHandler', express.errorHandler() );
 
-	app.set( 'dbHost', 'localhost' );
+	app.set( 'dbHost', process.env.MONGO_HOST || 'localhost' );
 	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
 
 	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY_ID );
