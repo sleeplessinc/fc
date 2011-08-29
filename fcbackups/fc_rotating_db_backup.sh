@@ -16,6 +16,10 @@
 ## cp2s3 -v -b finalsclub.org_db_backups -r test.txt
 
 
+## save the current working dir
+pushd .
+cd ~/fc/fcbackups
+
 ## this scripts expects these vars to be set
 ## export AWS_ACCESS_KEY_ID=<YOUR_AWS_ACCESS_KEY_ID>
 ## export AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET_ACCESS_KEY>
@@ -33,8 +37,6 @@ dailydate=`date +"____-__-%d"`
 bakdir=db-backups/$curdate
 
 
-## save the current working dir
-pushd .
 
 ## create temp backup/dump dir
 mkdir -p $bakdir 
