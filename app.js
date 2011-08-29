@@ -14,6 +14,7 @@ var db					= require( './db.js' );
 var mongoose		= require( './models.js' ).mongoose;
 
 var Mailer			= require( './mailer.js' );
+var hat					= require('hat');
 
 var connect			= require( 'connect' );
 var Session			= connect.middleware.session.Session;
@@ -675,6 +676,10 @@ app.get( '/resetpw', function( req, res ) {
 	log3("get resetpw page");
 	res.render( 'resetpw' );
 });
+app.get( '/resetpw/:id', function( req, res ) {
+	var resetPassCode = req.params.id
+	res.render( 'resetpw', { 'verify': true, 'resetPassCode' : resetPassCode } );
+});
 
 app.post( '/resetpw', function( req, res ) {
 	log3("post resetpw");
@@ -684,8 +689,10 @@ app.post( '/resetpw', function( req, res ) {
 	User.findOne( { 'email' : email }, function( err, user ) {
 		if( user ) {
 
-			var plaintext = user.genRandomPassword();
-			user.password = plaintext;		
+			var resetPassCode = hat(64);
+			user.setResetPassCode(resetPassCode);
+
+			var resetPassUrl = 'http://' + serverHost + ((app.address().port != 80)? ':'+app.address().port: '') + '/resetpw/' + resetPassCode;
 
 			user.save( function( err ) {
 				log3('save '+user.email);
@@ -697,7 +704,8 @@ app.post( '/resetpw', function( req, res ) {
 
 					'template'	: 'userPasswordReset',
 						'locals'		: {
-							'plaintext'			: plaintext
+							'resetPassCode'		: resetPassCode,
+							'resetPassUrl'		: resetPassUrl
 					}
 				};
 
@@ -716,6 +724,29 @@ app.post( '/resetpw', function( req, res ) {
 			});			
 		} else {
 			res.render( 'resetpw-error', { 'email' : email } );
+		}
+	});
+});
+app.post( '/resetpw/:id', function( req, res ) {
+	log3("post resetpw.code");
+	var resetPassCode = req.params.id
+	var email = req.body.email
+	var pass1 = req.body.pass1
+	var pass2 = req.body.pass2
+
+	User.findOne( { 'email' : email }, function( err, user ) {
+		var valid = false;
+		if( user ) {
+			var valid = user.resetPassword(resetPassCode, pass1, pass2);
+			if (valid) {
+				user.save( function( err ) {
+					res.render( 'resetpw-success', { 'verify' : true, 'email' : email, 'resetPassCode' : resetPassCode } );		
+				});			
+			}
+		} 
+
+		if (!valid) {
+			res.render( 'resetpw-error', { 'verify' : true, 'email' : email } );
 		}
 	});
 });
