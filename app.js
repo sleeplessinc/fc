@@ -1206,7 +1206,7 @@ var counts = io
 mongoose.connect( app.set( 'dbUri' ) );
 mongoose.connection.db.serverConfig.connection.autoReconnect = true
 
-var mailer = new Mailer( awsAccessKey, awsSecretKey );
+var mailer = new Mailer( app.set('awsAccessKey'), app.set('awsSecretKey') );
 
 app.listen( 3000 );
 console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
