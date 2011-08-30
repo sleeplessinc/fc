@@ -8,8 +8,9 @@ div.masthead
 				td.menu
 					a(href="/") Home
 					a(href="/press") Press
-					- if( user )
-						a(href="/schools") Courses
+					a(href="/schools") Courses
+
+					- if( user && user.loggedIn )
 						a(href="/profile") Profile
 						span(class='sub_menu')
 							a( href='/logout' ) Logout

@@ -24,6 +24,7 @@ div.content
 			- else
 				li None found.
 
-		div
-			span(class='sub_menu')
-				a( href = '/lecture/#{ lecture._id }/notes/new' ) New Note Pad
+		- if ( lecture.authorized )
+			div
+				span(class='sub_menu')
+					a( href = '/lecture/#{ lecture._id }/notes/new' ) New Note Pad

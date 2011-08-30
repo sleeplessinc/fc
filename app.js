@@ -106,16 +106,29 @@ app.configure(function(){
 // Middleware
 
 function loggedIn( req, res, next ) {
+	if( req.user ) {
+		next();
+	} else {
+		req.flash( 'error', 'You must be logged in to access that feature!' );
+
+		res.redirect( '/' );
+	}
+}
+
+function loadUser( req, res, next ) {
 	var sid = req.sessionID;
-	log3("logged in ...")
 
 	console.log( 'got request from session ID: %s', sid );
 
 	User.findOne( { session : sid }, function( err, user ) {
+
 		log3(err);
 		log3(user);
+
 		if( user ) {
 			req.user = user;
+
+			req.user.loggedIn = true;
 
 			log3( 'authenticated user: '+req.user._id+' / '+req.user.email+'');
 
@@ -137,23 +150,37 @@ function loggedIn( req, res, next ) {
 
 				res.redirect( '/' );
       }
-		} else if ( req.public ) {
-			// if public, allow through
-			next();
 		} else {
 			// stash the original request so we can redirect
 			var path = url.parse( req.url ).pathname;
 			req.session.redirect = path;
 
-			res.redirect( '/login' );
+			req.user = {};
+
+			next();
 		}
 	});
 }
 
-function public( req, res, next ) {
-	req.public = true;
+function loadSchool( req, res, next ) {
+	var userId		= req.user._id;
+	var schoolId	= req.params.id;
 
-	next();
+	School.findById( schoolId, function( err, school ) {
+		if( school ) {
+			req.school = school;
+
+			school.authorize( userId, function( authorized ) {
+				req.school.authorized = authorized;
+
+				next();
+			});
+		} else {
+			req.flash( 'error', 'Invalid school specified!' );
+
+			res.redirect( '/' );
+		}
+	});
 }
 
 function loadCourse( req, res, next ) {
@@ -162,19 +189,13 @@ function loadCourse( req, res, next ) {
 
 	Course.findById( courseId, function( err, course ) {
 		if( course ) {
-			course.authorize( userId, function( res )  {
-				if( res ) {
-					console.log( 'authorized' );
+			req.course = course;
 
-					req.course = course;
+			course.authorize( userId, function( authorized )  {
+				req.course.authorized = authorized;
 
-					next();
-				} else {
-					req.flash( 'error', 'You do not have permission to access that course.' );
-
-					res.redirect( '/' );
-				}
-			})
+				next();
+			});
 		} else {
 			req.flash( 'error', 'Invalid course specified!' );
 
@@ -189,17 +210,13 @@ function loadLecture( req, res, next ) {
 
 	Lecture.findById( lectureId, function( err, lecture ) {
 		if( lecture ) {
-			lecture.authorize( userId, function( res ) {
-				if( res ) {
-					req.lecture = lecture;
+			req.lecture = lecture;
 
-					next();
-				} else {
-					req.flash( 'error', 'You do not have permission to access that lecture.' );
+			lecture.authorize( userId, function( authorized ) {
+				req.lecture.authorized = authorized;
 
-					res.redirect( '/' );
-				}
-			})
+				next();
+			});
 		} else {
 			req.flash( 'error', 'Invalid lecture specified!' );
 
@@ -217,7 +234,7 @@ function loadNote( req, res, next ) {
 			note.authorize( userId, function( auth ) {
 				if( auth ) {
 					req.note = note;
-http://help.github.com/remove-sensitive-data/
+
 					next();
 				} else if ( note.public ) {
 					req.RO = true;
@@ -262,21 +279,19 @@ app.dynamicHelpers( {
 
 // Routes
 
-app.get( '/', loggedIn, function( req, res ) {
-	var userId = req.user._id;
-
+app.get( '/', loadUser, function( req, res ) {
 	log3("get / page");
 
 	res.render( 'index' );
 });
 
-app.get( '/schools', loggedIn, function( req, res ) {
+app.get( '/schools', loadUser, function( req, res ) {
 	var userId = req.user._id;
 
 	log3("get /schools page");
 
 	// mongoose's documentation on sort is extremely poor, tread carefully
-	School.find( { 'users' : userId } ).sort( 'name', '1' ).run( function( err, schools ) {
+	School.find( {} ).sort( 'name', '1' ).run( function( err, schools ) {
 		if( schools ) {
 			async.forEach(
 				schools,
@@ -300,24 +315,24 @@ app.get( '/schools', loggedIn, function( req, res ) {
 	});
 });
 
-app.get( '/:id/course/new', loggedIn, function( req, res ) {
-	var schoolId = req.params.id;
+app.get( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
+	var school = req.school;
 
-	School.findById( schoolId, function( err, school ) {
-		if( school ) {
-			res.render( 'course/new', { 'school': school } );
-		} else {
-			req.flash( 'error', 'Invalid note specified!' );
+	if( ( ! school ) || ( ! school.authorized ) ) {
+		res.redirect( '/schools' );
+	}
 
-			res.direct( '/' );
-		}
-	})
+	res.render( 'course/new', { 'school': school } );
 });
 
-app.post( '/:id/course/new', loggedIn, function( req, res ) {
-	var schoolId	= req.params.id;
+app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
+	var school = req.school;
 	var course = new Course;
 	var instructorEmail = req.body.email;
+
+	if( ( ! school ) || ( ! school.authorized ) ) {
+		res.redirect( '/schools' );
+	}
 
   if (!instructorEmail) {
     req.flash( 'error', 'Invalid parameters!' )
@@ -326,7 +341,7 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
 
 	course.name					= req.body.name;
 	course.description	= req.body.description;
-	course.school				= schoolId;
+	course.school				= school._id;
   course.instructor		= instructorEmail;
 
 	// find our instructor or invite them if necessary
@@ -404,7 +419,7 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
 	})
 });
 
-app.get( '/course/:id', loggedIn, loadCourse, function( req, res ) {
+app.get( '/course/:id', loadUser, loadCourse, function( req, res ) {
 	var userId = req.user._id;
 	var course = req.course;
 
@@ -418,7 +433,7 @@ app.get( '/course/:id', loggedIn, loadCourse, function( req, res ) {
 });
 
 // subscribe and unsubscribe to course networks
-app.get( '/course/:id/subscribe', loggedIn, loadCourse, function( req, res ) {
+app.get( '/course/:id/subscribe', loadUser, loadCourse, function( req, res ) {
 	var course = req.course;
 	var userId = req.user._id;
 
@@ -431,7 +446,7 @@ app.get( '/course/:id/subscribe', loggedIn, loadCourse, function( req, res ) {
 	});
 });
 
-app.get( '/course/:id/unsubscribe', loggedIn, loadCourse, function( req, res ) {
+app.get( '/course/:id/unsubscribe', loadUser, loadCourse, function( req, res ) {
 	var course = req.course;
 	var userId = req.user._id;
 
@@ -444,15 +459,30 @@ app.get( '/course/:id/unsubscribe', loggedIn, loadCourse, function( req, res ) {
 	});
 });
 
-app.get( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) {
-	var lecture = {};
+app.get( '/course/:id/lecture/new', loadUser, loadCourse, function( req, res ) {
+	var courseId	= req.params.id;
+	var course		= req.course;
+	var lecture		= {};
+
+	if( ( ! course ) || ( ! course.authorized ) ) {
+		res.redirect( '/course/' + courseId );
+
+		return;
+	}
 
 	res.render( 'lecture/new', { 'lecture' : lecture } );
 });
 
-app.post( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) {
-	var course	= req.course;
-	var lecture = new Lecture;
+app.post( '/course/:id/lecture/new', loadUser, loadCourse, function( req, res ) {
+	var courseId	= req.params.id;
+	var course		= req.course;
+	var lecture		= new Lecture;
+
+	if( ( ! course ) || ( ! course.authorized ) ) {
+		res.redirect( '/course/' + courseId );
+
+		return;
+	}
 
 	lecture.name		= req.body.name;
 	lecture.date		= req.body.date;
@@ -472,7 +502,7 @@ app.post( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) 
 
 // lecture
 
-app.get( '/lecture/:id', loggedIn, loadLecture, function( req, res ) {
+app.get( '/lecture/:id', loadUser, loadLecture, function( req, res ) {
 	var lecture	= req.lecture;
 
 	// pull out our notes
@@ -487,14 +517,30 @@ app.get( '/lecture/:id', loggedIn, loadLecture, function( req, res ) {
 	});
 });
 
-app.get( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) {
-	var note = {};
+app.get( '/lecture/:id/notes/new', loadUser, loadLecture, function( req, res ) {
+	var lectureId	= req.params.id;
+	var lecture		= req.lecture;
+	var note			= {};
+
+	if( ( ! lecture ) || ( ! lecture.authorized ) ) {
+		res.redirect( '/lecture/' + lectureId );
+
+		return;
+	}
 
 	res.render( 'notes/new', { 'note' : note } );
 });
 
-app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) {
-	var lecture = req.lecture;
+app.post( '/lecture/:id/notes/new', loadUser, loadLecture, function( req, res ) {
+	var lectureId	= req.params.id;
+	var lecture		= req.lecture;
+
+	if( ( ! lecture ) || ( ! lecture.authorized ) ) {
+		res.redirect( '/lecture/' + lectureId );
+
+		return;
+	}
+
 	var note		= new Note;
 
 	note.name			= req.body.name;
@@ -516,7 +562,7 @@ app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) 
 
 // notes
 
-app.get( '/note/:id', public, loggedIn, loadNote, function( req, res ) {
+app.get( '/note/:id', loadUser, loadNote, function( req, res ) {
 	var note = req.note;
 	var roID = note.roID || false;
 
@@ -590,23 +636,23 @@ app.get( '/note/:id', public, loggedIn, loadNote, function( req, res ) {
 
 // static pages
 
-app.get( '/about', public, loggedIn, function( req, res ) {
+app.get( '/about', loadUser, function( req, res ) {
   res.render( 'static/about' );
 });
 
-app.get( '/press', public, loggedIn, function( req, res ) {
+app.get( '/press', loadUser, function( req, res ) {
   res.render( 'static/press' );
 });
 
-app.get( '/terms', public, loggedIn, function( req, res ) {
+app.get( '/terms', loadUser, function( req, res ) {
   res.render( 'static/terms' );
 });
 
-app.get( '/contact', public, loggedIn, function( req, res ) {
+app.get( '/contact', loadUser, function( req, res ) {
 	res.render( 'static/contact' );
 });
 
-app.get( '/privacy', public, loggedIn, function( req, res ) {
+app.get( '/privacy', loadUser, function( req, res ) {
 	res.render( 'static/privacy' );
 });
 
@@ -885,13 +931,13 @@ app.get( '/logout', function( req, res ) {
 	});
 });
 
-app.get( '/profile', loggedIn, function( req, res ) {
+app.get( '/profile', loadUser, loggedIn, function( req, res ) {
 	var user = req.user;
 	
 	res.render( 'profile/index', { 'user' : user } );
 });
 
-app.post( '/profile', loggedIn, function( req, res ) {
+app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 	var user		= req.user;
 	var fields	= req.body;
 
