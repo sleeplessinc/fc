@@ -1,14 +1,9 @@
 div.content
 	div.container1
 		h1 Password Reset
-		p
-			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx-xxxx xxxx xxxx xxx x xxxxxx xxxxxxxx
-			xxxx. Xxx xxx xxxx xx xxxx xxxx xxxxxx-xxxx x xxxx xxx x xxxxxx.
-			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx xxx xxxx xxxx xxx x xxxxxx xxxxxxxx
-			xxxx.
-
 		- url = "/resetpw";
 		- if ( typeof(verify) != 'undefined' && verify ) { url += "/" + resetPassCode; }
+
 
 		form#resetpw( action = '#{ url }', method = 'POST' )
 			div.area 
@@ -16,7 +11,7 @@ div.content
 				- if ( typeof(verify) != 'undefined' && verify )  	
 					P To verify and reset your password, type the full email address and your new password twice, then click submit. 
 				- else 
-					P To reset your password, type the full email address you use to sign in to your account and click Submit. An email will be sent to you with the new password.
+					P To reset your password, enter your email address click Submit. An email will be sent to you with the new password.
 
 				div( class = 'row')
 					div( class = 'label')

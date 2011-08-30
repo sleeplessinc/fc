@@ -31,8 +31,12 @@ div.navbar {
 div.content {
 	margin: 0 5% 0.1em 5%;
 	padding: 1.5em 3%;
-	background: #456;
-	min-height: 40em;
+	background: #fff;
+	min-height: 30em;
+	border-left: solid 1px #ccc;
+	border-right: solid 1px #ccc;
+	zbackground-image: -webkit-gradient(linear, left top, right bottom, from(#fff), to(#eef));
+	zbackground-image: -moz-linear-gradient(#fff, #eef)
 }
 
 div.contenthome {
@@ -67,6 +71,10 @@ span.hint {
 }
 
 span.text p {
+}
+
+span.texterror p {
+	color: #f00;
 }
 
 span.texterror p {
@@ -151,10 +159,10 @@ div#wrapper div.header div.buttons {
 
 div.container1 {
 	background: #eee;
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#eeeeee));
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#f8f8ff), to(#eef));
 	background-image: -moz-linear-gradient(#ffffff, #eeeeee)
-	-moz-border-radius: 0.15em;
-	-webkit-border-radius: 0.15em;
+	-moz-border-radius: 0.20em;
+	-webkit-border-radius: 0.20em;
 	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 	padding: 0.8em 3% 2em 3%;
@@ -162,11 +170,11 @@ div.container1 {
 }
 
 div.area {
-	-moz-border-radius: 0.15em;
-	-webkit-border-radius: 0.15em;
+	-moz-border-radius: 0.20em;
+	-webkit-border-radius: 0.20em;
 	border: solid 1px #888;
-	margin: 1%; 
-	padding: 1%;
+	margin: 2%; 
+	padding: 0.5em 2%;
 }
 
 div.content h1 {
@@ -510,7 +518,7 @@ ul{
 	display: table-row;
 }
 .row .label {
-	width: 60%;
+	width: 40%;
 	text-align: right;
 	display: table-cell;
 	padding: 0.8em 3% 0.8em 0%;
@@ -560,6 +568,7 @@ div.school h2 {
 #messages {
 	background: #900;
 	padding: 0.5em;
+	margin: 0em 5%;
 }
 .error {
 	color: #fff;
@@ -625,6 +634,17 @@ div.postContainer div.privacy {
 	font-size: 75%;
 	color: #eef;
 	text-align: center;
+}
+
+
+table.contact td {
+	padding: 0.4em 1em;
+	vertical-align: top;
+}
+
+table.contact td:first-child {
+	text-align: right;
+	font-weight: bold;
 }
 
 

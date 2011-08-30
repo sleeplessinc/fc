@@ -40,8 +40,8 @@ div#wrapper div.header div.buttons {
 div.content {
 	padding: 1em 3%;
 	background: #653;
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#653), to(#874));
-	background-image: -moz-linear-gradient(#653, #874)
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#653), to(#fff));
+	background-image: -moz-linear-gradient(#653, #fff)
 }
 
 div.container1 {
@@ -522,3 +522,5 @@ div.postContainer div.privacy {
 	color: #eef;
 	text-align: center;
 }
+
+
