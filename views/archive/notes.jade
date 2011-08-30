@@ -9,6 +9,6 @@ div.content
 		- if ( notes.length > 0 )
 			- each note in notes
 				li
-					a( href = '/old/note/#{ note.id }' ) #{ note.topic || note.id }
+					a( href = '/archive/note/#{ note.id }' ) #{ note.topic || note.id }
 		- else
 			li No notes found.
