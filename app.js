@@ -982,7 +982,7 @@ function loadOldCourse( req, res, next ) {
 			function( err, results ) {
 				if ( err ) {
 					req.flash( 'err', 'Course with this ID does not exist' )
-					res.redirect( '/old/courses' );
+					res.redirect( '/archive/courses' );
 				} else {
 					req.course = results[0];
 					next()
@@ -994,38 +994,38 @@ function loadOldCourse( req, res, next ) {
 	} 
 }
 
-app.get( '/old/courses', public, loggedIn, function( req, res ) {
+app.get( '/archive/courses', public, loggedIn, function( req, res ) {
 	sqlClient.query(
 		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id)', function( err, results ) {
 			if ( err ) {
-				req.flash( 'error', 'There are no static courses' );
+				req.flash( 'error', 'There are no archived courses' );
 				res.redirect( '/' );
 			} else {
-				res.render( 'old/index', { 'courses' : results } );
+				res.render( 'archive/index', { 'courses' : results } );
 			}
 		}
 	)
 })
 
-app.get( '/old/course/:id', public, loggedIn, checkId, loadOldCourse, function( req, res ) {
+app.get( '/archive/course/:id', public, loggedIn, checkId, loadOldCourse, function( req, res ) {
 	sqlClient.query(
 		'SELECT id, topic FROM notes WHERE course_id='+req.id, function( err, results ) {
 			if ( err ) {
-				req.flash( 'error', 'There are no static courses' );
+				req.flash( 'error', 'There are no notes in this course' );
 				res.redirect( '/' );
 			} else {
-				res.render( 'old/notes', { 'notes' : results, 'course' : req.course } );
+				res.render( 'archive/notes', { 'notes' : results, 'course' : req.course } );
 			}
 		}
 	)
 })
 
-app.get( '/old/note/:id', public, loggedIn, checkId, function( req, res ) {
+app.get( '/archive/note/:id', public, loggedIn, checkId, function( req, res ) {
 	sqlClient.query(
 		'SELECT id, topic, text, course_id FROM notes WHERE id='+req.id, function( err, results ) {
 			if ( err ) {
 				req.flash( 'error', 'This is not a valid id for a note' );
-				res.redirect( '/old/courses' );
+				res.redirect( '/archive/courses' );
 			} else {
 				var note = results[0];
 				sqlClient.query(
@@ -1033,10 +1033,10 @@ app.get( '/old/note/:id', public, loggedIn, checkId, function( req, res ) {
 					function( err, results ) {
 						if ( err ) {
 							req.flash( 'error', 'There is no course for this note' )
-							res.redirect( '/old/courses' )
+							res.redirect( '/archive/courses' )
 						} else {
 							var course = results[0];
-							res.render( 'old/note', { 'layout' : 'notesLayout', 'note' : note, 'course': course } );
+							res.render( 'archive/note', { 'layout' : 'notesLayout', 'note' : note, 'course': course } );
 						}
 					}
 				)
