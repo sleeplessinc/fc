@@ -6,6 +6,9 @@ p { color: #444; }
 div.logbar {
 	margin: 0 5% 0.1em 5%;
 	background: #456;
+
+	width: 960px;
+	margin: 0 auto;
 }
 
 div.navbar {
@@ -37,6 +40,9 @@ div.contenthome {
 	min-height: 40em;
 	overflow: hidden;
 	background: url("/images/home.jpg") no-repeat;
+
+	width: 960px;
+	margin: 0 auto;
 }
 
 div.contenthome div.tagline {
