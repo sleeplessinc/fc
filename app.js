@@ -15,6 +15,7 @@ var mongoose		= require( './models.js' ).mongoose;
 var mysql				= require( 'mysql' );
 
 var Mailer			= require( './mailer.js' );
+var hat					= require('hat');
 
 var connect			= require( 'connect' );
 var Session			= connect.middleware.session.Session;
@@ -44,6 +45,7 @@ var sqlClient = mysql.createClient({
 var ADMIN_EMAIL = 'admin@finalsclub.org';
 
 var serverHost = process.env.SERVER_HOST;
+var serverPort = process.env.SERVER_PORT;
 
 if( serverHost ) {
 	console.log( 'Using server hostname defined in environment: %s', serverHost );
@@ -53,63 +55,45 @@ if( serverHost ) {
 	console.log( 'No hostname defined, defaulting to os.hostname(): %s', serverHost );
 }
 
-var mongoHost	= process.env.MONGO_HOST;
-var mongoSet	= false;
-
-if( mongoHost ) {
-	if( mongoHost.split( ',' ).count > 1 ) {
-		// we're dealing with a replication set
-
-		mongoSet = mongoHost;
-	}
-} else {
-	// default
-	mongoHost = 'mongodb://localhost/fc';
-
-	console.log( 'No database information defined, using default values: %s', mongoHost );
-}
-
-var awsAccessKey = process.env.AWS_ACCESS_KEY_ID;
-var awsSecretKey = process.env.AWS_SECRET_ACCESS_KEY;
-
-if( ( ! awsAccessKey ) || ( ! awsSecretKey ) ) {
-	throw( new Error( 'Invalid or no AWS keys defined!' ) );
-}
-
 app.configure( 'development', function() { 
 	app.set( 'errorHandler', express.errorHandler( { dumpExceptions: true, showStack: true } ) );
 
-/*
-	app.set( 'dbHost', 'localhost' );
+	app.set( 'dbHost', process.env.MONGO_HOST || 'localhost' );
 	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
-*/
+
+	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY_ID );
+	app.set( 'awsSecretKey', process.env.AWS_SECRET_ACCESS_KEY );
+
+	if ( !serverPort ) {
+		serverPort = 3000;
+	}	 
 });
 
 app.configure( 'production', function() {
 	app.set( 'errorHandler', express.errorHandler() );
 
-/*
-	app.set( 'dbHost', 'localhost' );
+	app.set( 'dbHost', process.env.MONGO_HOST || 'localhost' );
 	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
-*/
+
+	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY_ID );
+	app.set( 'awsSecretKey', process.env.AWS_SECRET_ACCESS_KEY );
+
+	if ( !serverPort ) {
+		serverPort = 80;
+	}	
 });
 
-app.configure( function() {
+app.configure(function(){
 	app.set( 'views', __dirname + '/views' );
 	app.set( 'view engine', 'jade' );
 	app.use( express.bodyParser() );
 
 	app.use( express.cookieParser() );
 
-	db.open( mongoSet || mongoHost, function( err, connection ) {
-		if( err ) {
-			throw( err );
-		} else {
-			app.set( 'sessionStore', new mongoStore( {
-				'connection' : connection
-			}));
-		}
-	});
+	// sessions
+	app.set( 'sessionStore', new mongoStore( {
+		'url' : app.set( 'dbUri' )
+	}));
 
 	app.use( express.session( {
 		'secret'	: 'finalsclub',
@@ -560,7 +544,7 @@ app.get( '/note/:id', public, loggedIn, loadNote, function( req, res ) {
 	if (roID) {
 		processReq();
 	} else {
-		db.open( mongoSet || mongoHost, 'etherpad', 'etherpad', function( err, epl ) {
+		db.open('mongodb://' + app.set( 'dbHost' ) + '/etherpad/etherpad', function( err, epl ) {
 			epl.findOne( { key: 'pad2readonly:' + note._id }, function(err, record) {
 				if ( record ) {
 					roID = record.value.replace(/"/g, '');
@@ -683,6 +667,10 @@ app.get( '/resetpw', function( req, res ) {
 	log3("get resetpw page");
 	res.render( 'resetpw' );
 });
+app.get( '/resetpw/:id', function( req, res ) {
+	var resetPassCode = req.params.id
+	res.render( 'resetpw', { 'verify': true, 'resetPassCode' : resetPassCode } );
+});
 
 app.post( '/resetpw', function( req, res ) {
 	log3("post resetpw");
@@ -692,8 +680,10 @@ app.post( '/resetpw', function( req, res ) {
 	User.findOne( { 'email' : email }, function( err, user ) {
 		if( user ) {
 
-			var plaintext = user.genRandomPassword();
-			user.password = plaintext;		
+			var resetPassCode = hat(64);
+			user.setResetPassCode(resetPassCode);
+
+			var resetPassUrl = 'http://' + serverHost + ((app.address().port != 80)? ':'+app.address().port: '') + '/resetpw/' + resetPassCode;
 
 			user.save( function( err ) {
 				log3('save '+user.email);
@@ -705,7 +695,8 @@ app.post( '/resetpw', function( req, res ) {
 
 					'template'	: 'userPasswordReset',
 						'locals'		: {
-							'plaintext'			: plaintext
+							'resetPassCode'		: resetPassCode,
+							'resetPassUrl'		: resetPassUrl
 					}
 				};
 
@@ -724,6 +715,29 @@ app.post( '/resetpw', function( req, res ) {
 			});			
 		} else {
 			res.render( 'resetpw-error', { 'email' : email } );
+		}
+	});
+});
+app.post( '/resetpw/:id', function( req, res ) {
+	log3("post resetpw.code");
+	var resetPassCode = req.params.id
+	var email = req.body.email
+	var pass1 = req.body.pass1
+	var pass2 = req.body.pass2
+
+	User.findOne( { 'email' : email }, function( err, user ) {
+		var valid = false;
+		if( user ) {
+			var valid = user.resetPassword(resetPassCode, pass1, pass2);
+			if (valid) {
+				user.save( function( err ) {
+					res.render( 'resetpw-success', { 'verify' : true, 'email' : email, 'resetPassCode' : resetPassCode } );		
+				});			
+			}
+		} 
+
+		if (!valid) {
+			res.render( 'resetpw-error', { 'verify' : true, 'email' : email } );
 		}
 	});
 });
@@ -1206,32 +1220,22 @@ var counts = io
 
 // Launch
 
-if( mongoSet ) {
-	console.log( 'Connecting to Mongo replica set.' );
+mongoose.connect( app.set( 'dbUri' ) );
+mongoose.connection.db.serverConfig.connection.autoReconnect = true
 
-	mongoose.connectSet( mongoSet, function( err ) {
-		if( err ) {
-			throw( err );
-		}
-	});;
+var mailer = new Mailer( app.set('awsAccessKey'), app.set('awsSecretKey') );
 
-	mongoose.connection.db.serverConfig.connection.autoReconnect = true;
-} else {
-	console.log( 'Connecting to Mongo instance.' );
+app.listen( serverPort, function() {
+	console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
 
-	mongoose.connect( mongoHost, function( err ) {
-		if( err ) {
-			throw( err );
-		}
-	});
-
-	mongoose.connection.db.serverConfig.connection.autoReconnect = true;
-}
-
-var mailer = new Mailer( awsAccessKey, awsSecretKey );
-
-app.listen( 3000 );
-console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
+	// if run as root, downgrade to the owner of this file
+	if (process.getuid() === 0) {
+		require('fs').stat(__filename, function(err, stats) {
+			if (err) { return console.log(err); }
+			process.setuid(stats.uid);
+		});
+	}
+});
 
 function isValidEmail(email) {
 	var re = /[a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
