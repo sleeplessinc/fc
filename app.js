@@ -1044,7 +1044,7 @@ function loadOldCourse( req, res, next ) {
 	} 
 }
 
-app.get( '/archive/courses', public, loggedIn, function( req, res ) {
+app.get( '/archive/courses', loadUser, function( req, res ) {
 	sqlClient.query(
 		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id)', function( err, results ) {
 			if ( err ) {
@@ -1057,7 +1057,7 @@ app.get( '/archive/courses', public, loggedIn, function( req, res ) {
 	)
 })
 
-app.get( '/archive/course/:id', public, loggedIn, checkId, loadOldCourse, function( req, res ) {
+app.get( '/archive/course/:id', loadUser, checkId, loadOldCourse, function( req, res ) {
 	sqlClient.query(
 		'SELECT id, topic FROM notes WHERE course_id='+req.id, function( err, results ) {
 			if ( err ) {
@@ -1070,7 +1070,7 @@ app.get( '/archive/course/:id', public, loggedIn, checkId, loadOldCourse, functi
 	)
 })
 
-app.get( '/archive/note/:id', public, loggedIn, checkId, function( req, res ) {
+app.get( '/archive/note/:id', loadUser, checkId, function( req, res ) {
 	sqlClient.query(
 		'SELECT id, topic, text, course_id FROM notes WHERE id='+req.id, function( err, results ) {
 			if ( err ) {
