@@ -12,6 +12,7 @@ var async				= require( 'async' );
 
 var db					= require( './db.js' );
 var mongoose		= require( './models.js' ).mongoose;
+var mysql				= require( 'mysql' );
 
 var Mailer			= require( './mailer.js' );
 var hat					= require('hat');
@@ -31,6 +32,16 @@ var School	= mongoose.model( 'School' );
 var Course	= mongoose.model( 'Course' );
 var Lecture	= mongoose.model( 'Lecture' );
 var Note		= mongoose.model( 'Note' );
+
+// Mysql Init
+
+var sqlClient = mysql.createClient({
+	user     : 'root',
+	password : 'root',
+	port		 : 8889
+})
+
+sqlClient.query( 'USE fcstatic' );
 
 // Configuration
 
@@ -63,6 +74,9 @@ app.configure( 'development', function() {
 
 app.configure( 'production', function() {
 	app.set( 'errorHandler', express.errorHandler() );
+
+	// XXX Disable view caching temp
+	app.disable( 'view cache' )
 
 	app.set( 'dbHost', process.env.MONGO_HOST || 'localhost' );
 	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
@@ -995,6 +1009,91 @@ app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 		res.render( 'profile/index', { 'user' : user } );
 	}
 });
+
+
+// Old Notes
+
+function checkId( req, res, next ) {
+	var id = req.params.id;
+
+	if (isNaN(id)) {
+		req.flash( 'error', 'Not a valid id' );
+		res.redirect('/old/courses')
+	} else {
+		req.id = id;
+		next()
+	}
+}
+
+function loadOldCourse( req, res, next ) {
+	if( url.parse( req.url ).pathname.match(/course/) ) {
+		sqlClient.query(
+			'SELECT name, description, section, instructor_name FROM courses WHERE id = '+req.id,
+			function( err, results ) {
+				if ( err ) {
+					req.flash( 'err', 'Course with this ID does not exist' )
+					res.redirect( '/archive/courses' );
+				} else {
+					req.course = results[0];
+					next()
+				}
+			}
+		)
+	} else {
+		next()
+	} 
+}
+
+app.get( '/archive/courses', public, loggedIn, function( req, res ) {
+	sqlClient.query(
+		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id)', function( err, results ) {
+			if ( err ) {
+				req.flash( 'error', 'There are no archived courses' );
+				res.redirect( '/' );
+			} else {
+				res.render( 'archive/index', { 'courses' : results } );
+			}
+		}
+	)
+})
+
+app.get( '/archive/course/:id', public, loggedIn, checkId, loadOldCourse, function( req, res ) {
+	sqlClient.query(
+		'SELECT id, topic FROM notes WHERE course_id='+req.id, function( err, results ) {
+			if ( err ) {
+				req.flash( 'error', 'There are no notes in this course' );
+				res.redirect( '/' );
+			} else {
+				res.render( 'archive/notes', { 'notes' : results, 'course' : req.course } );
+			}
+		}
+	)
+})
+
+app.get( '/archive/note/:id', public, loggedIn, checkId, function( req, res ) {
+	sqlClient.query(
+		'SELECT id, topic, text, course_id FROM notes WHERE id='+req.id, function( err, results ) {
+			if ( err ) {
+				req.flash( 'error', 'This is not a valid id for a note' );
+				res.redirect( '/archive/courses' );
+			} else {
+				var note = results[0];
+				sqlClient.query(
+					'SELECT name, description, section FROM courses WHERE id = '+note.course_id,
+					function( err, results ) {
+						if ( err ) {
+							req.flash( 'error', 'There is no course for this note' )
+							res.redirect( '/archive/courses' )
+						} else {
+							var course = results[0];
+							res.render( 'archive/note', { 'layout' : 'notesLayout', 'note' : note, 'course': course } );
+						}
+					}
+				)
+			}
+		}
+	)
+})
 
 // socket.io server
 
