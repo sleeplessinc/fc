@@ -134,6 +134,18 @@ div.footer a {
 .footer table {
 }
 
+.footerer {
+	text-align: center;
+	font-size: 70%;
+}
+.footerer a {
+	text-decoration: underline;
+	font-weight: normal;
+}
+.footerer a, .footerer p {
+	color: #888;
+}
+
 div.header {
 	background: #333;
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#444), to(#222));
