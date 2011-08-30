@@ -118,6 +118,32 @@ app.configure(function(){
 	app.use( errorHandler );
 });
 
+// Mailers
+
+function sendUserActivation( user ) {
+	var message = {
+		'to'				: user.email,
+
+		'subject'		: 'Welcome to FinalsClub.org!',
+
+		'template'	: 'userActivation',
+		'locals'		: {
+			'user'				: user,
+			'serverHost'	: serverHost
+		}
+	};
+
+	mailer.send( message, function( err, result ) {
+		if( err ) {
+			// XXX: Add route to resend this email
+
+			console.log( 'Error sending user activation email\nError Message: '+err.Message );
+		} else {
+			console.log( 'Successfully sent user activation email.' );
+		}
+	});
+}
+
 // Middleware
 
 function loggedIn( req, res, next ) {
@@ -364,14 +390,11 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
     if ( !user ) {
       var user          = new User;
 
-      var activateCode  = user.encrypt( user._id.toString() );
-
       user.email        = instructorEmail;
+			user.affil        = 'Instructor';
 
       user.activated    = false;
-      user.activateCode = activateCode;
-      user.affil        = 'Instructor';
-
+      
 			if ( ( user.email === '' ) || ( !isValidEmail( user.email ) ) ) {
 				req.flash( 'error', 'Please enter a valid email' );
 				return res.redirect( '/register' );
@@ -690,7 +713,9 @@ app.post( '/login', function( req, res ) {
 
 		if( user ) {
 			if( ! user.activated ) {
-				req.flash( 'error', 'This account has not been activated! Check your email for the activation URL.' );
+				req.flash( 'error', 'This account isn\'t activated. Check your inbox or <a href="/resendActivation">click here</a> to resend the activation email.' );
+
+				req.session.activateCode = user._id;
 
 				res.render( 'login' );
 			} else {
@@ -799,7 +824,6 @@ app.post( '/resetpw/:id', function( req, res ) {
 	});
 });
 
-
 app.get( '/register', function( req, res ) {
 	log3("get reg page");
 
@@ -817,11 +841,9 @@ app.post( '/register', function( req, res ) {
 	user.password     = req.body.password;
 	user.session      = sid;
 	user.school				= req.body.school === 'Other' ? req.body.otherSchool : req.body.school;
-	console.log(user.school)
   user.name         = req.body.name;
   user.affil        = req.body.affil;
   user.activated    = false;
-  user.activateCode = user.encrypt( user._id.toString() );
 
 	if ( ( user.email === '' ) || ( !isValidEmail( user.email ) ) ) {
 		req.flash( 'error', 'Please enter a valid email' );
@@ -833,30 +855,10 @@ app.post( '/register', function( req, res ) {
 	}
 
 	user.save( function( err ) {
+		// send user activation email
+		sendUserActivation( user );
+
 		var hostname = user.email.split( '@' ).pop();
-		log3('save '+user.email);
-
-		var message = {
-			'to'				: user.email,
-
-			'subject'		: 'Welcome to FinalsClub.org!',
-
-			'template'	: 'userActivation',
-			'locals'		: {
-				'user'				: user,
-				'serverHost'	: serverHost
-			}
-		};
-
-		mailer.send( message, function( err, result ) {
-			if( err ) {
-				// XXX: Add route to resend this email
-
-				console.log( 'Error sending user activation email\nError Message: '+err.Message );
-			} else {
-				console.log( 'Successfully sent user activation email.' );
-			}
-		});
 
 		School.findOne( { 'hostnames' : hostname }, function( err, school ) {
 			if( school ) {
@@ -894,6 +896,22 @@ app.post( '/register', function( req, res ) {
 	});
 });
 
+app.get( '/resendActivation', function( req, res ) {
+	var activateCode = req.session.activateCode;
+
+	User.findById( activateCode, function( err, user ) {
+		if( ( ! user ) || ( user.activated ) ) {
+			res.redirect( '/' );
+		} else {
+			sendUserActivation( user );
+
+			req.flash( 'info', 'Your activation code has been resent.' );
+
+			res.redirect( '/login' );
+		}
+	});
+});
+
 app.get( '/activate/:code', function( req, res ) {
 	var code = req.params.code;
 
@@ -902,7 +920,7 @@ app.get( '/activate/:code', function( req, res ) {
 		res.redirect( '/' );
 	}
 
-	User.findOne( { 'activateCode' : code }, function( err, user ) {
+	User.findById( code, function( err, user ) {
 		if( err || ! user ) {
 			req.flash( 'error', 'Invalid activation code!' );
 
@@ -1045,7 +1063,7 @@ function loadOldCourse( req, res, next ) {
 	} 
 }
 
-app.get( '/archive', loadUser, function( req, res ) {
+app.get( '/archive/courses', loadUser, function( req, res ) {
 	sqlClient.query(
 		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id)', function( err, results ) {
 			if ( err ) {
