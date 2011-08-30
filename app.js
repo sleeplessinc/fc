@@ -594,6 +594,10 @@ app.get( '/about', public, loggedIn, function( req, res ) {
   res.render( 'static/about' );
 });
 
+app.get( '/press', public, loggedIn, function( req, res ) {
+  res.render( 'static/press' );
+});
+
 app.get( '/terms', public, loggedIn, function( req, res ) {
   res.render( 'static/terms' );
 });
