@@ -34,7 +34,7 @@ var Lecture	= mongoose.model( 'Lecture' );
 var Note		= mongoose.model( 'Note' );
 
 // Mysql Init
-/*
+
 var sqlClient = mysql.createClient({
 	host	 : process.env.MYSQL_DB_HOSTNAME || 'localhost',
 	user     : process.env.MYSQL_DB_USER || 'root',
@@ -43,7 +43,7 @@ var sqlClient = mysql.createClient({
 })
 
 sqlClient.query( 'USE fcstatic' );
-*/
+
 // Configuration
 
 var ADMIN_EMAIL = 'admin@finalsclub.org';
