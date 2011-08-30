@@ -12,6 +12,7 @@ var async				= require( 'async' );
 
 var db					= require( './db.js' );
 var mongoose		= require( './models.js' ).mongoose;
+var mysql				= require( 'mysql' );
 
 var Mailer			= require( './mailer.js' );
 
@@ -30,6 +31,13 @@ var School	= mongoose.model( 'School' );
 var Course	= mongoose.model( 'Course' );
 var Lecture	= mongoose.model( 'Lecture' );
 var Note		= mongoose.model( 'Note' );
+
+// Mysql Init
+
+var sqlClient = mysql.createClient({
+	user     : 'root',
+	password : 'root'
+})
 
 // Configuration
 
@@ -205,8 +213,8 @@ function loadLecture( req, res, next ) {
 
 	Lecture.findById( lectureId, function( err, lecture ) {
 		if( lecture ) {
-			lecture.authorize( userId, function( res ) {
-				if( res ) {
+			lecture.authorize( userId, function( result ) {
+				if( result ) {
 					req.lecture = lecture;
 
 					next();
