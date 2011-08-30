@@ -36,9 +36,10 @@ var Note		= mongoose.model( 'Note' );
 // Mysql Init
 /*
 var sqlClient = mysql.createClient({
-	user     : 'root',
-	password : 'root',
-	port		 : 8889
+	host	 : process.env.MYSQL_DB_HOSTNAME || 'localhost',
+	user     : process.env.MYSQL_DB_USER || 'root',
+	password : process.env.MYSQL_DB_PASS || 'root',
+	port	 : process.env.MYSQL_DB_PORT || 3306
 })
 
 sqlClient.query( 'USE fcstatic' );
@@ -1050,7 +1051,7 @@ function loadOldCourse( req, res, next ) {
 			function( err, results ) {
 				if ( err ) {
 					req.flash( 'err', 'Course with this ID does not exist' )
-					res.redirect( '/archive/courses' );
+					res.redirect( '/archive' );
 				} else {
 					req.course = results[0];
 					next()
@@ -1080,7 +1081,7 @@ app.get( '/archive/course/:id', loadUser, checkId, loadOldCourse, function( req,
 		'SELECT id, topic FROM notes WHERE course_id='+req.id, function( err, results ) {
 			if ( err ) {
 				req.flash( 'error', 'There are no notes in this course' );
-				res.redirect( '/' );
+				res.redirect( '/archive' );
 			} else {
 				res.render( 'archive/notes', { 'notes' : results, 'course' : req.course } );
 			}
@@ -1093,7 +1094,7 @@ app.get( '/archive/note/:id', loadUser, checkId, function( req, res ) {
 		'SELECT id, topic, text, course_id FROM notes WHERE id='+req.id, function( err, results ) {
 			if ( err ) {
 				req.flash( 'error', 'This is not a valid id for a note' );
-				res.redirect( '/archive/courses' );
+				res.redirect( '/archive' );
 			} else {
 				var note = results[0];
 				sqlClient.query(
@@ -1101,7 +1102,7 @@ app.get( '/archive/note/:id', loadUser, checkId, function( req, res ) {
 					function( err, results ) {
 						if ( err ) {
 							req.flash( 'error', 'There is no course for this note' )
-							res.redirect( '/archive/courses' )
+							res.redirect( '/archive' )
 						} else {
 							var course = results[0];
 							res.render( 'archive/note', { 'layout' : 'notesLayout', 'note' : note, 'course': course } );
