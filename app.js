@@ -37,8 +37,11 @@ var Note		= mongoose.model( 'Note' );
 
 var sqlClient = mysql.createClient({
 	user     : 'root',
-	password : 'root'
+	password : 'root',
+	port		 : 8889
 })
+
+sqlClient.query( 'USE fcstatic' );
 
 // Configuration
 
@@ -953,6 +956,91 @@ app.post( '/profile', loggedIn, function( req, res ) {
 		res.render( 'profile/index', { 'user' : user } );
 	}
 });
+
+
+// Old Notes
+
+function checkId( req, res, next ) {
+	var id = req.params.id;
+
+	if (isNaN(id)) {
+		req.flash( 'error', 'Not a valid id' );
+		res.redirect('/old/courses')
+	} else {
+		req.id = id;
+		next()
+	}
+}
+
+function loadOldCourse( req, res, next ) {
+	if( url.parse( req.url ).pathname.match(/course/) ) {
+		sqlClient.query(
+			'SELECT name, description, section, instructor_name FROM courses WHERE id = '+req.id,
+			function( err, results ) {
+				if ( err ) {
+					req.flash( 'err', 'Course with this ID does not exist' )
+					res.redirect( '/old/courses' );
+				} else {
+					req.course = results[0];
+					next()
+				}
+			}
+		)
+	} else {
+		next()
+	} 
+}
+
+app.get( '/old/courses', public, loggedIn, function( req, res ) {
+	sqlClient.query(
+		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id)', function( err, results ) {
+			if ( err ) {
+				req.flash( 'error', 'There are no static courses' );
+				res.redirect( '/' );
+			} else {
+				res.render( 'old/index', { 'courses' : results } );
+			}
+		}
+	)
+})
+
+app.get( '/old/course/:id', public, loggedIn, checkId, loadOldCourse, function( req, res ) {
+	sqlClient.query(
+		'SELECT id, topic FROM notes WHERE course_id='+req.id, function( err, results ) {
+			if ( err ) {
+				req.flash( 'error', 'There are no static courses' );
+				res.redirect( '/' );
+			} else {
+				res.render( 'old/notes', { 'notes' : results, 'course' : req.course } );
+			}
+		}
+	)
+})
+
+app.get( '/old/note/:id', public, loggedIn, checkId, function( req, res ) {
+	sqlClient.query(
+		'SELECT topic, text, course_id FROM notes WHERE id='+req.id, function( err, results ) {
+			if ( err ) {
+				req.flash( 'error', 'This is not a valid id for a note' );
+				res.redirect( '/old/courses' );
+			} else {
+				var note = results[0];
+				sqlClient.query(
+					'SELECT name, description, section FROM courses WHERE id = '+note.course_id,
+					function( err, results ) {
+						if ( err ) {
+							req.flash( 'error', 'There is no course for this note' )
+							res.redirect( '/old/courses' )
+						} else {
+							var course = results[0];
+							res.render( 'old/note', { 'layout' : 'notesLayout', 'note' : note, 'course': course } );
+						}
+					}
+				)
+			}
+		}
+	)
+})
 
 // socket.io server
 
