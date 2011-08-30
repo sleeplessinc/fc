@@ -37,6 +37,7 @@ var Note		= mongoose.model( 'Note' );
 var ADMIN_EMAIL = 'admin@finalsclub.org';
 
 var serverHost = process.env.SERVER_HOST;
+var serverPort = process.env.SERVER_PORT;
 
 if( serverHost ) {
 	console.log( 'Using server hostname defined in environment: %s', serverHost );
@@ -54,6 +55,10 @@ app.configure( 'development', function() {
 
 	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY_ID );
 	app.set( 'awsSecretKey', process.env.AWS_SECRET_ACCESS_KEY );
+
+	if ( !serverPort ) {
+		serverPort = 3000;
+	}	 
 });
 
 app.configure( 'production', function() {
@@ -64,6 +69,10 @@ app.configure( 'production', function() {
 
 	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY_ID );
 	app.set( 'awsSecretKey', process.env.AWS_SECRET_ACCESS_KEY );
+
+	if ( !serverPort ) {
+		serverPort = 80;
+	}	
 });
 
 app.configure(function(){
@@ -1208,8 +1217,17 @@ mongoose.connection.db.serverConfig.connection.autoReconnect = true
 
 var mailer = new Mailer( app.set('awsAccessKey'), app.set('awsSecretKey') );
 
-app.listen( 3000 );
-console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
+app.listen( serverPort, function() {
+	console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
+
+	// if run as root, downgrade to the owner of this file
+	if (process.getuid() === 0) {
+		require('fs').stat(__filename, function(err, stats) {
+			if (err) { return console.log(err); }
+			process.setuid(stats.uid);
+		});
+	}
+});
 
 function isValidEmail(email) {
 	var re = /[a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;

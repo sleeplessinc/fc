@@ -3,7 +3,8 @@
 ps waux | grep node | grep -v grep
 
 echo "starting ..."
-node app.js &> log.txt &
+## note: start as root, pass env vars to sudo param, this app will downgrade itself once it has initialized
+sudo -E /usr/local/bin/node app.js &> log.txt &
 echo "$!" > /tmp/shell.pid
 
 
