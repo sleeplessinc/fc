@@ -75,6 +75,9 @@ app.configure( 'development', function() {
 app.configure( 'production', function() {
 	app.set( 'errorHandler', express.errorHandler() );
 
+	// XXX Disable view caching temp
+	app.disable( 'view cache' )
+
 	app.set( 'dbHost', process.env.MONGO_HOST || 'localhost' );
 	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
 
