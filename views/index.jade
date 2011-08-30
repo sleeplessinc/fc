@@ -1,4 +1,6 @@
-div.contenthome
-	div.tagline FinalsClub is the premier web portal for interactive education. Store your notes online, collaborate with classmates, and share knowledge with the world.
+div.wrapper
+	div.contenthome
+		div.tagline FinalsClub is the premier web portal for interactive education. Store your notes online, collaborate with classmates, and share knowledge with the world.
 
-
+	div.activities
+		!=partial( 'activities', { 'activities' : activities, 'user' : user } );

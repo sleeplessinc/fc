@@ -48,3 +48,8 @@ div.content
 						&nbsp;
 					div.field
 						button Submit
+
+		h1 Recent Activity
+
+		div.area
+			!=partial( '../activities', { 'activities' : activities, 'user' : user } );

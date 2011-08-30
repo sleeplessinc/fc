@@ -32,9 +32,14 @@ div.content {
 	min-height: 40em;
 }
 
-div.contenthome {
+div.wrapper {
 	margin: 0 5% 0.1em 5%;
 	min-height: 40em;
+	overflow: hidden;
+}
+
+div.contenthome {
+	min-height: 350px;
 	overflow: hidden;
 	background: url("/images/home.jpg") no-repeat;
 }
@@ -44,8 +49,6 @@ div.contenthome div.tagline {
 	color: #fff;
 	font-weight: bold;
 }
-
-
 
 span.reglink a {
 	color: #00a;

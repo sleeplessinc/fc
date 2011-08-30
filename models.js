@@ -17,19 +17,51 @@ function salt() {
 
 // MODELS
 
+// activity
+
+var ActivitySchema = new Schema( {
+	timestamp			: { type : Date, default: Date.now() },
+	user					: { type : ObjectId, required : true, ref : 'User' },
+	
+	type					: { type : String, required : true },
+	path					: { type : String }
+});
+
+var Activity = mongoose.model( 'Activity', ActivitySchema );
+
 // user
 
 var UserSchema = new Schema( {
-	email					: { type : String, require: true, index : { unique : true } },
+	email					: { type : String, required: true, index : { unique : true } },
 	school				: String,
   name          : String,
   affil         : String,
+
+	/* password */
 	hashed				: String,
-  activated     : Boolean,
-  activateCode  : String,
 	salt					: String,
-	session				: String
+
+	session				: String,
+
+	/* activation */
+  activated     : { type: Boolean, default: false },
 });
+
+/*
+
+UserSchema.virtual( 'activity' )
+	.set( function( type, path ) {
+		var activity = new Activity;
+
+		activity.user = this._id;
+
+		activity.type = type;
+		activity.path = path;
+
+		activity.save();
+	});
+
+*/
 
 UserSchema.virtual( 'password' )
 	.set( function( password ) {

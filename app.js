@@ -26,11 +26,12 @@ var app = module.exports = express.createServer();
 
 // Database
 
-var User		= mongoose.model( 'User' );
-var School	= mongoose.model( 'School' );
-var Course	= mongoose.model( 'Course' );
-var Lecture	= mongoose.model( 'Lecture' );
-var Note		= mongoose.model( 'Note' );
+var User			= mongoose.model( 'User' );
+var Activity	= mongoose.model( 'Activity' );
+var School		= mongoose.model( 'School' );
+var Course		= mongoose.model( 'Course' );
+var Lecture		= mongoose.model( 'Lecture' );
+var Note			= mongoose.model( 'Note' );
 
 // Configuration
 
@@ -208,7 +209,7 @@ function loadNote( req, res, next ) {
 			note.authorize( userId, function( auth ) {
 				if( auth ) {
 					req.note = note;
-http://help.github.com/remove-sensitive-data/
+
 					next();
 				} else if ( note.public ) {
 					req.RO = true;
@@ -238,6 +239,53 @@ http://help.github.com/remove-sensitive-data/
 	});
 }
 
+app.helpers( {
+	'renderActivity' : function( activity, user ) {
+		if( activity.user ) {
+			if( user && ( activity.user._id.toString() == user._id.toString() ) ) {
+				var name = 'You';
+			} else {
+				var name = activity.user.name;
+			}
+
+			var message = 'did something!';
+
+			switch( activity.type ) {
+				case 'register':
+					message = 'joined FinalsClub.org!';
+				break;
+
+				case 'profileEdit':
+					message = 'edited their profile!';
+				break;
+
+				case 'newCourse':
+					message = 'created a new course!';
+				break;
+
+				case 'newLecture':
+					message = 'created a new lecture!';
+				break;
+
+				case 'newPad':
+					message = 'created a new notepad!';
+				break;
+
+				case 'newComment':
+					message = 'commented on a lecture!';
+				break;
+			}
+
+			if( activity.path ) {
+				message = '<a href="' + activity.path + '" target="_blank">' + message + '</a>';
+			}
+
+			// clean up timestamp rendering
+		 	return '<li>' + name + ' ' + message + ' @ ' + activity.timestamp + '</li>\n';
+		}	
+	}
+});
+
 app.dynamicHelpers( {
 	// flash messages from express-messages
 	'messages' : require( 'express-messages' ),
@@ -254,11 +302,11 @@ app.dynamicHelpers( {
 // Routes
 
 app.get( '/', loggedIn, function( req, res ) {
-	var userId = req.user._id;
-
 	log3("get / page");
 
-	res.render( 'index' );
+	Activity.find( {} ).limit( 25 ).desc( 'timestamp' ).populate( 'user', [ '_id', 'name' ] ).run( function( err, activities ) {
+		res.render( 'index', { 'activities' : activities } );
+	});
 });
 
 app.get( '/schools', loggedIn, function( req, res ) {
@@ -310,6 +358,8 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
 	var course = new Course;
 	var instructorEmail = req.body.email;
 
+	var creator = req.user;
+
   if (!instructorEmail) {
     req.flash( 'error', 'Invalid parameters!' )
     return res.render( 'course/new' );
@@ -325,18 +375,16 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
     if ( !user ) {
       var user          = new User;
 
-      var activateCode  = user.encrypt( user._id.toString() );
-
       user.email        = instructorEmail;
+      user.affil        = 'Instructor';
 
       user.activated    = false;
-      user.activateCode = activateCode;
-      user.affil        = 'Instructor';
 
 			if ( ( user.email === '' ) || ( !isValidEmail( user.email ) ) ) {
 				req.flash( 'error', 'Please enter a valid email' );
 				return res.redirect( '/register' );
 			}
+
       user.save(function( err ) {
         if ( err ) {
           req.flash( 'error', 'Invalid parameters!' )
@@ -370,6 +418,15 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
 
 							res.render( 'course/new' );
 						} else {
+							var activity = new Activity;
+
+							activity.type = 'newCourse';
+							/* id of creating user */
+							activity.user = creator._id;
+							activity.path = '/course/' + course._id;
+
+							activity.save();
+
 							res.redirect( '/schools' );
 						}
 					});
@@ -442,6 +499,7 @@ app.get( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) {
 });
 
 app.post( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) {
+	var user		= req.user;
 	var course	= req.course;
 	var lecture = new Lecture;
 
@@ -456,6 +514,15 @@ app.post( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) 
 
 			res.render( 'lecture/new', { 'lecture' : lecture } );
 		} else {
+			var activity = new Activity;
+
+			activity.type = 'newLecture';
+			activity.path = '/lecture/' + course._id;
+
+			activity.user = user._id;
+
+			activity.save();
+
 			res.redirect( '/course/' + course._id );
 		}
 	});
@@ -485,6 +552,7 @@ app.get( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) {
 });
 
 app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) {
+	var user		= req.user;
 	var lecture = req.lecture;
 	var note		= new Note;
 
@@ -500,6 +568,15 @@ app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) 
 
 			res.render( 'notes/new', { 'note' : note } );
 		} else {
+			var activity = new Activity;
+
+			activity.type = 'newPad';
+			activity.path = '/note/' + note._id;
+
+			activity.user = user._id;
+
+			activity.save();
+
 			res.redirect( '/lecture/' + lecture._id );
 		}
 	});
@@ -743,11 +820,10 @@ app.post( '/register', function( req, res ) {
 	user.password     = req.body.password;
 	user.session      = sid;
 	user.school				= req.body.school === 'Other' ? req.body.otherSchool : req.body.school;
-	console.log(user.school)
   user.name         = req.body.name;
   user.affil        = req.body.affil;
+
   user.activated    = false;
-  user.activateCode = user.encrypt( user._id.toString() );
 
 	if ( ( user.email === '' ) || ( !isValidEmail( user.email ) ) ) {
 		req.flash( 'error', 'Please enter a valid email' );
@@ -828,7 +904,7 @@ app.get( '/activate/:code', function( req, res ) {
 		res.redirect( '/' );
 	}
 
-	User.findOne( { 'activateCode' : code }, function( err, user ) {
+	User.findOne( { '_id' : code }, function( err, user ) {
 		if( err || ! user ) {
 			req.flash( 'error', 'Invalid activation code!' );
 
@@ -847,6 +923,14 @@ app.get( '/activate/:code', function( req, res ) {
 						res.redirect( '/' );
 					} else {
 						req.flash( 'info', 'Successfully activated!' );
+
+						/* ping activation activity */
+						var activity = new Activity;
+
+						activity.user = user._id;
+						activity.type = 'register';
+
+						activity.save();
 
 						res.redirect( '/profile' );
 					}
@@ -875,7 +959,11 @@ app.get( '/logout', function( req, res ) {
 app.get( '/profile', loggedIn, function( req, res ) {
 	var user = req.user;
 	
-	res.render( 'profile/index', { 'user' : user } );
+	Activity.find( { 'user' : user._id } ).limit( 25 ).desc( 'timestamp' ).populate( 'user', [ '_id', 'name' ] ).run( function( err, activities ) {
+		console.log( activities );
+
+		res.render( 'profile/index', { 'user' : user, 'activities' : activities } );
+	});
 });
 
 app.post( '/profile', loggedIn, function( req, res ) {

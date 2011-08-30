@@ -1,0 +1,6 @@
+ul
+	- if ( activities.length == 0 )
+		li No recent activity!
+	- else
+		- each activity in activities
+			!=renderActivity( activity, user )
