@@ -36,9 +36,10 @@ var Note		= mongoose.model( 'Note' );
 // Mysql Init
 
 var sqlClient = mysql.createClient({
-	user     : 'root',
-	password : 'root',
-	port		 : 8889
+	host	 : process.env.MYSQL_DB_HOSTNAME || 'localhost',
+	user     : process.env.MYSQL_DB_USER || 'root',
+	password : process.env.MYSQL_DB_PASS || 'root',
+	port	 : process.env.MYSQL_DB_PORT || 3306
 })
 
 sqlClient.query( 'USE fcstatic' );
