@@ -228,7 +228,6 @@ function loadNote( req, res, next ) {
 			note.authorize( userId, function( auth ) {
 				if( auth ) {
 					req.note = note;
-http://help.github.com/remove-sensitive-data/
 					next();
 				} else if ( note.public ) {
 					req.RO = true;
