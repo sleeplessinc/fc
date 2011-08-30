@@ -10,6 +10,6 @@ div.content
 			- each course in courses
 				li
 					- course.section = course.section.replace(/\)/, '')
-					a( href = 'course/#{ course.id }' ) #{ course.section + ' - ' + course.name }
+					a( href = '/archive/course/#{ course.id }' ) #{ course.section + ' - ' + course.name }
 		- else
 			li No courses found.
