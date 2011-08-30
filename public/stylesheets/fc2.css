@@ -6,6 +6,9 @@ p { color: #444; }
 div.logbar {
 	margin: 0 5% 0.1em 5%;
 	background: #456;
+
+	width: 960px;
+	margin: 0 auto;
 }
 
 div.navbar {
@@ -37,6 +40,9 @@ div.contenthome {
 	min-height: 40em;
 	overflow: hidden;
 	background: url("/images/home.jpg") no-repeat;
+
+	width: 960px;
+	margin: 0 auto;
 }
 
 div.contenthome div.tagline {
@@ -96,14 +102,28 @@ td.menu a {
 }
 
 div.footer {
-	font-size: 70%;
-	width: 100%;
+	font-size: 80%;
 	text-align: center;
+	padding: 1.5em 5% 1.5em 5%;
+	margin: 1em 5% 1em 5%;
+	background: #567;
+	color: #def;
 }
 
 div.footer a {
 	padding: 0.5em 0.5em 0 0.5em;
 	font-weight: normal;
+	color: #bcf;
+	text-decoration: underline;
+}
+
+.footer .col1 {
+	width: 20%;
+	border-right: solid 1px #567;
+	text-align: right;
+}
+
+.footer table {
 }
 
 div.header {
@@ -410,28 +430,6 @@ background: transparent url(/images/arrow_up.png) no-repeat scroll 10% 50%;
 #posts .instructor {
   background: #EDDA74;
 }
-
-/*.button {
-
-	background: #fff;
-	color: black;
-
-	-moz-border-radius: 0.2em;
-	-webkit-border-radius: 0.2em;
-
-	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .2);
-	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .2);
-
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#edc), to(#dcb));
-	background-image: -moz-linear-gradient(#edc, #dcb)
-
-	zpadding: 0.1em 1em;
-	font-size: 80%;
-	display: table-cell;
-	zmargin: 0.5em 1em;
-	cursor: pointer; cursor: hand;
-} */
-
 
 .page a {
 }

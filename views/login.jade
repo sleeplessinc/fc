@@ -1,11 +1,6 @@
 div.content
 	div.container1
 		h1 Login
-		p
-			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx-xxxx xxxx xxxx xxx x xxxxxx xxxxxxxx
-			xxxx. Xxx xxx xxxx xx xxxx xxxx xxxxxx-xxxx x xxxx xxx x xxxxxx.
-			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx xxx xxxx xxxx xxx x xxxxxx xxxxxxxx
-			xxxx.
 		form#credentials( action = '/login', method = 'POST' )
 			div.area 
 				div( class = 'row')
@@ -26,13 +21,13 @@ div.content
 					div( class = 'field')
 						button Submit
 						span.reglink
-							a( href = '/register' ) Create an Account
+							a( href = '/resetpw' ) Forgot password?
 				div( class = 'row')
 					div( class = 'label')
 						&nbsp;
 					div( class = 'field')
 						span.reglink
-							a( href = '/resetpw' ) Forgot your Password
+							a( href = '/register' ) Create an Account
 
 script
 	$( document ).ready( function() {
