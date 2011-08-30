@@ -11,10 +11,10 @@ div#wrapper
 							- course.section = course.section.replace(/\)/, '')
 							strong.label Course: #{ course.section + ' - ' + course.name }
 						div.crumb
-							strong.label Note: #{ note.topic }
+							strong.label Note: #{ note.topic || note.id }
 
 	div#staticNote
-		!{ note.text }
+		!{ note.text || 'This note is empty.' }
 
 	div( style = 'clear: both; height: 1px;' )
 

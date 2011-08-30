@@ -1023,7 +1023,7 @@ app.get( '/old/course/:id', public, loggedIn, checkId, loadOldCourse, function( 
 
 app.get( '/old/note/:id', public, loggedIn, checkId, function( req, res ) {
 	sqlClient.query(
-		'SELECT topic, text, course_id FROM notes WHERE id='+req.id, function( err, results ) {
+		'SELECT id, topic, text, course_id FROM notes WHERE id='+req.id, function( err, results ) {
 			if ( err ) {
 				req.flash( 'error', 'This is not a valid id for a note' );
 				res.redirect( '/old/courses' );
