@@ -33,8 +33,8 @@ div.content {
 	padding: 1.5em 3%;
 	background: #fff;
 	min-height: 30em;
-	border-left: solid 1px #ccc;
-	border-right: solid 1px #ccc;
+	zborder-left: solid 1px #ccc;
+	zborder-right: solid 1px #ccc;
 	zbackground-image: -webkit-gradient(linear, left top, right bottom, from(#fff), to(#eef));
 	zbackground-image: -moz-linear-gradient(#fff, #eef)
 }
@@ -159,8 +159,8 @@ div#wrapper div.header div.buttons {
 
 div.container1 {
 	background: #eee;
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#f8f8ff), to(#eef));
-	background-image: -moz-linear-gradient(#ffffff, #eeeeee)
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#f4f4f4), to(#eee));
+	background-image: -moz-linear-gradient(#eee, #eee)
 	-moz-border-radius: 0.20em;
 	-webkit-border-radius: 0.20em;
 	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
@@ -450,7 +450,7 @@ span.sub_menu{
 	zfloat:right;
 	border-top:  solid 1px #a98;
 	border-bottom:  solid 1px #000;
-	background-color:#667;
+	background-color:#567;
 	-moz-border-radius: 0.3em;
 	-webkit-border-radius: 0.3em;
 	padding: 0.1em 0.5em;
@@ -471,14 +471,11 @@ span.sub_menu a:hover {
 
 
 h1 {
-	zmargin: 0.3em 0;
 	text-align: center;
 	color:#fff;
-	ztext-shadow: black 0 0 0.2em;
 	font-size: 120%;
 }
 h2 {
-	zmargin: 0.5em 0;
 	clear:both;
 	font-size: 110%;
 }
@@ -540,15 +537,41 @@ ul{
 
 div.school {
 
-	-moz-border-radius: 0.15em;
-	-webkit-border-radius: 0.15em;
-	border: solid 1px #888;
 	margin: 1%; 
 	padding: 2%;
+	/*
+	border: solid 1px #888;
+	-moz-border-radius: 0.20em;
+	-webkit-border-radius: 0.20em;
 	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .1);
 	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .1);
+	*/
 
 
+}
+
+.school h2 {
+}
+
+.content .container1 h1 {
+	background: #778899;
+	color: #fff;
+	padding: 0.5em 1em 0.5em 8em;
+	position: relative;
+	left: -8em;
+	letter-spacing: 0.1em;
+
+	-webkit-border-top-right-radius: 0.3em;
+	-webkit-border-bottom-right-radius: 0.3em;
+	-moz-border-radius-topright: 0.3em;
+	-moz-border-radius-bottomright: 0.3em;
+	border-top-right-radius: 0.3em;
+	border-bottom-right-radius: 0.3em;
+
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
 }
 
 ul a {
