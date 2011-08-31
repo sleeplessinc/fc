@@ -74,7 +74,7 @@ app.configure( 'development', function() {
 });
 
 app.configure( 'production', function() {
-	app.set( 'errorHandler', express.errorHandler() );
+	app.set( 'errorHandler', express.errorHandler( { dumpExceptions: true, showStack: true } ) );
 
 	// XXX Disable view caching temp
 	app.disable( 'view cache' )
@@ -1052,7 +1052,7 @@ function checkId( req, res, next ) {
 
 	if (isNaN(id)) {
 		req.flash( 'error', 'Not a valid id' );
-		res.redirect('/old/courses')
+		res.redirect('/archive')
 	} else {
 		req.id = id;
 		next()
@@ -1080,12 +1080,26 @@ function loadOldCourse( req, res, next ) {
 
 app.get( '/archive', loadUser, function( req, res ) {
 	sqlClient.query(
-		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id)', function( err, results ) {
+		'SELECT id, name FROM subjects WHERE id in (SELECT c.subject_id FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id)) ORDER BY name', function( err, results ) {
 			if ( err ) {
 				req.flash( 'error', 'There are no archived courses' );
 				res.redirect( '/' );
 			} else {
-				res.render( 'archive/index', { 'courses' : results } );
+				res.render( 'archive/index', { 'subjects' : results } );
+			}
+		}
+	)
+})
+
+app.get( '/archive/subject/:id', loadUser, checkId, function( req, res ) {
+	
+	sqlClient.query(
+		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id) AND c.subject_id = '+req.id+' ORDER BY c.created_at desc', function( err, results ) {
+			if ( err ) {
+				req.flash( 'error', 'There are no archived courses' );
+				res.redirect( '/' );
+			} else {
+				res.render( 'archive/courses', { 'courses' : results } );
 			}
 		}
 	)
