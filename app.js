@@ -1406,6 +1406,13 @@ var counts = io
 	});
 });
 
+// Exception Catch-All
+
+process.on('uncaughtException', function (e) {
+	console.log("!!!!!! UNCAUGHT EXCEPTION\n" + e.stack);
+});
+
+
 // Launch
 
 mongoose.connect( app.set( 'dbUri' ) );
