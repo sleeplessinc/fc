@@ -16,10 +16,10 @@ div.content
 									a( href = 'course/#{ course._id }' ) #{ course.name }
 						- else
 							li No courses found.
-
-					div
-						span(class='sub_menu')
-							a( href = '/#{ school._id }/course/new' ) New Course
+					- if ( school.authorized )
+						div
+							span(class='sub_menu')
+								a( href = '/#{ school._id }/course/new' ) New Course
 		- else
 			p
 				| You do not belong to any school networks.

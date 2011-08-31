@@ -211,11 +211,8 @@ function loadSchool( req, res, next ) {
 		if( school ) {
 			req.school = school;
 
-			school.authorize( userId, function( authorized ) {
-				req.school.authorized = authorized;
-
-				next();
-			});
+			req.school.authorized = school.authorize( userId );
+			next();
 		} else {
 			req.flash( 'error', 'Invalid school specified!' );
 
@@ -337,6 +334,7 @@ app.get( '/schools', loadUser, function( req, res ) {
 			async.forEach(
 				schools,
 				function( school, callback ) {
+					school.authorized = school.authorize( userId );
 					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
 						if( courses.length > 0 ) {
 							school.courses = courses;
@@ -360,7 +358,7 @@ app.get( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 	var school = req.school;
 
 	if( ( ! school ) || ( ! school.authorized ) ) {
-		res.redirect( '/schools' );
+		return res.redirect( '/schools' );
 	}
 
 	res.render( 'course/new', { 'school': school } );
@@ -503,9 +501,7 @@ app.get( '/course/:id/lecture/new', loadUser, loadCourse, function( req, res ) {
 	var lecture		= {};
 
 	if( ( ! course ) || ( ! course.authorized ) ) {
-		res.redirect( '/course/' + courseId );
-
-		return;
+		return res.redirect( '/course/' + courseId );
 	}
 
 	res.render( 'lecture/new', { 'lecture' : lecture } );
@@ -545,7 +541,7 @@ app.get( '/lecture/:id', loadUser, loadLecture, function( req, res ) {
 
 	// pull out our notes
 	Note.find( { 'lecture' : lecture._id } ).sort( 'name', '1' ).run( function( err, notes ) {
-		if ( !req.user.loggedIn ) {
+		if ( !req.user.loggedIn || !req.lecture.authorized ) {
 			notes = notes.filter(function( note ) {
 				if ( note.public ) return note;
 			})
