@@ -125,18 +125,18 @@ div.footer a {
 	text-decoration: underline;
 }
 
-.footer .col1 {
+.footer td.col1 {
 	width: 20%;
-	border-right: solid 1px #567;
 	text-align: right;
-}
-
-.footer table {
+	color: #cde;
+	border-right: solid 1px #abc;
+	padding-right: 1em;
 }
 
 .footerer {
 	text-align: center;
 	font-size: 70%;
+	margin-bottom: 2em;
 }
 .footerer a {
 	text-decoration: underline;
