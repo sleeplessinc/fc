@@ -211,11 +211,8 @@ function loadSchool( req, res, next ) {
 		if( school ) {
 			req.school = school;
 
-			school.authorize( userId, function( authorized ) {
-				req.school.authorized = authorized;
-
-				next();
-			});
+			req.school.authorized = school.authorize( userId );
+			next();
 		} else {
 			req.flash( 'error', 'Invalid school specified!' );
 
@@ -337,6 +334,7 @@ app.get( '/schools', loadUser, function( req, res ) {
 			async.forEach(
 				schools,
 				function( school, callback ) {
+					school.authorized = school.authorize( userId );
 					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
 						if( courses.length > 0 ) {
 							school.courses = courses;
@@ -360,7 +358,7 @@ app.get( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 	var school = req.school;
 
 	if( ( ! school ) || ( ! school.authorized ) ) {
-		res.redirect( '/schools' );
+		return res.redirect( '/schools' );
 	}
 
 	res.render( 'course/new', { 'school': school } );
@@ -503,9 +501,7 @@ app.get( '/course/:id/lecture/new', loadUser, loadCourse, function( req, res ) {
 	var lecture		= {};
 
 	if( ( ! course ) || ( ! course.authorized ) ) {
-		res.redirect( '/course/' + courseId );
-
-		return;
+		return res.redirect( '/course/' + courseId );
 	}
 
 	res.render( 'lecture/new', { 'lecture' : lecture } );
@@ -545,6 +541,11 @@ app.get( '/lecture/:id', loadUser, loadLecture, function( req, res ) {
 
 	// pull out our notes
 	Note.find( { 'lecture' : lecture._id } ).sort( 'name', '1' ).run( function( err, notes ) {
+		if ( !req.user.loggedIn || !req.lecture.authorized ) {
+			notes = notes.filter(function( note ) {
+				if ( note.public ) return note;
+			})
+		}
 		res.render( 'lecture/index', {
 			'lecture'			: lecture,
 			'notes'				: notes,
@@ -855,44 +856,58 @@ app.post( '/register', function( req, res ) {
 	}
 
 	user.save( function( err ) {
-		// send user activation email
-		sendUserActivation( user );
 
-		var hostname = user.email.split( '@' ).pop();
+		if ( err ) {
+			User.findOne({ 'email' : user.email }, function(err, result ) {
+				if (result.activated) {
+					req.flash( 'error', 'There is already someone registered with this email, if this is in error contact info@finalsclub.org for help' )
+					return res.redirect( '/register' )
+				} else {
+					req.flash( 'error', 'There is already someone registered with this email, if this is you, please check your email for the activation code' )
+					return res.redirect( '/resendActivation' )
+				}
+			})
+		} else {
+			// send user activation email
+			sendUserActivation( user );
 
-		School.findOne( { 'hostnames' : hostname }, function( err, school ) {
-			if( school ) {
-				log3('school recognized '+school.name);
-				school.users.push( user._id );
+			var hostname = user.email.split( '@' ).pop();
 
-				school.save( function( err ) {
-					log3('school.save() done');
-					req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network.' );
-				});
-			} else {
-				var message = {
-					'to'       : ADMIN_EMAIL,
+			School.findOne( { 'hostnames' : hostname }, function( err, school ) {
+				if( school ) {
+					log3('school recognized '+school.name);
+					school.users.push( user._id );
 
-					'subject'  : 'FC User Registration : Email did not match any schools',
+					school.save( function( err ) {
+						log3('school.save() done');
+						req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network. Please check your email from the activation link' );
+					});
+				} else {
+					req.flash( 'info', 'Your account has been created, please check your email for the activation link' )
+					var message = {
+						'to'       : ADMIN_EMAIL,
 
-					'template' : 'userNoSchool',
-					'locals'   : {
-						'user'   : user
+						'subject'  : 'FC User Registration : Email did not match any schools',
+
+						'template' : 'userNoSchool',
+						'locals'   : {
+							'user'   : user
+						}
 					}
+					mailer.send( message, function( err, result ) {
+						if ( err ) {
+					
+							console.log( 'Error sending user has no school email to admin\nError Message: '+err.Message );
+						} else {
+							console.log( 'Successfully sent user has no school email to admin.' );
+						}
+					})
 				}
 
-				mailer.send( message, function( err, result ) {
-					if ( err ) {
-					
-						console.log( 'Error sending user has no school email to admin\nError Message: '+err.Message );
-					} else {
-						console.log( 'Successfully sent user has no school email to admin.' );
-					}
-				})
-			}
+				res.redirect( '/' );
+			});
+		}
 
-			res.redirect( '/' );
-		});
 	});
 });
 
@@ -1063,7 +1078,7 @@ function loadOldCourse( req, res, next ) {
 	} 
 }
 
-app.get( '/archive/courses', loadUser, function( req, res ) {
+app.get( '/archive', loadUser, function( req, res ) {
 	sqlClient.query(
 		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id)', function( err, results ) {
 			if ( err ) {
