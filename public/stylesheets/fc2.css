@@ -2,6 +2,9 @@ body, td { font-family: Helvetica, sans-serif; }
 body { background: #fff; margin: 0; padding: 0; }
 img { border: none; }
 body, td, p { color: #444; }
+li { padding: 0.2em 0; }
+table, td, tr { margin: 0; padding: 0; }
+ul a { font-weight: normal; color: #00a; }
 
 div.logbar {
 	background: #234;
@@ -76,8 +79,6 @@ div.contenthome {
 }
 
 
-
-
 span.reglink a {
 	color: #00a;
 	font-size: 80%;
@@ -100,11 +101,6 @@ span.texterror p {
 
 span.texterror p {
 	color: #f00;
-}
-
-table, td, tr {
-	margin: 0; 
-	padding: 0; 
 }
 
 img.logo {
@@ -624,11 +620,6 @@ div.school {
 	padding: 0.2em 1%;
 }
 
-ul a {
-	font-weight: normal;
-	color: #00a;
-}
-
 div.menubar {
 	text-align: right;
 }
@@ -639,24 +630,26 @@ div.school h2 {
 }
 
 #messages {
-	background: #900;
-	padding: 0.5em;
 	margin: 0em 5%;
 }
-.error {
+#messages ul {
+	padding: 0.5em;
 	color: #fff;
 }
-.error a {
-	color: #fee;
+#messages ul a {
 	font-weight: bold;
 	text-decoration: underline;
 }
-.anonpost {
-	font-size: 70%;
+#messages ul.info {
+	background: #090;
+}
+#messages ul.error {
+	background: #900;
 }
 
-li {
-	padding: 0.2em 0; 
+
+.anonpost {
+	font-size: 70%;
 }
 
 a.readonlylink {
