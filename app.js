@@ -335,6 +335,7 @@ app.get( '/schools', loadUser, function( req, res ) {
 				schools,
 				function( school, callback ) {
 					school.authorized = school.authorize( userId );
+
 					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
 						if( courses.length > 0 ) {
 							school.courses = courses;
@@ -722,6 +723,7 @@ app.post( '/login', function( req, res ) {
 			} else {
 				if( user.authenticate( password ) ) {
 					log3("pass ok") 
+
 					var sid = req.sessionID;
 
 					user.session = sid;
@@ -735,6 +737,10 @@ app.post( '/login', function( req, res ) {
 						// redirect to profile if we don't have a stashed request
 						res.redirect( redirect || '/profile' );
 					});
+				} else {
+					req.flash( 'error', 'Invalid login!' );
+
+					res.render( 'login' );
 				}
 			}
 		} else {
@@ -856,17 +862,23 @@ app.post( '/register', function( req, res ) {
 	}
 
 	user.save( function( err ) {
-
 		if ( err ) {
-			User.findOne({ 'email' : user.email }, function(err, result ) {
-				if (result.activated) {
-					req.flash( 'error', 'There is already someone registered with this email, if this is in error contact info@finalsclub.org for help' )
-					return res.redirect( '/register' )
-				} else {
-					req.flash( 'error', 'There is already someone registered with this email, if this is you, please check your email for the activation code' )
-					return res.redirect( '/resendActivation' )
-				}
-			})
+			if( /dup key/.test( err.message ) ) {
+				// attempting to register an existing address
+					User.findOne({ 'email' : user.email }, function(err, result ) {
+						if (result.activated) {
+							req.flash( 'error', 'There is already someone registered with this email, if this is in error contact info@finalsclub.org for help' )
+							return res.redirect( '/register' )
+						} else {
+							req.flash( 'error', 'There is already someone registered with this email, if this is you, please check your email for the activation code' )
+							return res.redirect( '/resendActivation' )
+						}
+					});
+			} else {
+				req.flash( 'error', 'An error occurred during registration.' );
+
+				return res.redirect( '/register' );
+			}
 		} else {
 			// send user activation email
 			sendUserActivation( user );
