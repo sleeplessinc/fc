@@ -553,6 +553,8 @@ ul{
 	font-weight: bold;
 }
 .row .field {
+	width: 300px;
+
 	display: table-cell;
 	padding: 0.2em 0;
 }
