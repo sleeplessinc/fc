@@ -8,10 +8,13 @@ div.content
 		p Course: #{ lecture.course.name }
 		p Instructor: #{ lecture.course.instructor }
 
+		hr
+
 		h2 Existing Note Pads
 
 		ul
 			- if ( notes.length > 0 )
+				ul
 				- each note in notes
 					li
 						a( href = '/note/#{ note._id }' ) #{ note.name }
@@ -22,7 +25,9 @@ div.content
 						span( note-id = note._id ).count= counts[ note._id ]
 						span  Visits: #{note.visits}
 			- else
-				li None found.
+				p No note pads have been created for this lecture yet.
+
+		hr
 
 		- if ( lecture.authorized )
 			div

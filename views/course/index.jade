@@ -4,16 +4,22 @@ div.content
 		h1 #{ course.name }
 		p Instructor: #{ course.instructor }
 
+		hr
+
 		h2 Existing Lectures 
+
 		ul
 			- if ( lectures.length > 0 )
 				- each lecture in lectures
 					li
 						a( href = '/lecture/#{ lecture._id }' ) #{ lecture.name }
 			- else
-				li None found.
+				p No lectures have been created for this course yet.
+
+		hr
 
 		- if ( course.authorized )
 			div
 				span(class='sub_menu')
 					a( href = '/course/#{ course._id }/lecture/new' ) New Lecture
+
