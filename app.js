@@ -856,6 +856,12 @@ app.post( '/register', function( req, res ) {
 	}
 
 	user.save( function( err ) {
+
+		if ( err ) {
+			req.flash( 'error', 'There was a problem setting up your account, email info@finalsclub.org if you have further trouble' )
+			return res.redirect( '/register' )
+		}
+
 		// send user activation email
 		sendUserActivation( user );
 
