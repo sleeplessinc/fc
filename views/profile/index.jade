@@ -3,18 +3,14 @@ div.content
 		h1 User Profile
 
 		form#profile( action = '/profile', method = 'POST' )
-			div.zarea 
+			h2 Account Information
+
+			div.area 
 				div.row
 					div.label
 						span Email
 					div.field
 						span #{ user.email }
-
-				div.row
-					div.label
-						label( for = 'name' ) Name
-					div.field
-						input( id = 'name', type = 'text', name = 'name', value = user.name )
 
 				div.row
 					div.label
@@ -24,6 +20,40 @@ div.content
 							option( value = 'Student' ) Student
 							option( value = 'Teachers Assistant' ) Teachers Assistant
 
+			h2 Profile Information
+
+			div.area
+				div.row
+					div.label
+						label( for = 'name' ) Name
+					div.field
+						input( id = 'name', type = 'text', name = 'name', value = user.name )
+
+				div.row
+					div.label
+						label &nbsp;
+					div.field
+						- if ( user.showName )
+							input( style = 'width: auto;', id = 'showName', type = 'checkbox', name = 'showName' , checked )
+						- else
+							input( style = 'width: auto;', id = 'showName', type = 'checkbox', name = 'showName' )
+						| Display your real name in contributions
+
+				div.row
+					div.label
+						label( for = 'major' ) Major
+					div.field
+						input( id = 'major', type = 'text', name = 'major', value = user.major )
+
+				div.row
+					div.label
+						label( for = 'bio' ) Bio
+					div.field
+						input( id = 'bio', type = 'text', name = 'bio', value = user.bio )
+
+			h2 Change Password
+
+			div.area
 				- if ( user.hashed )
 					div.row
 						div.label
@@ -43,8 +73,8 @@ div.content
 					div.field
 						input( id = 'newPasswordConfirm', type = 'password', name = 'newPasswordConfirm' )
 
-				div.row
-					div.label
-						&nbsp;
-					div.field
-						button Submit
+			div.row
+				div.label
+					&nbsp;
+				div.field
+					button Submit

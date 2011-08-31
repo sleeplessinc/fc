@@ -336,6 +336,8 @@ app.get( '/schools', loadUser, function( req, res ) {
 				function( school, callback ) {
 					school.authorized = school.authorize( userId );
 
+					console.log( school.authorized );
+
 					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
 						if( courses.length > 0 ) {
 							school.courses = courses;
@@ -1005,6 +1007,8 @@ app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 	var error				= false;
 	var wasComplete	= user.isComplete;
 
+	console.log( fields );
+
 	if( ! fields.name ) {
 		req.flash( 'error', 'Please enter a valid name!' );
 
@@ -1040,6 +1044,11 @@ app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 		}
 	}
 
+	user.major		= fields.major;
+	user.bio			= fields.bio;
+
+	user.showName	= ( fields.showName ? true : false );
+
 	if( ! error ) {
 		user.save( function( err ) {
 			if( err ) {
@@ -1047,10 +1056,12 @@ app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 			} else {
 				if( ( user.isComplete ) && ( ! wasComplete ) ) {
 					req.flash( 'info', 'Your account is now fully activated. Thank you for joining FinalsClub!' );
+
+					res.redirect( '/' );
+				} else {
+					res.render( 'profile/index', { 'user' : user } );
 				}
 			}
-
-			res.redirect( '/' );
 		});
 	} else {
 		res.render( 'profile/index', { 'user' : user } );
