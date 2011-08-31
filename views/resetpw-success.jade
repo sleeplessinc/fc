@@ -1,24 +1,8 @@
 div.content
 	div.container1
 		h1 Password Reset
-		p
-			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx-xxxx xxxx xxxx xxx x xxxxxx xxxxxxxx
-			xxxx. Xxx xxx xxxx xx xxxx xxxx xxxxxx-xxxx x xxxx xxx x xxxxxx.
-			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx xxx xxxx xxxx xxx x xxxxxx xxxxxxxx
-			xxxx.
-		div.area
-			span.text 
-			- if ( typeof(verify) != 'undefined' && verify )  	
-				P Your password has been reset.  You can login using your new password now.
-			- else 
-				P Your password has been reset.  An email has been sent to #{ email }.
-				
+		- if ( typeof(verify) != 'undefined' && verify )  	
+			P Your password has been reset.  You can login using your new password now.
+		- else 
+			P Your password has been reset.  An email has been sent to #{ email }.
 
-script
-	$( document ).ready( function() {
-		if( $( 'input[name=email]' ).val() ) {
-			$( 'input[name=password]' ).focus();
-		} else {
-			$( 'input[name=email]' ).focus();
-		}
-	});

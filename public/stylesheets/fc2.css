@@ -31,8 +31,12 @@ div.navbar {
 div.content {
 	margin: 0 5% 0.1em 5%;
 	padding: 1.5em 3%;
-	background: #456;
-	min-height: 40em;
+	background: #fff;
+	min-height: 30em;
+	zborder-left: solid 1px #ccc;
+	zborder-right: solid 1px #ccc;
+	zbackground-image: -webkit-gradient(linear, left top, right bottom, from(#fff), to(#eef));
+	zbackground-image: -moz-linear-gradient(#fff, #eef)
 }
 
 div.contenthome {
@@ -73,6 +77,10 @@ span.texterror p {
 	color: #f00;
 }
 
+span.texterror p {
+	color: #f00;
+}
+
 table, td, tr {
 	margin: 0; 
 	padding: 0; 
@@ -106,7 +114,7 @@ div.footer {
 	text-align: center;
 	padding: 1.5em 5% 1.5em 5%;
 	margin: 1em 5% 1em 5%;
-	background: #567;
+	background: #234;
 	color: #def;
 }
 
@@ -117,13 +125,25 @@ div.footer a {
 	text-decoration: underline;
 }
 
-.footer .col1 {
+.footer td.col1 {
 	width: 20%;
-	border-right: solid 1px #567;
 	text-align: right;
+	color: #cde;
+	border-right: solid 1px #abc;
+	padding-right: 1em;
 }
 
-.footer table {
+.footerer {
+	text-align: center;
+	font-size: 70%;
+	margin-bottom: 2em;
+}
+.footerer a {
+	text-decoration: underline;
+	font-weight: normal;
+}
+.footerer a, .footerer p {
+	color: #888;
 }
 
 div.header {
@@ -151,10 +171,10 @@ div#wrapper div.header div.buttons {
 
 div.container1 {
 	background: #eee;
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#eeeeee));
-	background-image: -moz-linear-gradient(#ffffff, #eeeeee)
-	-moz-border-radius: 0.15em;
-	-webkit-border-radius: 0.15em;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#f4f4f4), to(#eee));
+	background-image: -moz-linear-gradient(#eee, #eee)
+	-moz-border-radius: 0.20em;
+	-webkit-border-radius: 0.20em;
 	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 	padding: 0.8em 3% 2em 3%;
@@ -162,11 +182,11 @@ div.container1 {
 }
 
 div.area {
-	-moz-border-radius: 0.15em;
-	-webkit-border-radius: 0.15em;
+	-moz-border-radius: 0.20em;
+	-webkit-border-radius: 0.20em;
 	border: solid 1px #888;
-	margin: 1%; 
-	padding: 1%;
+	margin: 2%; 
+	padding: 0.5em 2%;
 }
 
 div.content h1 {
@@ -442,7 +462,7 @@ span.sub_menu{
 	zfloat:right;
 	border-top:  solid 1px #a98;
 	border-bottom:  solid 1px #000;
-	background-color:#667;
+	background-color:#567;
 	-moz-border-radius: 0.3em;
 	-webkit-border-radius: 0.3em;
 	padding: 0.1em 0.5em;
@@ -463,14 +483,11 @@ span.sub_menu a:hover {
 
 
 h1 {
-	zmargin: 0.3em 0;
 	text-align: center;
 	color:#fff;
-	ztext-shadow: black 0 0 0.2em;
 	font-size: 120%;
 }
 h2 {
-	zmargin: 0.5em 0;
 	clear:both;
 	font-size: 110%;
 }
@@ -510,7 +527,7 @@ ul{
 	display: table-row;
 }
 .row .label {
-	width: 60%;
+	width: 40%;
 	text-align: right;
 	display: table-cell;
 	padding: 0.8em 3% 0.8em 0%;
@@ -532,15 +549,41 @@ ul{
 
 div.school {
 
-	-moz-border-radius: 0.15em;
-	-webkit-border-radius: 0.15em;
-	border: solid 1px #888;
 	margin: 1%; 
 	padding: 2%;
+	/*
+	border: solid 1px #888;
+	-moz-border-radius: 0.20em;
+	-webkit-border-radius: 0.20em;
 	-webkit-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .1);
 	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .1);
+	*/
 
 
+}
+
+.school h2 {
+}
+
+.content .container1 h1 {
+	background: #778899;
+	color: #fff;
+	padding: 0.5em 1em 0.5em 8em;
+	position: relative;
+	left: -8em;
+	letter-spacing: 0.1em;
+
+	-webkit-border-top-right-radius: 0.3em;
+	-webkit-border-bottom-right-radius: 0.3em;
+	-moz-border-radius-topright: 0.3em;
+	-moz-border-radius-bottomright: 0.3em;
+	border-top-right-radius: 0.3em;
+	border-bottom-right-radius: 0.3em;
+
+	-moz-border-radius: 0.3em;
+	-webkit-border-radius: 0.3em;
+	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+	-moz-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
 }
 
 ul a {
@@ -560,6 +603,7 @@ div.school h2 {
 #messages {
 	background: #900;
 	padding: 0.5em;
+	margin: 0em 5%;
 }
 .error {
 	color: #fff;
@@ -625,6 +669,17 @@ div.postContainer div.privacy {
 	font-size: 75%;
 	color: #eef;
 	text-align: center;
+}
+
+
+table.contact td {
+	padding: 0.4em 1em;
+	vertical-align: top;
+}
+
+table.contact td:first-child {
+	text-align: right;
+	font-weight: bold;
 }
 
 
