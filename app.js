@@ -857,7 +857,7 @@ app.post( '/register', function( req, res ) {
 		return res.redirect( '/register' );
 	}
 
-	if ( req.body.password.length < 8 ) {
+	if ( req.body.password.length < 6 ) {
 		req.flash( 'error', 'Please enter a password longer than eight characters' );
 		return res.redirect( '/register' );
 	}
