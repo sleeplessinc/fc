@@ -858,49 +858,56 @@ app.post( '/register', function( req, res ) {
 	user.save( function( err ) {
 
 		if ( err ) {
-			req.flash( 'error', 'There was a problem setting up your account, email info@finalsclub.org if you have further trouble' )
-			return res.redirect( '/register' )
-		}
+			User.findOne({ 'email' : user.email }, function(err, result ) {
+				if (result.activated) {
+					req.flash( 'error', 'There is already someone registered with this email, if this is in error contact info@finalsclub.org for help' )
+					return res.redirect( '/register' )
+				} else {
+					req.flash( 'error', 'There is already someone registered with this email, if this is you, please check your email for the activation code' )
+					return res.redirect( '/resendActivation' )
+				}
+			})
+		} else {
+			// send user activation email
+			sendUserActivation( user );
 
-		// send user activation email
-		sendUserActivation( user );
+			var hostname = user.email.split( '@' ).pop();
 
-		var hostname = user.email.split( '@' ).pop();
+			School.findOne( { 'hostnames' : hostname }, function( err, school ) {
+				if( school ) {
+					log3('school recognized '+school.name);
+					school.users.push( user._id );
 
-		School.findOne( { 'hostnames' : hostname }, function( err, school ) {
-			if( school ) {
-				log3('school recognized '+school.name);
-				school.users.push( user._id );
+					school.save( function( err ) {
+						log3('school.save() done');
+						req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network. Please check your email from the activation link' );
+					});
+				} else {
+					req.flash( 'info', 'Your account has been created, please check your email for the activation link' )
+					var message = {
+						'to'       : ADMIN_EMAIL,
 
-				school.save( function( err ) {
-					log3('school.save() done');
-					req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network. Please check your email from the activation link' );
-				});
-			} else {
-				req.flash( 'info', 'Your account has been created, please check your email for the activation link' )
-				var message = {
-					'to'       : ADMIN_EMAIL,
+						'subject'  : 'FC User Registration : Email did not match any schools',
 
-					'subject'  : 'FC User Registration : Email did not match any schools',
-
-					'template' : 'userNoSchool',
-					'locals'   : {
-						'user'   : user
+						'template' : 'userNoSchool',
+						'locals'   : {
+							'user'   : user
+						}
 					}
+					mailer.send( message, function( err, result ) {
+						if ( err ) {
+					
+							console.log( 'Error sending user has no school email to admin\nError Message: '+err.Message );
+						} else {
+							console.log( 'Successfully sent user has no school email to admin.' );
+						}
+					})
 				}
 
-				mailer.send( message, function( err, result ) {
-					if ( err ) {
-					
-						console.log( 'Error sending user has no school email to admin\nError Message: '+err.Message );
-					} else {
-						console.log( 'Successfully sent user has no school email to admin.' );
-					}
-				})
-			}
+				res.redirect( '/' );
+			});
+		}
 
-			res.redirect( '/' );
-		});
 	});
 });
 
