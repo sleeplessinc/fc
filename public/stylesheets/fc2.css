@@ -5,10 +5,21 @@ p { color: #444; }
 
 div.logbar {
 	margin: 0 5% 0.1em 5%;
-	background: #456;
-
+	background: #234;
+	color: #eee;
 	width: 960px;
 	margin: 0 auto;
+}
+
+div.loginstatus {
+	font-size: 75%;
+	text-align: right;
+	padding: 0.5em 2em;
+}
+
+span.username {
+	font-weight: bold;
+	padding: 0 0.5em;
 }
 
 div.navbar {
@@ -26,6 +37,10 @@ div.navbar {
 	text-align: left;
 	zpadding: 0.5em 1em;
 	vertical-align: top;
+}
+
+.navbar .logo {
+	padding-left: 60px; 
 }
 
 div.content {
@@ -121,14 +136,17 @@ div.footer {
 div.footer a {
 	padding: 0.5em 0.5em 0 0.5em;
 	font-weight: normal;
-	color: #bcf;
+	color: #ccc;
 	text-decoration: underline;
 }
 
+.footer .col1 img {
+	margin: 0.5em 0;
+}
 .footer td.col1 {
 	width: 20%;
 	text-align: right;
-	color: #cde;
+	color: #eee;
 	border-right: solid 1px #abc;
 	padding-right: 1em;
 }
@@ -682,4 +700,8 @@ table.contact td:first-child {
 	font-weight: bold;
 }
 
+
+.staticNote {
+	margin: 2em 0;
+}
 
