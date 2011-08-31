@@ -46,7 +46,7 @@ sqlClient.query( 'USE fcstatic' );
 
 // Configuration
 
-var ADMIN_EMAIL = 'admin@finalsclub.org';
+var ADMIN_EMAIL = 'info@finalsclub.org';
 
 var serverHost = process.env.SERVER_HOST;
 var serverPort = process.env.SERVER_PORT;
@@ -335,9 +335,6 @@ app.get( '/schools', loadUser, function( req, res ) {
 				schools,
 				function( school, callback ) {
 					school.authorized = school.authorize( userId );
-
-					console.log( school.authorized );
-
 					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
 						if( courses.length > 0 ) {
 							school.courses = courses;
@@ -433,6 +430,26 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 
 							res.render( 'course/new' );
 						} else {
+							var message = {
+								to					: ADMIN_EMAIL,
+
+								'subject'		: school.name+' has a new course: '+course.name,
+					
+								'template'	: 'newCourse',
+								'locals'		: {
+									'course'			: course,
+									'user'				: req.user,
+									'serverHost'	: serverHost
+								}
+							};
+
+							mailer.send( message, function( err, result ) {
+								if ( err ) {
+									console.log( 'Error sending new course email to info@finalsclub.org' )
+								} else {
+									console.log( 'Successfully invited instructor to course')
+								}
+							})
 							res.redirect( '/schools' );
 						}
 					});
@@ -860,7 +877,7 @@ app.post( '/register', function( req, res ) {
 		return res.redirect( '/register' );
 	}
 
-	if ( req.body.password.length < 8 ) {
+	if ( req.body.password.length < 6 ) {
 		req.flash( 'error', 'Please enter a password longer than eight characters' );
 		return res.redirect( '/register' );
 	}
@@ -973,7 +990,7 @@ app.get( '/activate/:code', function( req, res ) {
 
 						res.redirect( '/' );
 					} else {
-						req.flash( 'info', 'Account successfully activated.' );
+						req.flash( 'info', 'Account successfully activated. Please complete your profile.' );
 
 						res.redirect( '/profile' );
 					}
