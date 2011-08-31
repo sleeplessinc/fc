@@ -4,6 +4,9 @@ div.contenthome
 			| FinalsClub is the premier web portal for interactive education.
 			| Store your notes online, collaborate with classmates, and share knowledge with the world.
 		p
-			div.button.green Learn something >> 
+			div.button.green#learnsomething Learn something >> 
 
-
+script.
+	$("#learnsomething").click(function() {
+		document.location = "/archive";
+	});
