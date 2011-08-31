@@ -715,7 +715,8 @@ app.post( '/login', function( req, res ) {
 
 		if( user ) {
 			if( ! user.activated ) {
-				req.flash( 'error', 'This account isn\'t activated. Check your inbox or <a href="/resendActivation">click here</a> to resend the activation email.' );
+				// (undocumented) markdown-esque link functionality in req.flash
+				req.flash( 'error', 'This account isn\'t activated. Check your inbox or [click here](/resendActivation) to resend the activation email.' );
 
 				req.session.activateCode = user._id;
 
