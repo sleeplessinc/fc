@@ -31,7 +31,8 @@ var UserSchema = new Schema( {
 	resetPassDate		: Date,
 	salt						: String,
 	session					: String,
-	showName				: { 'type' : Boolean, 'default' : true }
+	showName				: { 'type' : Boolean, 'default' : true },
+	admin						: { 'type' : Boolean, 'default' : false }
 });
 
 UserSchema.virtual( 'displayName' )
