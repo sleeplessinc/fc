@@ -1,20 +1,11 @@
-div#wrapper
-	div#header
-		table
-			tr
-				td.lilogo
-					a(href="/")
-						img.logo(height="30", src="/images/fclogo.png")
-				td
-					div#breadcrumb
-						div.crumb
-							- course.section = course.section.replace(/\)/, '')
-							strong.label Course: #{ course.section + ' - ' + course.name }
-						div.crumb
-							strong.label Note: #{ note.topic || note.id }
+div.content
+	div.container1
+		- course.section = course.section.replace(/\)/, '')
+		h1 !{ course.section + " &mdash; " + course.name}
+		h2 Note: #{ note.topic || note.id }
 
-	div#staticNote
-		!{ note.text || 'This note is empty.' }
+		div.staticNote
+			!{ note.text || 'This note is empty.' }
 
-	div( style = 'clear: both; height: 1px;' )
+		div( style = 'clear: both; height: 1px;' )
 
