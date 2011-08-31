@@ -335,9 +335,6 @@ app.get( '/schools', loadUser, function( req, res ) {
 				schools,
 				function( school, callback ) {
 					school.authorized = school.authorize( userId );
-
-					console.log( school.authorized );
-
 					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
 						if( courses.length > 0 ) {
 							school.courses = courses;
