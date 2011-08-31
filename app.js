@@ -36,9 +36,10 @@ var Note		= mongoose.model( 'Note' );
 // Mysql Init
 
 var sqlClient = mysql.createClient({
-	user     : 'root',
-	password : 'root',
-	port		 : 8889
+	user     : 'fclegacy',
+	password : '7nVYXxeE',
+	host		 : 'fcsql.cqdvga5bwf6p.us-west-1.rds.amazonaws.com',
+	port		 : 3306
 })
 
 sqlClient.query( 'USE fcstatic' );
@@ -521,6 +522,11 @@ app.get( '/lecture/:id', loadUser, loadLecture, function( req, res ) {
 
 	// pull out our notes
 	Note.find( { 'lecture' : lecture._id } ).sort( 'name', '1' ).run( function( err, notes ) {
+		if ( !req.user.loggedIn ) {
+			notes = notes.filter(function( note ) {
+				if ( note.public ) return note;
+			})
+		}
 		res.render( 'lecture/index', {
 			'lecture'			: lecture,
 			'notes'				: notes,
