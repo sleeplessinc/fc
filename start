@@ -3,20 +3,14 @@
 ps waux | grep node | grep -v grep
 
 echo "starting ..."
-#cd ~/fc
-node app.js &> log.txt &
-echo "$!" > /tmp/shell.pid
+## note: start as root, pass env vars to sudo param, this app will downgrade itself once it has initialized
+sudo -E forever app.js &> log.txt &
 
 
 cd etherpad-lite/node
-node server.js &> log.txt &
-echo "$!" > /tmp/epl.pid
+forever server.js &> log.txt &
 cd ../..
 
 sleep 3
 ps waux | grep node | grep -v grep
-
-#cd ~/fc/etherpad-lite
-#./bin/run.sh &> log.txt &
-#echo "$!" > /tmp/epl.pid
 

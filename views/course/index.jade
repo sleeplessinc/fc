@@ -12,6 +12,8 @@ div.content
 						a( href = '/lecture/#{ lecture._id }' ) #{ lecture.name }
 			- else
 				li None found.
-		div
-			span(class='sub_menu')
-				a( href = '/course/#{ course._id }/lecture/new' ) New Lecture
+
+		- if ( course.authorized )
+			div
+				span(class='sub_menu')
+					a( href = '/course/#{ course._id }/lecture/new' ) New Lecture

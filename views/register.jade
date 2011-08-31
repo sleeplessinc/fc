@@ -1,13 +1,18 @@
+script.
+	$(function() {
+		$( '[name=school]' ).change(function() {
+			if ( $(this).val() === 'Other' ) {
+				$(this).parent().append('<div class="field" id="otherSchool"><input type="text" name="otherSchool"></div>');
+			} else {
+				if ( $( '#otherSchool' ) ) $( '#otherSchool' ).remove();
+			}
+		})
+	});
 div.content
 	div.container1
 		h1 Create an Account
-		p
-			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx-xxxx xxxx xxxx xxx x xxxxxx xxxxxxxx
-			xxxx. Xxx xxx xxxx xx xxxx xxxx xxxxxx-xxxx x xxxx xxx x xxxxxx.
-			Xxx xxx xxxxxxx xx xxxxxx xxxx xxxxxx xxx xxxx xxxx xxx x xxxxxx xxxxxxxx
-			xxxx.
 		form#credentials( action = '/register', method = 'POST' )
-			div.area 
+			div.zarea 
 				div( class = 'row')
 					div( class = 'label')
 						label( for = 'email' ) Email
@@ -28,7 +33,7 @@ div.content
 							select( name = 'school' )
 								- each school in schools
 									option( value = '#{school.name}' ) #{ school.name }
-								option( value = 'Not Listed' ) Not Listed
+								option( value = 'Other' ) Other
 
 				div( class = 'row')
 					div( class = 'label')
@@ -48,4 +53,4 @@ div.content
 					div( class = 'label')
 						&nbsp;
 					div( class = 'field')
-						button Submit
+						button Register

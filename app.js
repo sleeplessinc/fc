@@ -12,8 +12,10 @@ var async				= require( 'async' );
 
 var db					= require( './db.js' );
 var mongoose		= require( './models.js' ).mongoose;
+var mysql				= require( 'mysql' );
 
 var Mailer			= require( './mailer.js' );
+var hat					= require('hat');
 
 var connect			= require( 'connect' );
 var Session			= connect.middleware.session.Session;
@@ -31,11 +33,23 @@ var Course	= mongoose.model( 'Course' );
 var Lecture	= mongoose.model( 'Lecture' );
 var Note		= mongoose.model( 'Note' );
 
+// Mysql Init
+
+var sqlClient = mysql.createClient({
+	host	 : process.env.MYSQL_DB_HOSTNAME || 'localhost',
+	user     : process.env.MYSQL_DB_USER || 'root',
+	password : process.env.MYSQL_DB_PASS || 'root',
+	port	 : process.env.MYSQL_DB_PORT || 3306
+})
+
+sqlClient.query( 'USE fcstatic' );
+
 // Configuration
 
 var ADMIN_EMAIL = 'admin@finalsclub.org';
 
 var serverHost = process.env.SERVER_HOST;
+var serverPort = process.env.SERVER_PORT;
 
 if( serverHost ) {
 	console.log( 'Using server hostname defined in environment: %s', serverHost );
@@ -45,63 +59,48 @@ if( serverHost ) {
 	console.log( 'No hostname defined, defaulting to os.hostname(): %s', serverHost );
 }
 
-var mongoHost	= process.env.MONGO_HOST;
-var mongoSet	= false;
-
-if( mongoHost ) {
-	if( mongoHost.split( ',' ).count > 1 ) {
-		// we're dealing with a replication set
-
-		mongoSet = mongoHost;
-	}
-} else {
-	// default
-	mongoHost = 'mongodb://localhost/fc';
-
-	console.log( 'No database information defined, using default values: %s', mongoHost );
-}
-
-var awsAccessKey = process.env.AWS_ACCESS_KEY_ID;
-var awsSecretKey = process.env.AWS_SECRET_ACCESS_KEY;
-
-if( ( ! awsAccessKey ) || ( ! awsSecretKey ) ) {
-	throw( new Error( 'Invalid or no AWS keys defined!' ) );
-}
-
 app.configure( 'development', function() { 
 	app.set( 'errorHandler', express.errorHandler( { dumpExceptions: true, showStack: true } ) );
 
-/*
-	app.set( 'dbHost', 'localhost' );
+	app.set( 'dbHost', process.env.MONGO_HOST || 'localhost' );
 	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
-*/
+
+	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY_ID );
+	app.set( 'awsSecretKey', process.env.AWS_SECRET_ACCESS_KEY );
+
+	if ( !serverPort ) {
+		serverPort = 3000;
+	}	 
 });
 
 app.configure( 'production', function() {
-	app.set( 'errorHandler', express.errorHandler() );
+	app.set( 'errorHandler', express.errorHandler( { dumpExceptions: true, showStack: true } ) );
 
-/*
-	app.set( 'dbHost', 'localhost' );
+	// XXX Disable view caching temp
+	app.disable( 'view cache' )
+
+	app.set( 'dbHost', process.env.MONGO_HOST || 'localhost' );
 	app.set( 'dbUri', 'mongodb://' + app.set( 'dbHost' ) + '/fc' );
-*/
+
+	app.set( 'awsAccessKey', process.env.AWS_ACCESS_KEY_ID );
+	app.set( 'awsSecretKey', process.env.AWS_SECRET_ACCESS_KEY );
+
+	if ( !serverPort ) {
+		serverPort = 80;
+	}	
 });
 
-app.configure( function() {
+app.configure(function(){
 	app.set( 'views', __dirname + '/views' );
 	app.set( 'view engine', 'jade' );
 	app.use( express.bodyParser() );
 
 	app.use( express.cookieParser() );
 
-	db.open( mongoSet || mongoHost, function( err, connection ) {
-		if( err ) {
-			throw( err );
-		} else {
-			app.set( 'sessionStore', new mongoStore( {
-				'connection' : connection
-			}));
-		}
-	});
+	// sessions
+	app.set( 'sessionStore', new mongoStore( {
+		'url' : app.set( 'dbUri' )
+	}));
 
 	app.use( express.session( {
 		'secret'	: 'finalsclub',
@@ -119,19 +118,58 @@ app.configure( function() {
 	app.use( errorHandler );
 });
 
+// Mailers
+
+function sendUserActivation( user ) {
+	var message = {
+		'to'				: user.email,
+
+		'subject'		: 'Welcome to FinalsClub.org!',
+
+		'template'	: 'userActivation',
+		'locals'		: {
+			'user'				: user,
+			'serverHost'	: serverHost
+		}
+	};
+
+	mailer.send( message, function( err, result ) {
+		if( err ) {
+			// XXX: Add route to resend this email
+
+			console.log( 'Error sending user activation email\nError Message: '+err.Message );
+		} else {
+			console.log( 'Successfully sent user activation email.' );
+		}
+	});
+}
+
 // Middleware
 
 function loggedIn( req, res, next ) {
+	if( req.user ) {
+		next();
+	} else {
+		req.flash( 'error', 'You must be logged in to access that feature!' );
+
+		res.redirect( '/' );
+	}
+}
+
+function loadUser( req, res, next ) {
 	var sid = req.sessionID;
-	log3("logged in ...")
 
 	console.log( 'got request from session ID: %s', sid );
 
 	User.findOne( { session : sid }, function( err, user ) {
+
 		log3(err);
 		log3(user);
+
 		if( user ) {
 			req.user = user;
+
+			req.user.loggedIn = true;
 
 			log3( 'authenticated user: '+req.user._id+' / '+req.user.email+'');
 
@@ -153,23 +191,34 @@ function loggedIn( req, res, next ) {
 
 				res.redirect( '/' );
       }
-		} else if ( req.public ) {
-			// if public, allow through
-			next();
 		} else {
 			// stash the original request so we can redirect
 			var path = url.parse( req.url ).pathname;
 			req.session.redirect = path;
 
-			res.redirect( '/login' );
+			req.user = {};
+
+			next();
 		}
 	});
 }
 
-function public( req, res, next ) {
-	req.public = true;
+function loadSchool( req, res, next ) {
+	var userId		= req.user._id;
+	var schoolId	= req.params.id;
 
-	next();
+	School.findById( schoolId, function( err, school ) {
+		if( school ) {
+			req.school = school;
+
+			req.school.authorized = school.authorize( userId );
+			next();
+		} else {
+			req.flash( 'error', 'Invalid school specified!' );
+
+			res.redirect( '/' );
+		}
+	});
 }
 
 function loadCourse( req, res, next ) {
@@ -178,19 +227,13 @@ function loadCourse( req, res, next ) {
 
 	Course.findById( courseId, function( err, course ) {
 		if( course ) {
-			course.authorize( userId, function( res )  {
-				if( res ) {
-					console.log( 'authorized' );
+			req.course = course;
 
-					req.course = course;
+			course.authorize( userId, function( authorized )  {
+				req.course.authorized = authorized;
 
-					next();
-				} else {
-					req.flash( 'error', 'You do not have permission to access that course.' );
-
-					res.redirect( '/' );
-				}
-			})
+				next();
+			});
 		} else {
 			req.flash( 'error', 'Invalid course specified!' );
 
@@ -205,17 +248,13 @@ function loadLecture( req, res, next ) {
 
 	Lecture.findById( lectureId, function( err, lecture ) {
 		if( lecture ) {
-			lecture.authorize( userId, function( res ) {
-				if( res ) {
-					req.lecture = lecture;
+			req.lecture = lecture;
 
-					next();
-				} else {
-					req.flash( 'error', 'You do not have permission to access that lecture.' );
+			lecture.authorize( userId, function( authorized ) {
+				req.lecture.authorized = authorized;
 
-					res.redirect( '/' );
-				}
-			})
+				next();
+			});
 		} else {
 			req.flash( 'error', 'Invalid lecture specified!' );
 
@@ -233,7 +272,7 @@ function loadNote( req, res, next ) {
 			note.authorize( userId, function( auth ) {
 				if( auth ) {
 					req.note = note;
-http://help.github.com/remove-sensitive-data/
+
 					next();
 				} else if ( note.public ) {
 					req.RO = true;
@@ -278,25 +317,27 @@ app.dynamicHelpers( {
 
 // Routes
 
-app.get( '/', loggedIn, function( req, res ) {
-	var userId = req.user._id;
-
+app.get( '/', loadUser, function( req, res ) {
 	log3("get / page");
 
 	res.render( 'index' );
 });
 
-app.get( '/schools', loggedIn, function( req, res ) {
+app.get( '/schools', loadUser, function( req, res ) {
 	var userId = req.user._id;
 
 	log3("get /schools page");
 
 	// mongoose's documentation on sort is extremely poor, tread carefully
-	School.find( { 'users' : userId } ).sort( 'name', '1' ).run( function( err, schools ) {
+	School.find( {} ).sort( 'name', '1' ).run( function( err, schools ) {
 		if( schools ) {
 			async.forEach(
 				schools,
 				function( school, callback ) {
+					school.authorized = school.authorize( userId );
+
+					console.log( school.authorized );
+
 					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
 						if( courses.length > 0 ) {
 							school.courses = courses;
@@ -316,24 +357,24 @@ app.get( '/schools', loggedIn, function( req, res ) {
 	});
 });
 
-app.get( '/:id/course/new', loggedIn, function( req, res ) {
-	var schoolId = req.params.id;
+app.get( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
+	var school = req.school;
 
-	School.findById( schoolId, function( err, school ) {
-		if( school ) {
-			res.render( 'course/new', { 'school': school } );
-		} else {
-			req.flash( 'error', 'Invalid note specified!' );
+	if( ( ! school ) || ( ! school.authorized ) ) {
+		return res.redirect( '/schools' );
+	}
 
-			res.direct( '/' );
-		}
-	})
+	res.render( 'course/new', { 'school': school } );
 });
 
-app.post( '/:id/course/new', loggedIn, function( req, res ) {
-	var schoolId	= req.params.id;
+app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
+	var school = req.school;
 	var course = new Course;
 	var instructorEmail = req.body.email;
+
+	if( ( ! school ) || ( ! school.authorized ) ) {
+		res.redirect( '/schools' );
+	}
 
   if (!instructorEmail) {
     req.flash( 'error', 'Invalid parameters!' )
@@ -342,7 +383,7 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
 
 	course.name					= req.body.name;
 	course.description	= req.body.description;
-	course.school				= schoolId;
+	course.school				= school._id;
   course.instructor		= instructorEmail;
 
 	// find our instructor or invite them if necessary
@@ -350,14 +391,11 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
     if ( !user ) {
       var user          = new User;
 
-      var activateCode  = user.encrypt( user._id.toString() );
-
       user.email        = instructorEmail;
+			user.affil        = 'Instructor';
 
       user.activated    = false;
-      user.activateCode = activateCode;
-      user.affil        = 'Instructor';
-
+      
 			if ( ( user.email === '' ) || ( !isValidEmail( user.email ) ) ) {
 				req.flash( 'error', 'Please enter a valid email' );
 				return res.redirect( '/register' );
@@ -420,7 +458,7 @@ app.post( '/:id/course/new', loggedIn, function( req, res ) {
 	})
 });
 
-app.get( '/course/:id', loggedIn, loadCourse, function( req, res ) {
+app.get( '/course/:id', loadUser, loadCourse, function( req, res ) {
 	var userId = req.user._id;
 	var course = req.course;
 
@@ -434,7 +472,7 @@ app.get( '/course/:id', loggedIn, loadCourse, function( req, res ) {
 });
 
 // subscribe and unsubscribe to course networks
-app.get( '/course/:id/subscribe', loggedIn, loadCourse, function( req, res ) {
+app.get( '/course/:id/subscribe', loadUser, loadCourse, function( req, res ) {
 	var course = req.course;
 	var userId = req.user._id;
 
@@ -447,7 +485,7 @@ app.get( '/course/:id/subscribe', loggedIn, loadCourse, function( req, res ) {
 	});
 });
 
-app.get( '/course/:id/unsubscribe', loggedIn, loadCourse, function( req, res ) {
+app.get( '/course/:id/unsubscribe', loadUser, loadCourse, function( req, res ) {
 	var course = req.course;
 	var userId = req.user._id;
 
@@ -460,15 +498,28 @@ app.get( '/course/:id/unsubscribe', loggedIn, loadCourse, function( req, res ) {
 	});
 });
 
-app.get( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) {
-	var lecture = {};
+app.get( '/course/:id/lecture/new', loadUser, loadCourse, function( req, res ) {
+	var courseId	= req.params.id;
+	var course		= req.course;
+	var lecture		= {};
+
+	if( ( ! course ) || ( ! course.authorized ) ) {
+		return res.redirect( '/course/' + courseId );
+	}
 
 	res.render( 'lecture/new', { 'lecture' : lecture } );
 });
 
-app.post( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) {
-	var course	= req.course;
-	var lecture = new Lecture;
+app.post( '/course/:id/lecture/new', loadUser, loadCourse, function( req, res ) {
+	var courseId	= req.params.id;
+	var course		= req.course;
+	var lecture		= new Lecture;
+
+	if( ( ! course ) || ( ! course.authorized ) ) {
+		res.redirect( '/course/' + courseId );
+
+		return;
+	}
 
 	lecture.name		= req.body.name;
 	lecture.date		= req.body.date;
@@ -488,11 +539,16 @@ app.post( '/course/:id/lecture/new', loggedIn, loadCourse, function( req, res ) 
 
 // lecture
 
-app.get( '/lecture/:id', loggedIn, loadLecture, function( req, res ) {
+app.get( '/lecture/:id', loadUser, loadLecture, function( req, res ) {
 	var lecture	= req.lecture;
 
 	// pull out our notes
 	Note.find( { 'lecture' : lecture._id } ).sort( 'name', '1' ).run( function( err, notes ) {
+		if ( !req.user.loggedIn || !req.lecture.authorized ) {
+			notes = notes.filter(function( note ) {
+				if ( note.public ) return note;
+			})
+		}
 		res.render( 'lecture/index', {
 			'lecture'			: lecture,
 			'notes'				: notes,
@@ -503,14 +559,30 @@ app.get( '/lecture/:id', loggedIn, loadLecture, function( req, res ) {
 	});
 });
 
-app.get( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) {
-	var note = {};
+app.get( '/lecture/:id/notes/new', loadUser, loadLecture, function( req, res ) {
+	var lectureId	= req.params.id;
+	var lecture		= req.lecture;
+	var note			= {};
+
+	if( ( ! lecture ) || ( ! lecture.authorized ) ) {
+		res.redirect( '/lecture/' + lectureId );
+
+		return;
+	}
 
 	res.render( 'notes/new', { 'note' : note } );
 });
 
-app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) {
-	var lecture = req.lecture;
+app.post( '/lecture/:id/notes/new', loadUser, loadLecture, function( req, res ) {
+	var lectureId	= req.params.id;
+	var lecture		= req.lecture;
+
+	if( ( ! lecture ) || ( ! lecture.authorized ) ) {
+		res.redirect( '/lecture/' + lectureId );
+
+		return;
+	}
+
 	var note		= new Note;
 
 	note.name			= req.body.name;
@@ -532,7 +604,7 @@ app.post( '/lecture/:id/notes/new', loggedIn, loadLecture, function( req, res ) 
 
 // notes
 
-app.get( '/note/:id', public, loggedIn, loadNote, function( req, res ) {
+app.get( '/note/:id', loadUser, loadNote, function( req, res ) {
 	var note = req.note;
 	var roID = note.roID || false;
 
@@ -552,7 +624,7 @@ app.get( '/note/:id', public, loggedIn, loadNote, function( req, res ) {
 	if (roID) {
 		processReq();
 	} else {
-		db.open( mongoSet || mongoHost, 'etherpad', 'etherpad', function( err, epl ) {
+		db.open('mongodb://' + app.set( 'dbHost' ) + '/etherpad/etherpad', function( err, epl ) {
 			epl.findOne( { key: 'pad2readonly:' + note._id }, function(err, record) {
 				if ( record ) {
 					roID = record.value.replace(/"/g, '');
@@ -606,19 +678,23 @@ app.get( '/note/:id', public, loggedIn, loadNote, function( req, res ) {
 
 // static pages
 
-app.get( '/about', public, loggedIn, function( req, res ) {
+app.get( '/about', loadUser, function( req, res ) {
   res.render( 'static/about' );
 });
 
-app.get( '/terms', public, loggedIn, function( req, res ) {
+app.get( '/press', loadUser, function( req, res ) {
+  res.render( 'static/press' );
+});
+
+app.get( '/terms', loadUser, function( req, res ) {
   res.render( 'static/terms' );
 });
 
-app.get( '/contact', public, loggedIn, function( req, res ) {
+app.get( '/contact', loadUser, function( req, res ) {
 	res.render( 'static/contact' );
 });
 
-app.get( '/privacy', public, loggedIn, function( req, res ) {
+app.get( '/privacy', loadUser, function( req, res ) {
 	res.render( 'static/privacy' );
 });
 
@@ -641,12 +717,16 @@ app.post( '/login', function( req, res ) {
 
 		if( user ) {
 			if( ! user.activated ) {
-				req.flash( 'error', 'This account has not been activated! Check your email for the activation URL.' );
+				// (undocumented) markdown-esque link functionality in req.flash
+				req.flash( 'error', 'This account isn\'t activated. Check your inbox or [click here](/resendActivation) to resend the activation email.' );
+
+				req.session.activateCode = user._id;
 
 				res.render( 'login' );
 			} else {
 				if( user.authenticate( password ) ) {
 					log3("pass ok") 
+
 					var sid = req.sessionID;
 
 					user.session = sid;
@@ -660,6 +740,10 @@ app.post( '/login', function( req, res ) {
 						// redirect to profile if we don't have a stashed request
 						res.redirect( redirect || '/profile' );
 					});
+				} else {
+					req.flash( 'error', 'Invalid login!' );
+
+					res.render( 'login' );
 				}
 			}
 		} else {
@@ -675,6 +759,10 @@ app.get( '/resetpw', function( req, res ) {
 	log3("get resetpw page");
 	res.render( 'resetpw' );
 });
+app.get( '/resetpw/:id', function( req, res ) {
+	var resetPassCode = req.params.id
+	res.render( 'resetpw', { 'verify': true, 'resetPassCode' : resetPassCode } );
+});
 
 app.post( '/resetpw', function( req, res ) {
 	log3("post resetpw");
@@ -684,8 +772,10 @@ app.post( '/resetpw', function( req, res ) {
 	User.findOne( { 'email' : email }, function( err, user ) {
 		if( user ) {
 
-			var plaintext = user.genRandomPassword();
-			user.password = plaintext;		
+			var resetPassCode = hat(64);
+			user.setResetPassCode(resetPassCode);
+
+			var resetPassUrl = 'http://' + serverHost + ((app.address().port != 80)? ':'+app.address().port: '') + '/resetpw/' + resetPassCode;
 
 			user.save( function( err ) {
 				log3('save '+user.email);
@@ -697,7 +787,8 @@ app.post( '/resetpw', function( req, res ) {
 
 					'template'	: 'userPasswordReset',
 						'locals'		: {
-							'plaintext'			: plaintext
+							'resetPassCode'		: resetPassCode,
+							'resetPassUrl'		: resetPassUrl
 					}
 				};
 
@@ -719,7 +810,29 @@ app.post( '/resetpw', function( req, res ) {
 		}
 	});
 });
+app.post( '/resetpw/:id', function( req, res ) {
+	log3("post resetpw.code");
+	var resetPassCode = req.params.id
+	var email = req.body.email
+	var pass1 = req.body.pass1
+	var pass2 = req.body.pass2
 
+	User.findOne( { 'email' : email }, function( err, user ) {
+		var valid = false;
+		if( user ) {
+			var valid = user.resetPassword(resetPassCode, pass1, pass2);
+			if (valid) {
+				user.save( function( err ) {
+					res.render( 'resetpw-success', { 'verify' : true, 'email' : email, 'resetPassCode' : resetPassCode } );		
+				});			
+			}
+		} 
+
+		if (!valid) {
+			res.render( 'resetpw-error', { 'verify' : true, 'email' : email } );
+		}
+	});
+});
 
 app.get( '/register', function( req, res ) {
 	log3("get reg page");
@@ -737,80 +850,100 @@ app.post( '/register', function( req, res ) {
 	user.email        = req.body.email;
 	user.password     = req.body.password;
 	user.session      = sid;
-	user.school				= req.body.school;
+	user.school				= req.body.school === 'Other' ? req.body.otherSchool : req.body.school;
   user.name         = req.body.name;
   user.affil        = req.body.affil;
   user.activated    = false;
-  user.activateCode = user.encrypt( user._id.toString() );
 
 	if ( ( user.email === '' ) || ( !isValidEmail( user.email ) ) ) {
 		req.flash( 'error', 'Please enter a valid email' );
 		return res.redirect( '/register' );
 	}
+
 	if ( req.body.password.length < 8 ) {
 		req.flash( 'error', 'Please enter a password longer than eight characters' );
 		return res.redirect( '/register' );
 	}
 
+	var hostname = user.email.split( '@' ).pop();
+
+	if( hostname == 'finalsclub.org' ) {
+		user.admin = true;
+	}
+
 	user.save( function( err ) {
-		var hostname = user.email.split( '@' ).pop();
-		log3('save '+user.email);
-
-		var message = {
-			'to'				: user.email,
-
-			'subject'		: 'Welcome to FinalsClub.org!',
-
-			'template'	: 'userActivation',
-			'locals'		: {
-				'user'				: user,
-				'serverHost'	: serverHost
-			}
-		};
-
-		mailer.send( message, function( err, result ) {
-			if( err ) {
-				// XXX: Add route to resend this email
-
-				console.log( 'Error sending user activation email\nError Message: '+err.Message );
+		if ( err ) {
+			if( /dup key/.test( err.message ) ) {
+				// attempting to register an existing address
+					User.findOne({ 'email' : user.email }, function(err, result ) {
+						if (result.activated) {
+							req.flash( 'error', 'There is already someone registered with this email, if this is in error contact info@finalsclub.org for help' )
+							return res.redirect( '/register' )
+						} else {
+							req.flash( 'error', 'There is already someone registered with this email, if this is you, please check your email for the activation code' )
+							return res.redirect( '/resendActivation' )
+						}
+					});
 			} else {
-				console.log( 'Successfully sent user activation email.' );
+				req.flash( 'error', 'An error occurred during registration.' );
+
+				return res.redirect( '/register' );
 			}
-		});
+		} else {
+			// send user activation email
+			sendUserActivation( user );
 
-		School.findOne( { 'hostnames' : hostname }, function( err, school ) {
-			if( school ) {
-				log3('school recognized '+school.name);
-				school.users.push( user._id );
+			School.findOne( { 'hostnames' : hostname }, function( err, school ) {
+				if( school ) {
+					log3('school recognized '+school.name);
+					school.users.push( user._id );
 
-				school.save( function( err ) {
-					log3('school.save() done');
-					req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network.' );
-				});
-			} else {
-				var message = {
-					'to'       : ADMIN_EMAIL,
+					school.save( function( err ) {
+						log3('school.save() done');
+						req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network. Please check your email from the activation link' );
+					});
+				} else {
+					req.flash( 'info', 'Your account has been created, please check your email for the activation link' )
+					var message = {
+						'to'       : ADMIN_EMAIL,
 
-					'subject'  : 'FC User Registration : Email did not match any schools',
+						'subject'  : 'FC User Registration : Email did not match any schools',
 
-					'template' : 'userNoSchool',
-					'locals'   : {
-						'user'   : user
+						'template' : 'userNoSchool',
+						'locals'   : {
+							'user'   : user
+						}
 					}
+					mailer.send( message, function( err, result ) {
+						if ( err ) {
+					
+							console.log( 'Error sending user has no school email to admin\nError Message: '+err.Message );
+						} else {
+							console.log( 'Successfully sent user has no school email to admin.' );
+						}
+					})
 				}
 
-				mailer.send( message, function( err, result ) {
-					if ( err ) {
-					
-						console.log( 'Error sending user has no school email to admin\nError Message: '+err.Message );
-					} else {
-						console.log( 'Successfully sent user has no school email to admin.' );
-					}
-				})
-			}
+				res.redirect( '/' );
+			});
+		}
 
+	});
+});
+
+app.get( '/resendActivation', function( req, res ) {
+	var activateCode = req.session.activateCode;
+
+	User.findById( activateCode, function( err, user ) {
+		if( ( ! user ) || ( user.activated ) ) {
 			res.redirect( '/' );
-		});
+		} else {
+			sendUserActivation( user );
+
+			req.flash( 'info', 'Your activation code has been resent.' );
+
+			res.redirect( '/login' );
+		}
 	});
 });
 
@@ -822,7 +955,7 @@ app.get( '/activate/:code', function( req, res ) {
 		res.redirect( '/' );
 	}
 
-	User.findOne( { 'activateCode' : code }, function( err, user ) {
+	User.findById( code, function( err, user ) {
 		if( err || ! user ) {
 			req.flash( 'error', 'Invalid activation code!' );
 
@@ -836,11 +969,11 @@ app.get( '/activate/:code', function( req, res ) {
 
 				user.save( function( err ) {
 					if( err ) {
-						req.flash( 'error', 'Unable to activate user!' );
+						req.flash( 'error', 'Unable to activate account.' );
 
 						res.redirect( '/' );
 					} else {
-						req.flash( 'info', 'Successfully activated!' );
+						req.flash( 'info', 'Account successfully activated.' );
 
 						res.redirect( '/profile' );
 					}
@@ -866,18 +999,20 @@ app.get( '/logout', function( req, res ) {
 	});
 });
 
-app.get( '/profile', loggedIn, function( req, res ) {
+app.get( '/profile', loadUser, loggedIn, function( req, res ) {
 	var user = req.user;
 	
 	res.render( 'profile/index', { 'user' : user } );
 });
 
-app.post( '/profile', loggedIn, function( req, res ) {
+app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 	var user		= req.user;
 	var fields	= req.body;
 
 	var error				= false;
 	var wasComplete	= user.isComplete;
+
+	console.log( fields );
 
 	if( ! fields.name ) {
 		req.flash( 'error', 'Please enter a valid name!' );
@@ -914,6 +1049,11 @@ app.post( '/profile', loggedIn, function( req, res ) {
 		}
 	}
 
+	user.major		= fields.major;
+	user.bio			= fields.bio;
+
+	user.showName	= ( fields.showName ? true : false );
+
 	if( ! error ) {
 		user.save( function( err ) {
 			if( err ) {
@@ -921,15 +1061,116 @@ app.post( '/profile', loggedIn, function( req, res ) {
 			} else {
 				if( ( user.isComplete ) && ( ! wasComplete ) ) {
 					req.flash( 'info', 'Your account is now fully activated. Thank you for joining FinalsClub!' );
+
+					res.redirect( '/' );
+				} else {
+					res.render( 'profile/index', { 'user' : user } );
 				}
 			}
-
-			res.redirect( '/' );
 		});
 	} else {
 		res.render( 'profile/index', { 'user' : user } );
 	}
 });
+
+
+// Old Notes
+
+function checkId( req, res, next ) {
+	var id = req.params.id;
+
+	if (isNaN(id)) {
+		req.flash( 'error', 'Not a valid id' );
+		res.redirect('/archive')
+	} else {
+		req.id = id;
+		next()
+	}
+}
+
+function loadOldCourse( req, res, next ) {
+	if( url.parse( req.url ).pathname.match(/course/) ) {
+		sqlClient.query(
+			'SELECT name, description, section, instructor_name FROM courses WHERE id = '+req.id,
+			function( err, results ) {
+				if ( err ) {
+					req.flash( 'err', 'Course with this ID does not exist' )
+					res.redirect( '/archive' );
+				} else {
+					req.course = results[0];
+					next()
+				}
+			}
+		)
+	} else {
+		next()
+	} 
+}
+
+app.get( '/archive', loadUser, function( req, res ) {
+	sqlClient.query(
+		'SELECT id, name FROM subjects WHERE id in (SELECT c.subject_id FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id)) ORDER BY name', function( err, results ) {
+			if ( err ) {
+				req.flash( 'error', 'There are no archived courses' );
+				res.redirect( '/' );
+			} else {
+				res.render( 'archive/index', { 'subjects' : results } );
+			}
+		}
+	)
+})
+
+app.get( '/archive/subject/:id', loadUser, checkId, function( req, res ) {
+	
+	sqlClient.query(
+		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id) AND c.subject_id = '+req.id+' ORDER BY c.created_at desc', function( err, results ) {
+			if ( err ) {
+				req.flash( 'error', 'There are no archived courses' );
+				res.redirect( '/' );
+			} else {
+				res.render( 'archive/courses', { 'courses' : results } );
+			}
+		}
+	)
+})
+
+app.get( '/archive/course/:id', loadUser, checkId, loadOldCourse, function( req, res ) {
+	sqlClient.query(
+		'SELECT id, topic FROM notes WHERE course_id='+req.id, function( err, results ) {
+			if ( err ) {
+				req.flash( 'error', 'There are no notes in this course' );
+				res.redirect( '/archive' );
+			} else {
+				res.render( 'archive/notes', { 'notes' : results, 'course' : req.course } );
+			}
+		}
+	)
+})
+
+app.get( '/archive/note/:id', loadUser, checkId, function( req, res ) {
+	sqlClient.query(
+		'SELECT id, topic, text, course_id FROM notes WHERE id='+req.id, function( err, results ) {
+			if ( err ) {
+				req.flash( 'error', 'This is not a valid id for a note' );
+				res.redirect( '/archive' );
+			} else {
+				var note = results[0];
+				sqlClient.query(
+					'SELECT name, description, section FROM courses WHERE id = '+note.course_id,
+					function( err, results ) {
+						if ( err ) {
+							req.flash( 'error', 'There is no course for this note' )
+							res.redirect( '/archive' )
+						} else {
+							var course = results[0];
+							res.render( 'archive/note', { 'layout' : 'notesLayout', 'note' : note, 'course': course } );
+						}
+					}
+				)
+			}
+		}
+	)
+})
 
 // socket.io server
 
@@ -1195,34 +1436,31 @@ var counts = io
 	});
 });
 
+// Exception Catch-All
+
+process.on('uncaughtException', function (e) {
+	console.log("!!!!!! UNCAUGHT EXCEPTION\n" + e.stack);
+});
+
+
 // Launch
 
-if( mongoSet ) {
-	console.log( 'Connecting to Mongo replica set.' );
+mongoose.connect( app.set( 'dbUri' ) );
+mongoose.connection.db.serverConfig.connection.autoReconnect = true
 
-	mongoose.connectSet( mongoSet, function( err ) {
-		if( err ) {
-			throw( err );
-		}
-	});;
+var mailer = new Mailer( app.set('awsAccessKey'), app.set('awsSecretKey') );
 
-	mongoose.connection.db.serverConfig.connection.autoReconnect = true;
-} else {
-	console.log( 'Connecting to Mongo instance.' );
+app.listen( serverPort, function() {
+	console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
 
-	mongoose.connect( mongoHost, function( err ) {
-		if( err ) {
-			throw( err );
-		}
-	});
-
-	mongoose.connection.db.serverConfig.connection.autoReconnect = true;
-}
-
-var mailer = new Mailer( awsAccessKey, awsSecretKey );
-
-app.listen( 3000 );
-console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
+	// if run as root, downgrade to the owner of this file
+	if (process.getuid() === 0) {
+		require('fs').stat(__filename, function(err, stats) {
+			if (err) { return console.log(err); }
+			process.setuid(stats.uid);
+		});
+	}
+});
 
 function isValidEmail(email) {
 	var re = /[a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
