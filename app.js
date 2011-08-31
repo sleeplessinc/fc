@@ -74,7 +74,7 @@ app.configure( 'development', function() {
 });
 
 app.configure( 'production', function() {
-	app.set( 'errorHandler', express.errorHandler() );
+	app.set( 'errorHandler', express.errorHandler( { dumpExceptions: true, showStack: true } ) );
 
 	// XXX Disable view caching temp
 	app.disable( 'view cache' )
@@ -335,6 +335,8 @@ app.get( '/schools', loadUser, function( req, res ) {
 				schools,
 				function( school, callback ) {
 					school.authorized = school.authorize( userId );
+
+					console.log( school.authorized );
 
 					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
 						if( courses.length > 0 ) {
@@ -857,9 +859,16 @@ app.post( '/register', function( req, res ) {
 		req.flash( 'error', 'Please enter a valid email' );
 		return res.redirect( '/register' );
 	}
+
 	if ( req.body.password.length < 8 ) {
 		req.flash( 'error', 'Please enter a password longer than eight characters' );
 		return res.redirect( '/register' );
+	}
+
+	var hostname = user.email.split( '@' ).pop();
+
+	if( hostname == 'finalsclub.org' ) {
+		user.admin = true;
 	}
 
 	user.save( function( err ) {
@@ -883,8 +892,6 @@ app.post( '/register', function( req, res ) {
 		} else {
 			// send user activation email
 			sendUserActivation( user );
-
-			var hostname = user.email.split( '@' ).pop();
 
 			School.findOne( { 'hostnames' : hostname }, function( err, school ) {
 				if( school ) {
@@ -1005,6 +1012,8 @@ app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 	var error				= false;
 	var wasComplete	= user.isComplete;
 
+	console.log( fields );
+
 	if( ! fields.name ) {
 		req.flash( 'error', 'Please enter a valid name!' );
 
@@ -1040,6 +1049,11 @@ app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 		}
 	}
 
+	user.major		= fields.major;
+	user.bio			= fields.bio;
+
+	user.showName	= ( fields.showName ? true : false );
+
 	if( ! error ) {
 		user.save( function( err ) {
 			if( err ) {
@@ -1047,10 +1061,12 @@ app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 			} else {
 				if( ( user.isComplete ) && ( ! wasComplete ) ) {
 					req.flash( 'info', 'Your account is now fully activated. Thank you for joining FinalsClub!' );
+
+					res.redirect( '/' );
+				} else {
+					res.render( 'profile/index', { 'user' : user } );
 				}
 			}
-
-			res.redirect( '/' );
 		});
 	} else {
 		res.render( 'profile/index', { 'user' : user } );
@@ -1065,7 +1081,7 @@ function checkId( req, res, next ) {
 
 	if (isNaN(id)) {
 		req.flash( 'error', 'Not a valid id' );
-		res.redirect('/old/courses')
+		res.redirect('/archive')
 	} else {
 		req.id = id;
 		next()
@@ -1093,12 +1109,26 @@ function loadOldCourse( req, res, next ) {
 
 app.get( '/archive', loadUser, function( req, res ) {
 	sqlClient.query(
-		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id)', function( err, results ) {
+		'SELECT id, name FROM subjects WHERE id in (SELECT c.subject_id FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id)) ORDER BY name', function( err, results ) {
 			if ( err ) {
 				req.flash( 'error', 'There are no archived courses' );
 				res.redirect( '/' );
 			} else {
-				res.render( 'archive/index', { 'courses' : results } );
+				res.render( 'archive/index', { 'subjects' : results } );
+			}
+		}
+	)
+})
+
+app.get( '/archive/subject/:id', loadUser, checkId, function( req, res ) {
+	
+	sqlClient.query(
+		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id) AND c.subject_id = '+req.id+' ORDER BY c.created_at desc', function( err, results ) {
+			if ( err ) {
+				req.flash( 'error', 'There are no archived courses' );
+				res.redirect( '/' );
+			} else {
+				res.render( 'archive/courses', { 'courses' : results } );
 			}
 		}
 	)

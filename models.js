@@ -20,18 +20,29 @@ function salt() {
 // user
 
 var UserSchema = new Schema( {
-	email				: { type : String, require: true, index : { unique : true } },
-	school				: String,
-	name				: String,
-	affil				: String,
-	hashed				: String,
-	activated			: Boolean,
+	email						: { type : String, require: true, index : { unique : true } },
+	school					: String,
+	name						: String,
+	affil						: String,
+	hashed					: String,
+	activated				: Boolean,
 	activateCode		: String,
 	resetPassCode		: String,
 	resetPassDate		: Date,
-	salt				: String,
-	session				: String
+	salt						: String,
+	session					: String,
+	showName				: { 'type' : Boolean, 'default' : true },
+	admin						: { 'type' : Boolean, 'default' : false }
 });
+
+UserSchema.virtual( 'displayName' )
+	.get( function() {
+		if( this.showName ) {
+			return this.name;
+		} else {
+			return this.email;
+		}
+	});
 
 UserSchema.virtual( 'password' )
 	.set( function( password ) {

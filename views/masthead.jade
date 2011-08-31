@@ -4,7 +4,7 @@ div.masthead
 			- if( user && user.loggedIn )
 				| Currently logged in as 
 				span.username
-					| !{ user.name } 
+					| !{ user.displayName }
 			- else
 				| &nbsp;
 	div.navbar
@@ -14,6 +14,7 @@ div.masthead
 					a(href="/")
 						img.logo(src="/images/fclogo.png")
 				td.menu
+					a(href="http://blog.finalsclub.org") Blog
 					a(href="/press") Press
 					a(href="/schools") Courses
 					a(href="/archive") Archive
