@@ -46,7 +46,7 @@ sqlClient.query( 'USE fcstatic' );
 
 // Configuration
 
-var ADMIN_EMAIL = 'admin@finalsclub.org';
+var ADMIN_EMAIL = 'info@finalsclub.org';
 
 var serverHost = process.env.SERVER_HOST;
 var serverPort = process.env.SERVER_PORT;
@@ -430,6 +430,26 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 
 							res.render( 'course/new' );
 						} else {
+							var message = {
+								to					: ADMIN_EMAIL,
+
+								'subject'		: school.name+' has a new course: '+course.name,
+					
+								'template'	: 'newCourse',
+								'locals'		: {
+									'course'			: course,
+									'user'				: req.user,
+									'serverHost'	: serverHost
+								}
+							};
+
+							mailer.send( message, function( err, result ) {
+								if ( err ) {
+									console.log( 'Error sending new course email to info@finalsclub.org' )
+								} else {
+									console.log( 'Successfully invited instructor to course')
+								}
+							})
 							res.redirect( '/schools' );
 						}
 					});
