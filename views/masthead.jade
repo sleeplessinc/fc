@@ -1,4 +1,12 @@
 div.masthead 
+	div.logbar
+		div.loginstatus
+			- if( user && user.loggedIn )
+				| Currently logged in as 
+				span.username
+					| !{ user.displayName }
+			- else
+				| &nbsp;
 	div.navbar
 		table
 			tr
@@ -6,7 +14,7 @@ div.masthead
 					a(href="/")
 						img.logo(src="/images/fclogo.png")
 				td.menu
-					a(href="/") Home
+					a(href="http://blog.finalsclub.org") Blog
 					a(href="/press") Press
 					a(href="/schools") Courses
 					a(href="/archive") Archive
@@ -19,3 +27,5 @@ div.masthead
 						a(href="/register") Create an Account
 						span(class='sub_menu')
 							a(href="/login") Login
+	div.logbar
+		&nbsp;

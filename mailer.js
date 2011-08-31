@@ -41,7 +41,7 @@ Mailer.prototype.send = function( msg, callback ) {
 		'Message.Body.Text.Data'						: msg.body,
 		'Message.Subject.Charset'						: 'UTF-8',
 		'Message.Subject.Data'							: msg.subject,
-		'Source'										: 'FinalsClub.org Mailer <info@finalsclub.org>'
+		'Source'										: 'FinalsClub.org <info@finalsclub.org>'
 	};
 
 	this.client.call( 'SendEmail', params, function( result ) {

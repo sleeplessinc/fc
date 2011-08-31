@@ -335,6 +335,9 @@ app.get( '/schools', loadUser, function( req, res ) {
 				schools,
 				function( school, callback ) {
 					school.authorized = school.authorize( userId );
+
+					console.log( school.authorized );
+
 					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
 						if( courses.length > 0 ) {
 							school.courses = courses;
@@ -714,7 +717,8 @@ app.post( '/login', function( req, res ) {
 
 		if( user ) {
 			if( ! user.activated ) {
-				req.flash( 'error', 'This account isn\'t activated. Check your inbox or <a href="/resendActivation">click here</a> to resend the activation email.' );
+				// (undocumented) markdown-esque link functionality in req.flash
+				req.flash( 'error', 'This account isn\'t activated. Check your inbox or [click here](/resendActivation) to resend the activation email.' );
 
 				req.session.activateCode = user._id;
 
@@ -722,6 +726,7 @@ app.post( '/login', function( req, res ) {
 			} else {
 				if( user.authenticate( password ) ) {
 					log3("pass ok") 
+
 					var sid = req.sessionID;
 
 					user.session = sid;
@@ -735,6 +740,10 @@ app.post( '/login', function( req, res ) {
 						// redirect to profile if we don't have a stashed request
 						res.redirect( redirect || '/profile' );
 					});
+				} else {
+					req.flash( 'error', 'Invalid login!' );
+
+					res.render( 'login' );
 				}
 			}
 		} else {
@@ -850,28 +859,39 @@ app.post( '/register', function( req, res ) {
 		req.flash( 'error', 'Please enter a valid email' );
 		return res.redirect( '/register' );
 	}
+
 	if ( req.body.password.length < 8 ) {
 		req.flash( 'error', 'Please enter a password longer than eight characters' );
 		return res.redirect( '/register' );
 	}
 
-	user.save( function( err ) {
+	var hostname = user.email.split( '@' ).pop();
 
+	if( hostname == 'finalsclub.org' ) {
+		user.admin = true;
+	}
+
+	user.save( function( err ) {
 		if ( err ) {
-			User.findOne({ 'email' : user.email }, function(err, result ) {
-				if (result.activated) {
-					req.flash( 'error', 'There is already someone registered with this email, if this is in error contact info@finalsclub.org for help' )
-					return res.redirect( '/register' )
-				} else {
-					req.flash( 'error', 'There is already someone registered with this email, if this is you, please check your email for the activation code' )
-					return res.redirect( '/resendActivation' )
-				}
-			})
+			if( /dup key/.test( err.message ) ) {
+				// attempting to register an existing address
+					User.findOne({ 'email' : user.email }, function(err, result ) {
+						if (result.activated) {
+							req.flash( 'error', 'There is already someone registered with this email, if this is in error contact info@finalsclub.org for help' )
+							return res.redirect( '/register' )
+						} else {
+							req.flash( 'error', 'There is already someone registered with this email, if this is you, please check your email for the activation code' )
+							return res.redirect( '/resendActivation' )
+						}
+					});
+			} else {
+				req.flash( 'error', 'An error occurred during registration.' );
+
+				return res.redirect( '/register' );
+			}
 		} else {
 			// send user activation email
 			sendUserActivation( user );
-
-			var hostname = user.email.split( '@' ).pop();
 
 			School.findOne( { 'hostnames' : hostname }, function( err, school ) {
 				if( school ) {
@@ -949,11 +969,11 @@ app.get( '/activate/:code', function( req, res ) {
 
 				user.save( function( err ) {
 					if( err ) {
-						req.flash( 'error', 'Unable to activate user!' );
+						req.flash( 'error', 'Unable to activate account.' );
 
 						res.redirect( '/' );
 					} else {
-						req.flash( 'info', 'Successfully activated!' );
+						req.flash( 'info', 'Account successfully activated.' );
 
 						res.redirect( '/profile' );
 					}
@@ -992,6 +1012,8 @@ app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 	var error				= false;
 	var wasComplete	= user.isComplete;
 
+	console.log( fields );
+
 	if( ! fields.name ) {
 		req.flash( 'error', 'Please enter a valid name!' );
 
@@ -1027,6 +1049,11 @@ app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 		}
 	}
 
+	user.major		= fields.major;
+	user.bio			= fields.bio;
+
+	user.showName	= ( fields.showName ? true : false );
+
 	if( ! error ) {
 		user.save( function( err ) {
 			if( err ) {
@@ -1034,10 +1061,12 @@ app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 			} else {
 				if( ( user.isComplete ) && ( ! wasComplete ) ) {
 					req.flash( 'info', 'Your account is now fully activated. Thank you for joining FinalsClub!' );
+
+					res.redirect( '/' );
+				} else {
+					res.render( 'profile/index', { 'user' : user } );
 				}
 			}
-
-			res.redirect( '/' );
 		});
 	} else {
 		res.render( 'profile/index', { 'user' : user } );
@@ -1406,6 +1435,13 @@ var counts = io
 		}
 	});
 });
+
+// Exception Catch-All
+
+process.on('uncaughtException', function (e) {
+	console.log("!!!!!! UNCAUGHT EXCEPTION\n" + e.stack);
+});
+
 
 // Launch
 
