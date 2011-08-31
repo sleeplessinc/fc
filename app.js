@@ -1059,7 +1059,7 @@ function loadOldCourse( req, res, next ) {
 					next()
 				}
 			}
-		)http://nodeknockout.com/teams/sponoders
+		)
 	} else {
 		next()
 	} 
