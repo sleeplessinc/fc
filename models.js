@@ -131,7 +131,7 @@ var SchoolSchema = new Schema( {
 });
 
 SchoolSchema.method( 'authorize', function( user ) {
-	return ( this.users.indexOf( user ) !== -1 ) ? true : false;
+	return ( user.admin || ( this.users.indexOf( user ) !== -1 ) ) ? true : false;
 });
 
 var School = mongoose.model( 'School', SchoolSchema );
