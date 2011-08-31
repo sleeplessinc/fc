@@ -1,14 +1,16 @@
 body, td { font-family: Helvetica, sans-serif; }
 body { background: #fff; margin: 0; padding: 0; }
 img { border: none; }
-p { color: #444; }
+body, td, p { color: #444; }
 
 div.logbar {
-	margin: 0 5% 0.1em 5%;
 	background: #234;
 	color: #eee;
+	/*
 	width: 960px;
 	margin: 0 auto;
+	*/
+	margin: 0 5% 0.1em 5%;
 }
 
 div.loginstatus {
@@ -45,8 +47,8 @@ div.navbar {
 
 div.content {
 	margin: 0 5% 0.1em 5%;
-	padding: 1.5em 3%;
-	background: #fff;
+	padding: 1.0em 0%;
+	zbackground: #fdd;
 	min-height: 30em;
 	zborder-left: solid 1px #ccc;
 	zborder-right: solid 1px #ccc;
@@ -188,6 +190,7 @@ div#wrapper div.header div.buttons {
 
 
 div.container1 {
+	/*
 	background: #eee;
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#f4f4f4), to(#eee));
 	background-image: -moz-linear-gradient(#eee, #eee)
@@ -197,6 +200,7 @@ div.container1 {
 	-moz-box-shadow: 0 0.2em 0.3em rgba(0, 0, 0, .3);
 	padding: 0.8em 3% 2em 3%;
 	margin: 0.2em 0;
+	*/
 }
 
 div.area {
@@ -211,6 +215,7 @@ div.content h1 {
 	color: #000;
 	text-align: left;
 	font-weight: bold;
+	font-family: Georgia, Helvetica;
 }
 
 #sidebar {
@@ -504,6 +509,7 @@ h1 {
 	text-align: center;
 	color:#fff;
 	font-size: 120%;
+	font-family: Georgia, Helvetica;
 }
 h2 {
 	clear:both;
@@ -545,7 +551,7 @@ ul{
 	display: table-row;
 }
 .row .label {
-	width: 40%;
+	width: 50%;
 	text-align: right;
 	display: table-cell;
 	padding: 0.8em 3% 0.8em 0%;
@@ -583,6 +589,7 @@ div.school {
 .school h2 {
 }
 
+/*
 .content .container1 h1 {
 	background: #778899;
 	color: #fff;
@@ -602,6 +609,15 @@ div.school {
 	-webkit-border-radius: 0.3em;
 	-webkit-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
 	-moz-box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, .3);
+}
+*/
+.content .container1 h1 {
+	border-bottom: 2px solid #5c6572;
+	background: transparent url("/images/bg_main-heading.gif") 0 100% repeat-x;
+	font-family: Georgia, helvetica;
+	font-weight: normal;
+	font-size: 140%;
+	padding: 0.2em 1%;
 }
 
 ul a {
@@ -625,6 +641,11 @@ div.school h2 {
 }
 .error {
 	color: #fff;
+}
+.error a {
+	color: #fee;
+	font-weight: bold;
+	text-decoration: underline;
 }
 .anonpost {
 	font-size: 70%;
