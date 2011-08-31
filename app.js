@@ -868,9 +868,10 @@ app.post( '/register', function( req, res ) {
 
 				school.save( function( err ) {
 					log3('school.save() done');
-					req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network.' );
+					req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network. Please check your email from the activation link' );
 				});
 			} else {
+				req.flash( 'info', 'Your account has been created, please check your email for the activation link' )
 				var message = {
 					'to'       : ADMIN_EMAIL,
 
@@ -1058,13 +1059,13 @@ function loadOldCourse( req, res, next ) {
 					next()
 				}
 			}
-		)
+		)http://nodeknockout.com/teams/sponoders
 	} else {
 		next()
 	} 
 }
 
-app.get( '/archive/courses', loadUser, function( req, res ) {
+app.get( '/archive', loadUser, function( req, res ) {
 	sqlClient.query(
 		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id)', function( err, results ) {
 			if ( err ) {
