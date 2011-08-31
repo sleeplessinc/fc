@@ -784,14 +784,14 @@ table.contact td:first-child {
 	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#090', endColorstr='#070');
 }
 .green:hover {
-	background: #f47c20;
-	background: -webkit-gradient(linear, left top, left bottom, from(#f88e11), to(#f06015));
-	background: -moz-linear-gradient(top,  #f88e11,  #f06015);
-	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#f88e11', endColorstr='#f06015');
+	background: #eef;
+	background: -webkit-gradient(linear, left top, left bottom, from(#009), to(#007));
+	background: -moz-linear-gradient(top,  #009,  #007);
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#009', endColorstr='#007');
 }
 .green:active {
-	color: #fcd3a5;
-	background: -webkit-gradient(linear, left top, left bottom, from(#f47a20), to(#faa51a));
-	background: -moz-linear-gradient(top,  #f47a20,  #faa51a);
-	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#f47a20', endColorstr='#faa51a');
+	background: #eef;
+	background: -webkit-gradient(linear, left top, left bottom, from(#009), to(#007));
+	background: -moz-linear-gradient(top,  #009,  #007);
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#009', endColorstr='#007');
 }
