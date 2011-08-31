@@ -12,14 +12,16 @@ div.content
 					div.field
 						span #{ user.email }
 
-				- if ( user.affil != 'Instructor' )
-					div.row
-						div.label
-							label( for = 'affiliation' ) Affiliation
-						div.field
+				div.row
+					div.label
+						label( for = 'affiliation' ) Affiliation
+					div.field
+						- if ( user.affil != 'Instructor' )
 							select( id = 'affiliation', name = 'affiliation' )
 								option( value = 'Student' ) Student
 								option( value = 'Teachers Assistant' ) Teachers Assistant
+						- else
+							span #{ user.affil }
 
 			h2 Profile Information
 
