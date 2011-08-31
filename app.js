@@ -859,9 +859,16 @@ app.post( '/register', function( req, res ) {
 		req.flash( 'error', 'Please enter a valid email' );
 		return res.redirect( '/register' );
 	}
+
 	if ( req.body.password.length < 8 ) {
 		req.flash( 'error', 'Please enter a password longer than eight characters' );
 		return res.redirect( '/register' );
+	}
+
+	var hostname = user.email.split( '@' ).pop();
+
+	if( hostname == 'finalsclub.org' ) {
+		user.admin = true;
 	}
 
 	user.save( function( err ) {
@@ -885,8 +892,6 @@ app.post( '/register', function( req, res ) {
 		} else {
 			// send user activation email
 			sendUserActivation( user );
-
-			var hostname = user.email.split( '@' ).pop();
 
 			School.findOne( { 'hostnames' : hostname }, function( err, school ) {
 				if( school ) {
