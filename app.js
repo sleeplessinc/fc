@@ -964,11 +964,11 @@ app.get( '/activate/:code', function( req, res ) {
 
 				user.save( function( err ) {
 					if( err ) {
-						req.flash( 'error', 'Unable to activate user!' );
+						req.flash( 'error', 'Unable to activate account.' );
 
 						res.redirect( '/' );
 					} else {
-						req.flash( 'info', 'Successfully activated!' );
+						req.flash( 'info', 'Account successfully activated.' );
 
 						res.redirect( '/profile' );
 					}
