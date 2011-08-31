@@ -6,6 +6,22 @@ li { padding: 0.2em 0; }
 table, td, tr { margin: 0; padding: 0; }
 ul a { font-weight: normal; color: #00a; }
 
+h1 {
+	text-align: center;
+	color:#fff;
+	font-size: 120%;
+	font-family: Georgia, Helvetica;
+}
+h2 {
+	clear:both;
+	font-size: 110%;
+}
+
+h3 {
+	font-size: 105%;
+}
+
+
 div.logbar {
 	background: #234;
 	color: #eee;
@@ -505,25 +521,6 @@ span.sub_menu a:hover {
 }
 
 
-h1 {
-	text-align: center;
-	color:#fff;
-	font-size: 120%;
-	font-family: Georgia, Helvetica;
-}
-h2 {
-	clear:both;
-	font-size: 110%;
-}
-
-h3 {
-	font-size: 105%;
-}
-ul{
-	zmargin:8px 15px;
-}
-
-
 #sidebar h3 {
 	margin: 0;
 	font-size: 105%;
@@ -635,12 +632,13 @@ div.school h2 {
 	margin: 0em 5%;
 }
 #messages ul {
-	padding: 0.5em;
+	padding: 0.5em 1em 0.5em 3em;
 	color: #fff;
 }
 #messages ul a {
 	font-weight: bold;
 	text-decoration: underline;
+	color: #fff;
 }
 #messages ul.info {
 	background: #090;

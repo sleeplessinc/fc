@@ -970,7 +970,7 @@ app.get( '/activate/:code', function( req, res ) {
 
 						res.redirect( '/' );
 					} else {
-						req.flash( 'info', 'Account successfully activated.' );
+						req.flash( 'info', 'Account successfully activated. Please complete your profile.' );
 
 						res.redirect( '/profile' );
 					}
