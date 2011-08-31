@@ -47,8 +47,8 @@ div.navbar {
 	margin: 0.1em 0;
 	background: #333;
 
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#222), to(#333));
-	background-image: -moz-linear-gradient(#222, #333)
+	background: -webkit-gradient(linear, left top, left bottom, from(#222), to(#333));
+	background: -moz-linear-gradient(#222, #333)
 
 	ztext-shadow: black 0 0 0.2em;
 	zborder-bottom: solid 1px #888;
@@ -56,7 +56,6 @@ div.navbar {
 	color: #eee;
 	font-weight: bold;
 	text-align: left;
-	zpadding: 0.5em 1em;
 	vertical-align: top;
 }
 
@@ -180,6 +179,10 @@ div.footer a {
 }
 .footerer a, .footerer p {
 	color: #888;
+}
+
+.footer img.logo {
+	width: 120px;
 }
 
 div.header {
@@ -774,17 +777,11 @@ table.contact td:first-child {
 	background: #080;
 	background: -webkit-gradient(linear, left top, left bottom, from(#090), to(#070));
 	background: -moz-linear-gradient(top,  #090,  #070);
-	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#090', endColorstr='#070');
-}
-.green:hover {
-	background: #eef;
-	background: -webkit-gradient(linear, left top, left bottom, from(#009), to(#007));
-	background: -moz-linear-gradient(top,  #009,  #007);
-	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#009', endColorstr='#007');
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00bb00', endColorstr='#007700');
 }
 .green:active {
 	background: #eef;
 	background: -webkit-gradient(linear, left top, left bottom, from(#009), to(#007));
 	background: -moz-linear-gradient(top,  #009,  #007);
-	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#009', endColorstr='#007');
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0000bb', endColorstr='#000077');
 }
