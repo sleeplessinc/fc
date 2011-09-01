@@ -1118,6 +1118,8 @@ app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 
 					res.redirect( '/' );
 				} else {
+					res.render( 'info', 'Your profile was successfully updated!' );
+
 					res.render( 'profile/index', { 'user' : user } );
 				}
 			}
