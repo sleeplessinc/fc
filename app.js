@@ -211,8 +211,10 @@ function loadSchool( req, res, next ) {
 		if( school ) {
 			req.school = school;
 
-			req.school.authorized = school.authorize( user );
-			next();
+			school.authorize( user, function( authorized ){
+				req.school.authorized = authorized;
+				next();
+			});
 		} else {
 			req.flash( 'error', 'Invalid school specified!' );
 
