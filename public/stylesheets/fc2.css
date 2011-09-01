@@ -809,8 +809,23 @@ div.press {
 	margin: 2em 0;
 }
 img.press {
-	height: 3em;
+	height: 2.5em;
 	float: left;
 	zborder: solid 1px #aaa;
-	margin: 0 1em 1em 0;
+	margin: 0 2em 1em 0;
 }
+
+div.press p.date {
+	font-size: 90%;
+	color: #68a;
+}
+
+div.press p.readmore {
+	font-size: 90%;
+	font-style: italic;
+}
+
+div.press p.readmore a {
+	color: #48c;
+}
+
