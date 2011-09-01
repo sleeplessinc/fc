@@ -804,3 +804,10 @@ table.contact td:first-child {
 	background: -moz-linear-gradient(top,  #009,  #007);
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0000bb', endColorstr='#000077');
 }
+
+img.press {
+	height: 40px;
+	float: left;
+	zborder: solid 1px #aaa;
+	margin: 0 1em 1em 0;
+}
