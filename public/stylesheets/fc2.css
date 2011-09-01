@@ -21,6 +21,10 @@ h3 {
 	font-size: 105%;
 }
 
+.fleft { float: left; }
+.fright { float: right; }
+.clear { clear: both; }
+
 
 div.logbar {
 	background: #234;
@@ -123,9 +127,9 @@ img.logo {
 	vertical-align: middle;
 }
 
-td.lilogo {
+/*td.lilogo {
 	padding-right: 2em;
-}
+}*/
 
 td.menu {
 	font-size: 90%;
@@ -181,7 +185,8 @@ div.footer a {
 	color: #888;
 }
 
-.footer img.logo {
+img.lilogo {
+	padding: 0 1em;
 	width: 120px;
 }
 
@@ -199,14 +204,27 @@ div.header {
 	margin: 0;
 }
 
-div#wrapper div.header {
-	font-size: 120%;
-	text-align: left;
+div#wrapper div#header {
+	color: #eee;
+	background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(68, 68, 68)), to(rgb(34, 34, 34)));
+	height: 42px;
+	padding-top: 5px;
+	font-size: 15px;
 }
-div#wrapper div.header div.buttons {
+div#wrapper div#header div.buttons {
   float: right;
 }
 
+div#wrapper div#header {
+	background: #444;
+}
+
+div#wrapper div#header .rcol {
+	padding: 10px 1em 0 0;
+}
+div#wrapper div#header .rcol a {
+	text-decoration: underline;
+}
 
 div.container1 {
 	/*
@@ -365,17 +383,17 @@ color: red;
   overflow-y: auto;
 }
 #postsHeader {
-padding-bottom: 0.5em;
+	padding-bottom: 0.5em;
 }
 .postsHeaderTitle {
-font-weight: bold;
+	font-weight: bold;
 }
 .showpostsButton {
 /* this doesn't work in Firefox; may be impossible on OS X */
 font-size: 70%;
 }
 #postsHeaderInstructions {
-background-color: #ffc3c3;
+	background-color: #ffc3c3;
 }
 #recentPosts {
 min-height: 6em;
@@ -687,6 +705,7 @@ div#reportedContainer h1 {
 div#postsHeader h1 {
 	margin: 0;
 	padding: 0.3em 1em;
+	font-family: helvetica;
 	font-weight: bold;
 	font-size: 100%;
 	color:#442;
