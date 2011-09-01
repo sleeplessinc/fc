@@ -18,8 +18,15 @@ div.content
 					div.field
 						- if ( user.affil != 'Instructor' )
 							select( id = 'affiliation', name = 'affiliation' )
-								option( value = 'Student' ) Student
-								option( value = 'Teachers Assistant' ) Teachers Assistant
+								- if ( user.affil == 'Student' )
+									option( value = 'Student', selected = true ) Student
+								- else
+									option( value = 'Student' ) Student
+
+								- if ( user.affil == 'Teachers Assistant' )
+									option( value = 'Teachers Assistant', selected = true ) Teachers Assistant
+								- else
+									option( value = 'Teachers Assistant' ) Teachers Assistant
 						- else
 							span #{ user.affil }
 

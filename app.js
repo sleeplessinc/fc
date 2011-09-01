@@ -887,7 +887,7 @@ app.post( '/register', function( req, res ) {
 
 	var hostname = user.email.split( '@' ).pop();
 
-	if( hostname == 'finalsclub.org' ) {
+	if( /^(finalsclub.org|sleepless.com)$/.test( hostname ) ) {
 		user.admin = true;
 	}
 
@@ -1031,8 +1031,6 @@ app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 
 	var error				= false;
 	var wasComplete	= user.isComplete;
-
-	console.log( fields );
 
 	if( ! fields.name ) {
 		req.flash( 'error', 'Please enter a valid name!' );
