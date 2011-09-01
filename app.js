@@ -266,7 +266,7 @@ function loadLecture( req, res, next ) {
 }
 
 function loadNote( req, res, next ) {
-	var user	 = req.user ? req.user._id : false;
+	var user	 = req.user ? req.user : false;
 	var noteId = req.params.id;
 
 	Note.findById( noteId, function( err, note ) {
