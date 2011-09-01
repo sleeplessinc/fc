@@ -562,20 +562,32 @@ app.post( '/course/:id/lecture/new', loadUser, loadCourse, function( req, res ) 
 app.get( '/lecture/:id', loadUser, loadLecture, function( req, res ) {
 	var lecture	= req.lecture;
 
-	// pull out our notes
-	Note.find( { 'lecture' : lecture._id } ).sort( 'name', '1' ).run( function( err, notes ) {
-		if ( !req.user.loggedIn || !req.lecture.authorized ) {
-			notes = notes.filter(function( note ) {
-				if ( note.public ) return note;
-			})
-		}
-		res.render( 'lecture/index', {
-			'lecture'			: lecture,
-			'notes'				: notes,
-			'counts'			: counts,
+	// grab the associated course (this should be done with DBRefs eventually )
+	Course.findById( lecture.course, function( err, course ) {
+		if( course ) {
+			// pull out our notes
+			Note.find( { 'lecture' : lecture._id } ).sort( 'name', '1' ).run( function( err, notes ) {
+				if ( !req.user.loggedIn || !req.lecture.authorized ) {
+					notes = notes.filter(function( note ) {
+						if ( note.public ) return note;
+					})
+				}
+				res.render( 'lecture/index', {
+					'lecture'			: lecture,
+					'course'			: course,
+					'notes'				: notes,
+					'counts'			: counts,
 
-			'javascripts'	: [ 'counts.js' ]
-		});
+					'javascripts'	: [ 'counts.js' ]
+				});
+			});
+		} else {
+			// with DBRefs we will be able to reassign orphaned courses/lecture/pads
+
+			req.flash( 'error', 'That lecture is orphaned!' );
+
+			res.redirect( '/' );
+		}
 	});
 });
 
@@ -704,6 +716,10 @@ app.get( '/about', loadUser, function( req, res ) {
 
 app.get( '/press', loadUser, function( req, res ) {
   res.render( 'static/press' );
+});
+
+app.get( '/conduct', loadUser, function( req, res ) {
+  res.render( 'static/conduct' );
 });
 
 app.get( '/terms', loadUser, function( req, res ) {

@@ -21,11 +21,11 @@ div.masthead
 
 					- if( user && user.loggedIn )
 						a(href="/profile") Profile
-						span(class='sub_menu')
-							a( href='/logout' ) Logout
+						//span(class='sub_menu')
+						a.special( href='/logout' ) Logout
 					- else
 						a(href="/register") Create an Account
-						span(class='sub_menu')
-							a(href="/login") Login
+						// span(class='sub_menu')
+						a.special(href="/login") Login
 	div.logbar
 		&nbsp;
