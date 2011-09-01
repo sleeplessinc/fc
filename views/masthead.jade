@@ -4,7 +4,7 @@ div.masthead
 			- if( user && user.loggedIn )
 				| Currently logged in as 
 				span.username
-					| !{ user.displayName }
+					| !{ user.displayName || user.name }
 			- else
 				| &nbsp;
 	div.navbar

@@ -140,6 +140,7 @@ var School = mongoose.model( 'School', SchoolSchema );
 
 var CourseSchema = new Schema( {
 	name				: { type : String, required : true },
+	number			: String,
 	description	: String,
   instructor  : String,
 	// courses are tied to one school
@@ -150,6 +151,15 @@ var CourseSchema = new Schema( {
 	// many users may subscribe to a course
 	users				: Array
 });
+
+CourseSchema.virtual( 'displayName' )
+	.get( function() {
+		if( this.number ) {
+			return this.number + ': ' + this.name;
+		} else {
+			return this.name;
+		}
+	});
 
 CourseSchema.method( 'authorize', function( user, cb ) {
 	School.findById( this.school, function( err, school ) {

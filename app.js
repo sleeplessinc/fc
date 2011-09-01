@@ -338,7 +338,6 @@ app.get( '/schools', loadUser, function( req, res ) {
 				function( school, callback ) {
 					school.authorize( user, function( authorized ) {
 						school.authorized = authorized;
-						console.log( school.authorized );
 
 						Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
 										if( courses.length > 0 ) {
@@ -384,6 +383,7 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
     return res.render( 'course/new' );
   }
 
+	course.number				= req.body.number;
 	course.name					= req.body.name;
 	course.description	= req.body.description;
 	course.school				= school._id;
