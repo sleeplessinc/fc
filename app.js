@@ -1128,6 +1128,25 @@ function checkId( req, res, next ) {
 	}
 }
 
+function loadSubject( req, res, next ) {
+	if( url.parse( req.url ).pathname.match(/subject/) ) {
+		sqlClient.query(
+			'SELECT name FROM subjects WHERE id = '+req.id,
+			function( err, results ) {
+				if ( err ) {
+					req.flash( 'err', 'Subject with this ID does not exist' )
+					res.redirect( '/archive' );
+				} else {
+					req.subject = results[0];
+					next()
+				}
+			}
+		)
+	} else {
+		next()
+	} 
+}
+
 function loadOldCourse( req, res, next ) {
 	if( url.parse( req.url ).pathname.match(/course/) ) {
 		sqlClient.query(
@@ -1160,7 +1179,7 @@ app.get( '/archive', loadUser, function( req, res ) {
 	)
 })
 
-app.get( '/archive/subject/:id', loadUser, checkId, function( req, res ) {
+app.get( '/archive/subject/:id', loadUser, checkId, loadSubject, function( req, res ) {
 	
 	sqlClient.query(
 		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id) AND c.subject_id = '+req.id+' ORDER BY c.created_at desc', function( err, results ) {
@@ -1168,7 +1187,7 @@ app.get( '/archive/subject/:id', loadUser, checkId, function( req, res ) {
 				req.flash( 'error', 'There are no archived courses' );
 				res.redirect( '/' );
 			} else {
-				res.render( 'archive/courses', { 'courses' : results } );
+				res.render( 'archive/courses', { 'courses' : results, 'subject': req.subject } );
 			}
 		}
 	)
