@@ -805,8 +805,11 @@ table.contact td:first-child {
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0000bb', endColorstr='#000077');
 }
 
+div.press {
+	margin: 2em 0;
+}
 img.press {
-	height: 40px;
+	height: 3em;
 	float: left;
 	zborder: solid 1px #aaa;
 	margin: 0 1em 1em 0;
