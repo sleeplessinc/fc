@@ -130,8 +130,8 @@ var SchoolSchema = new Schema( {
 	users				: Array
 });
 
-SchoolSchema.method( 'authorize', function( user ) {
-	return ( user.admin || ( this.users.indexOf( user ) !== -1 ) ) ? true : false;
+SchoolSchema.method( 'authorize', function( user, cb ) {
+	return cb(user.admin || ( this.users.indexOf( user._id ) !== -1 ));
 });
 
 var School = mongoose.model( 'School', SchoolSchema );
@@ -153,7 +153,11 @@ var CourseSchema = new Schema( {
 
 CourseSchema.method( 'authorize', function( user, cb ) {
 	School.findById( this.school, function( err, school ) {
-		return cb(school ? school.authorize( user ) : false);
+		if ( school ) {
+			school.authorize( user, function( result ) {
+							return cb( result );
+			})
+		}
 	});
 });
 

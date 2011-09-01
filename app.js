@@ -334,17 +334,18 @@ app.get( '/schools', loadUser, function( req, res ) {
 			async.forEach(
 				schools,
 				function( school, callback ) {
-					school.authorized = school.authorize( user );
+					school.authorize( user, function( authorized ) {
+						school.authorized = authorized;
+						console.log( school.authorized );
 
-					console.log( school.authorized );
-
-					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
-						if( courses.length > 0 ) {
-							school.courses = courses;
-						} else {
-							school.courses = [];
-						}
-						callback();
+						Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
+										if( courses.length > 0 ) {
+														school.courses = courses;
+										} else {
+														school.courses = [];
+										}
+										callback();
+						});
 					});
 				},
 				function( err ) {
