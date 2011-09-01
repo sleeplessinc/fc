@@ -6,10 +6,26 @@ script
 	var roID      = '#{roID}';
 
 div#wrapper
-	div.header #{lecture.name} &mdash; #{note.name}
-		div.buttons
+	div#header
+		div.fleft
+			a(href="/")
+				img.lilogo(src="/images/finals-club-wht.png")
+		div.fleft
+			div
+				b Lecture: 
+				| &nbsp;
+				a( href = '/lecture/#{lecture._id}' )= lecture.name
+			div
+				b Notes:
+				| &nbsp;
+				#{note.name}
+		div.fright.rcol
+			// a( href = '/note/#{note._id}', class = 'readonlylink') Read-Only Version
 			button#toggleBC Discussion
 			button#togglePad Notes
+		div.clear
+
+
 	div#sidebar
 		div.container
 
