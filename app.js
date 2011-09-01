@@ -718,6 +718,10 @@ app.get( '/press', loadUser, function( req, res ) {
   res.render( 'static/press' );
 });
 
+app.get( '/conduct', loadUser, function( req, res ) {
+  res.render( 'static/conduct' );
+});
+
 app.get( '/terms', loadUser, function( req, res ) {
   res.render( 'static/terms' );
 });

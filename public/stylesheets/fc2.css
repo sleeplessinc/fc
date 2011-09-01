@@ -5,6 +5,7 @@ body, td, p { color: #444; }
 li { padding: 0.2em 0; }
 table, td, tr { margin: 0; padding: 0; }
 ul a { font-weight: normal; color: #00a; }
+a { color: #00a; }
 
 h1 {
 	text-align: center;
