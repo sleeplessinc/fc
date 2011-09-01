@@ -23,7 +23,7 @@ div.content
 						- else
 							|  (Private)
 						span( note-id = note._id ).count= counts[ note._id ]
-						span  Visits: #{note.visits}
+						span  Visits: #{ note.visits || 0 }
 			- else
 				p No note pads have been created for this lecture yet.
 

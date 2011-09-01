@@ -637,7 +637,7 @@ app.post( '/lecture/:id/notes/new', loadUser, loadLecture, function( req, res ) 
 	note.name			= req.body.name;
 	note.date			= req.body.date;
 	note.lecture	= lecture._id;
-	note.public		= req.body.public ? true : false;
+	note.public		= req.body.private ? false : true;
 
 	note.save( function( err ) {
 		if( err ) {
