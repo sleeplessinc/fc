@@ -757,6 +757,9 @@ app.post( '/login', function( req, res ) {
 						// login complete, remember the user's email for next time
 						req.session.email = email;
 
+						// alert the successful login
+						req.flash( 'info', 'Successfully logged in!' );
+
 						// redirect to profile if we don't have a stashed request
 						res.redirect( redirect || '/profile' );
 					});
