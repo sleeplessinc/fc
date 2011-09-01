@@ -130,8 +130,8 @@ var SchoolSchema = new Schema( {
 	users				: Array
 });
 
-SchoolSchema.method( 'authorize', function( user ) {
-	return ( this.users.indexOf( user ) !== -1 ) ? true : false;
+SchoolSchema.method( 'authorize', function( user, cb ) {
+	return cb(user.admin || ( this.users.indexOf( user._id ) !== -1 ));
 });
 
 var School = mongoose.model( 'School', SchoolSchema );
@@ -140,6 +140,7 @@ var School = mongoose.model( 'School', SchoolSchema );
 
 var CourseSchema = new Schema( {
 	name				: { type : String, required : true },
+	number			: String,
 	description	: String,
   instructor  : String,
 	// courses are tied to one school
@@ -151,9 +152,22 @@ var CourseSchema = new Schema( {
 	users				: Array
 });
 
+CourseSchema.virtual( 'displayName' )
+	.get( function() {
+		if( this.number ) {
+			return this.number + ': ' + this.name;
+		} else {
+			return this.name;
+		}
+	});
+
 CourseSchema.method( 'authorize', function( user, cb ) {
 	School.findById( this.school, function( err, school ) {
-		return cb(school ? school.authorize( user ) : false);
+		if ( school ) {
+			school.authorize( user, function( result ) {
+							return cb( result );
+			})
+		}
 	});
 });
 

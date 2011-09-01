@@ -5,6 +5,7 @@ body, td, p { color: #444; }
 li { padding: 0.2em 0; }
 table, td, tr { margin: 0; padding: 0; }
 ul a { font-weight: normal; color: #00a; }
+a { color: #00a; }
 
 h1 {
 	text-align: center;
@@ -21,6 +22,10 @@ h3 {
 	font-size: 105%;
 }
 
+.fleft { float: left; }
+.fright { float: right; }
+.clear { clear: both; }
+
 
 div.logbar {
 	background: #234;
@@ -36,6 +41,7 @@ div.loginstatus {
 	font-size: 75%;
 	text-align: right;
 	padding: 0.5em 2em;
+	text-shadow: #888 0 0 0.4em;
 }
 
 span.username {
@@ -47,8 +53,8 @@ div.navbar {
 	margin: 0.1em 0;
 	background: #333;
 
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#222), to(#333));
-	background-image: -moz-linear-gradient(#222, #333)
+	background: -webkit-gradient(linear, left top, left bottom, from(#222), to(#333));
+	background: -moz-linear-gradient(#222, #333)
 
 	ztext-shadow: black 0 0 0.2em;
 	zborder-bottom: solid 1px #888;
@@ -56,7 +62,6 @@ div.navbar {
 	color: #eee;
 	font-weight: bold;
 	text-align: left;
-	zpadding: 0.5em 1em;
 	vertical-align: top;
 }
 
@@ -124,9 +129,9 @@ img.logo {
 	vertical-align: middle;
 }
 
-td.lilogo {
+/*td.lilogo {
 	padding-right: 2em;
-}
+}*/
 
 td.menu {
 	font-size: 90%;
@@ -138,8 +143,30 @@ td.menu {
 
 td.menu a {
 	color: #fff;
+	margin: 0 0em;
+	text-decoration: none;
+	text-shadow: #888 0 0 0.8em;
+	padding: 2px 10px;
+	-webkit-border-radius: .2em; 
+	-moz-border-radius: .2em;
+	border-radius: .2em;
+}
+
+td.menu a.special {
+	background: #456;
+	color: #fff;
 	margin: 0 1em;
 	text-decoration: none;
+	text-shadow: #888 0 0 0.8em;
+	padding: 2px 10px;
+	-webkit-border-radius: .2em; 
+	-moz-border-radius: .2em;
+	border-radius: .2em;
+}
+
+td.menu a:hover {
+	color: #000;
+	background: #fff;
 }
 
 div.footer {
@@ -182,6 +209,11 @@ div.footer a {
 	color: #888;
 }
 
+img.lilogo {
+	padding: 0 1em;
+	width: 120px;
+}
+
 div.header {
 	background: #333;
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#444), to(#222));
@@ -196,14 +228,27 @@ div.header {
 	margin: 0;
 }
 
-div#wrapper div.header {
-	font-size: 120%;
-	text-align: left;
+div#wrapper div#header {
+	color: #eee;
+	background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(68, 68, 68)), to(rgb(34, 34, 34)));
+	height: 42px;
+	padding-top: 5px;
+	font-size: 15px;
 }
-div#wrapper div.header div.buttons {
+div#wrapper div#header div.buttons {
   float: right;
 }
 
+div#wrapper div#header {
+	background: #444;
+}
+
+div#wrapper div#header .rcol {
+	padding: 10px 1em 0 0;
+}
+div#wrapper div#header .rcol a {
+	text-decoration: underline;
+}
 
 div.container1 {
 	/*
@@ -362,17 +407,17 @@ color: red;
   overflow-y: auto;
 }
 #postsHeader {
-padding-bottom: 0.5em;
+	padding-bottom: 0.5em;
 }
 .postsHeaderTitle {
-font-weight: bold;
+	font-weight: bold;
 }
 .showpostsButton {
 /* this doesn't work in Firefox; may be impossible on OS X */
 font-size: 70%;
 }
 #postsHeaderInstructions {
-background-color: #ffc3c3;
+	background-color: #ffc3c3;
 }
 #recentPosts {
 min-height: 6em;
@@ -684,6 +729,7 @@ div#reportedContainer h1 {
 div#postsHeader h1 {
 	margin: 0;
 	padding: 0.3em 1em;
+	font-family: helvetica;
 	font-weight: bold;
 	font-size: 100%;
 	color:#442;
@@ -774,17 +820,61 @@ table.contact td:first-child {
 	background: #080;
 	background: -webkit-gradient(linear, left top, left bottom, from(#090), to(#070));
 	background: -moz-linear-gradient(top,  #090,  #070);
-	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#090', endColorstr='#070');
-}
-.green:hover {
-	background: #eef;
-	background: -webkit-gradient(linear, left top, left bottom, from(#009), to(#007));
-	background: -moz-linear-gradient(top,  #009,  #007);
-	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#009', endColorstr='#007');
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00bb00', endColorstr='#007700');
 }
 .green:active {
 	background: #eef;
 	background: -webkit-gradient(linear, left top, left bottom, from(#009), to(#007));
 	background: -moz-linear-gradient(top,  #009,  #007);
-	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#009', endColorstr='#007');
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0000bb', endColorstr='#000077');
 }
+
+div.press {
+	margin: 2em 0;
+}
+img.press {
+	height: 2.5em;
+	float: left;
+	zborder: solid 1px #aaa;
+	margin: 0 2em 1em 0;
+}
+
+div.press p.date {
+	font-size: 90%;
+	color: #68a;
+}
+
+div.press p.readmore {
+	font-size: 90%;
+	font-style: italic;
+}
+
+div.press p.readmore a {
+	color: #48c;
+}
+
+div.conduct { text-align: center; }
+div.conduct p.academic {
+	padding: 2em 0;
+}
+div.conduct img {
+	padding: 20px; 
+	border: solid 1px #888;
+	background: -webkit-gradient(linear, left top, left bottom, from(#fcfcff), to(#f4f4ff));
+	background: -moz-linear-gradient(top,  #fcfcff,  #f4f4ff);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fcfcff', endColorstr='#f4f4ff');
+	-webkit-border-radius: .2em; 
+	-moz-border-radius: .2em;
+	border-radius: .2em;
+	-webkit-box-shadow: 0 1px 2px rgba(0,0,0,.5);
+	-moz-box-shadow: 0 1px 2px rgba(0,0,0,.5);
+	box-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+div.conduct p.vague {
+	font-style: italic;
+	font-size: 80%;
+	color: #888;
+}
+
+
+

@@ -10,12 +10,17 @@ div.content
 		- if ( schools.length > 0 )
 			- each school in schools
 				div(class='school')
-					h2= school.name
+					- if ( school.url )
+						h2
+							a( href = school.url, target = '_blank' )= school.name
+					- else
+						h2= school.name
 					ul
 						- if ( school.courses.length > 0 )
 							- each course in school.courses
 								li
-									a( href = 'course/#{ course._id }' ) #{ course.name }
+									a( href = 'course/#{ course._id }' ) #{ course.displayName }
+
 						- else
 							li No courses found.
 					- if ( school.authorized )

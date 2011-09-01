@@ -61,8 +61,8 @@ chmod 775 fcbackup_init.sh
 
 
 cd
-ln -s fc/bruml/log.txt b.log
-ln -s fc/etherpad-lite/node/log.txt e.log
+ln -sf fc/bruml/log.txt b.log
+ln -sf fc/etherpad-lite/node/log.txt e.log
 
 ./restart.sh
 

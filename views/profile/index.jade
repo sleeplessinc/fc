@@ -16,9 +16,19 @@ div.content
 					div.label
 						label( for = 'affiliation' ) Affiliation
 					div.field
-						select( id = 'affiliation', name = 'affiliation', val = user.affil )
-							option( value = 'Student' ) Student
-							option( value = 'Teachers Assistant' ) Teachers Assistant
+						- if ( user.affil != 'Instructor' )
+							select( id = 'affiliation', name = 'affiliation' )
+								- if ( user.affil == 'Student' )
+									option( value = 'Student', selected = true ) Student
+								- else
+									option( value = 'Student' ) Student
+
+								- if ( user.affil == 'Teachers Assistant' )
+									option( value = 'Teachers Assistant', selected = true ) Teachers Assistant
+								- else
+									option( value = 'Teachers Assistant' ) Teachers Assistant
+						- else
+							span #{ user.affil }
 
 			h2 Profile Information
 
@@ -39,11 +49,12 @@ div.content
 							input( style = 'width: auto;', id = 'showName', type = 'checkbox', name = 'showName' )
 						| Display your real name in contributions
 
-				div.row
-					div.label
-						label( for = 'major' ) Major
-					div.field
-						input( id = 'major', type = 'text', name = 'major', value = user.major )
+				- if ( user.affil != 'Instructor' )
+					div.row
+						div.label
+							label( for = 'major' ) Major
+						div.field
+							input( id = 'major', type = 'text', name = 'major', value = user.major )
 
 				div.row
 					div.label
