@@ -1166,46 +1166,30 @@ function loadOldCourse( req, res, next ) {
 	} 
 }
 
+var featuredCourses = [
+	{name: 'The Human Mind', 'id': 1563},
+	{name: 'Justice', 'id': 797},
+	{name: 'Protest Literature', 'id': 1681},
+	{name: 'Animal Cognition', 'id': 681},
+	{name: 'Life Sciences', 'id': 1793},
+	{name: 'Social Psychology', 'id': 660},
+	{name: 'The Book from Gutenberg to the Internet', 'id': 1439},
+	{name: 'Cyberspace in Court', 'id': 1446},
+	{name: 'Nazi Cinema', 'id': 2586},
+	{name: 'Media and the American Mind', 'id': 2583},
+	{name: 'Social Thought in Modern America', 'id': 2585},
+	{name: 'Major British Writers II', 'id': 869},
+	{name: 'Civil Procedure', 'id': 2589},
+	{name: 'Evidence', 'id': 2590},
+	{name: 'Management of Industrial and Nonprofit Organizations', 'id': 2591},
+];
+
 app.get( '/learn', loadUser, function( req, res ) {
-	var courses = [
-		{name: 'The Human Mind', 'id': 1563},
-		{name: 'Justice', 'id': 797},
-		{name: 'Protest Literature', 'id': 1681},
-		{name: 'Animal Cognition', 'id': 681},
-		{name: 'Life Sciences', 'id': 1793},
-		{name: 'Social Psychology', 'id': 660},
-		{name: 'The Book from Gutenberg to the Internet', 'id': 1439},
-		{name: 'Cyberspace in Court', 'id': 1446},
-		{name: 'Nazi Cinema', 'id': 2586},
-		{name: 'Media and the American Mind', 'id': 2583},
-		{name: 'Social Thought in Modern America', 'id': 2585},
-		{name: 'Major British Writers II', 'id': 869},
-		{name: 'Civil Procedure', 'id': 2589},
-		{name: 'Evidence', 'id': 2590},
-		{name: 'Management of Industrial and Nonprofit Organizations', 'id': 2591},
-	];
-	res.render( 'archive/learn', { 'courses' : courses } );
+	res.render( 'archive/learn', { 'courses' : featuredCourses } );
 })
 
 app.get( '/learn/random', loadUser, function( req, res ) {
-	var courses = [
-		{name: 'The Human Mind', 'id': 1563},
-		{name: 'Justice', 'id': 797},
-		{name: 'Protest Literature', 'id': 1681},
-		{name: 'Animal Cognition', 'id': 681},
-		{name: 'Life Sciences', 'id': 1793},
-		{name: 'Social Psychology', 'id': 660},
-		{name: 'The Book from Gutenberg to the Internet', 'id': 1439},
-		{name: 'Cyberspace in Court', 'id': 1446},
-		{name: 'Nazi Cinema', 'id': 2586},
-		{name: 'Media and the American Mind', 'id': 2583},
-		{name: 'Social Thought in Modern America', 'id': 2585},
-		{name: 'Major British Writers II', 'id': 869},
-		{name: 'Civil Procedure', 'id': 2589},
-		{name: 'Evidence', 'id': 2590},
-		{name: 'Management of Industrial and Nonprofit Organizations', 'id': 2591},
-	];
-	res.redirect( '/archive/course/'+ courses[Math.floor(Math.random()*courses.length)].id);
+	res.redirect( '/archive/course/'+ featuredCourses[Math.floor(Math.random()*featuredCourses.length)].id);
 })
 
 app.get( '/archive', loadUser, function( req, res ) {
