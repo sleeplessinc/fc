@@ -66,8 +66,8 @@ npm install forever -g
 
 ## make it easier for root to run node
 cd /usr/bin
-ln -s /usr/local/bin/node .
-ln -s /usr/local/bin/forever .
+ln -sf /usr/local/bin/node .
+ln -sf /usr/local/bin/forever .
 
 curl https://s3.amazonaws.com/finalsclub.org/start.sh | sudo -u ec2-user sh
 
