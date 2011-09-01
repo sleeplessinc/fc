@@ -204,14 +204,14 @@ function loadUser( req, res, next ) {
 }
 
 function loadSchool( req, res, next ) {
-	var userId		= req.user._id;
+	var user			= req.user;
 	var schoolId	= req.params.id;
 
 	School.findById( schoolId, function( err, school ) {
 		if( school ) {
 			req.school = school;
 
-			req.school.authorized = school.authorize( userId );
+			req.school.authorized = school.authorize( user );
 			next();
 		} else {
 			req.flash( 'error', 'Invalid school specified!' );
@@ -222,14 +222,14 @@ function loadSchool( req, res, next ) {
 }
 
 function loadCourse( req, res, next ) {
-	var userId		= req.user._id;
+	var user			= req.user;
 	var courseId	= req.params.id;
 
 	Course.findById( courseId, function( err, course ) {
 		if( course ) {
 			req.course = course;
 
-			course.authorize( userId, function( authorized )  {
+			course.authorize( user, function( authorized )  {
 				req.course.authorized = authorized;
 
 				next();
@@ -243,14 +243,14 @@ function loadCourse( req, res, next ) {
 }
 
 function loadLecture( req, res, next ) {
-	var userId = req.user._id;
+	var user			= req.user;
 	var lectureId	= req.params.id;
 
 	Lecture.findById( lectureId, function( err, lecture ) {
 		if( lecture ) {
 			req.lecture = lecture;
 
-			lecture.authorize( userId, function( authorized ) {
+			lecture.authorize( user, function( authorized ) {
 				req.lecture.authorized = authorized;
 
 				next();
@@ -264,12 +264,12 @@ function loadLecture( req, res, next ) {
 }
 
 function loadNote( req, res, next ) {
-	var userId = req.user ? req.user._id : false;
+	var user	 = req.user ? req.user._id : false;
 	var noteId = req.params.id;
 
 	Note.findById( noteId, function( err, note ) {
-		if( note && userId ) {
-			note.authorize( userId, function( auth ) {
+		if( note && user ) {
+			note.authorize( user, function( auth ) {
 				if( auth ) {
 					req.note = note;
 
@@ -324,7 +324,7 @@ app.get( '/', loadUser, function( req, res ) {
 });
 
 app.get( '/schools', loadUser, function( req, res ) {
-	var userId = req.user._id;
+	var user = req.user;
 
 	log3("get /schools page");
 
@@ -334,7 +334,10 @@ app.get( '/schools', loadUser, function( req, res ) {
 			async.forEach(
 				schools,
 				function( school, callback ) {
-					school.authorized = school.authorize( userId );
+					school.authorized = school.authorize( user );
+
+					console.log( school.authorized );
+
 					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
 						if( courses.length > 0 ) {
 							school.courses = courses;
