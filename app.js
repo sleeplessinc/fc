@@ -204,15 +204,17 @@ function loadUser( req, res, next ) {
 }
 
 function loadSchool( req, res, next ) {
-	var userId		= req.user._id;
+	var user			= req.user;
 	var schoolId	= req.params.id;
 
 	School.findById( schoolId, function( err, school ) {
 		if( school ) {
 			req.school = school;
 
-			req.school.authorized = school.authorize( userId );
-			next();
+			school.authorize( user, function( authorized ){
+				req.school.authorized = authorized;
+				next();
+			});
 		} else {
 			req.flash( 'error', 'Invalid school specified!' );
 
@@ -222,14 +224,14 @@ function loadSchool( req, res, next ) {
 }
 
 function loadCourse( req, res, next ) {
-	var userId		= req.user._id;
+	var user			= req.user;
 	var courseId	= req.params.id;
 
 	Course.findById( courseId, function( err, course ) {
 		if( course ) {
 			req.course = course;
 
-			course.authorize( userId, function( authorized )  {
+			course.authorize( user, function( authorized )  {
 				req.course.authorized = authorized;
 
 				next();
@@ -243,14 +245,14 @@ function loadCourse( req, res, next ) {
 }
 
 function loadLecture( req, res, next ) {
-	var userId = req.user._id;
+	var user			= req.user;
 	var lectureId	= req.params.id;
 
 	Lecture.findById( lectureId, function( err, lecture ) {
 		if( lecture ) {
 			req.lecture = lecture;
 
-			lecture.authorize( userId, function( authorized ) {
+			lecture.authorize( user, function( authorized ) {
 				req.lecture.authorized = authorized;
 
 				next();
@@ -264,12 +266,12 @@ function loadLecture( req, res, next ) {
 }
 
 function loadNote( req, res, next ) {
-	var userId = req.user ? req.user._id : false;
+	var user	 = req.user ? req.user : false;
 	var noteId = req.params.id;
 
 	Note.findById( noteId, function( err, note ) {
-		if( note && userId ) {
-			note.authorize( userId, function( auth ) {
+		if( note && user ) {
+			note.authorize( user, function( auth ) {
 				if( auth ) {
 					req.note = note;
 
@@ -324,7 +326,7 @@ app.get( '/', loadUser, function( req, res ) {
 });
 
 app.get( '/schools', loadUser, function( req, res ) {
-	var userId = req.user._id;
+	var user = req.user;
 
 	log3("get /schools page");
 
@@ -334,14 +336,17 @@ app.get( '/schools', loadUser, function( req, res ) {
 			async.forEach(
 				schools,
 				function( school, callback ) {
-					school.authorized = school.authorize( userId );
-					Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
-						if( courses.length > 0 ) {
-							school.courses = courses;
-						} else {
-							school.courses = [];
-						}
-						callback();
+					school.authorize( user, function( authorized ) {
+						school.authorized = authorized;
+
+						Course.find( { 'school' : school._id } ).sort( 'name', '1' ).run( function( err, courses ) {
+										if( courses.length > 0 ) {
+														school.courses = courses;
+										} else {
+														school.courses = [];
+										}
+										callback();
+						});
 					});
 				},
 				function( err ) {
@@ -378,6 +383,7 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
     return res.render( 'course/new' );
   }
 
+	course.number				= req.body.number;
 	course.name					= req.body.name;
 	course.description	= req.body.description;
 	course.school				= school._id;
@@ -559,20 +565,32 @@ app.post( '/course/:id/lecture/new', loadUser, loadCourse, function( req, res ) 
 app.get( '/lecture/:id', loadUser, loadLecture, function( req, res ) {
 	var lecture	= req.lecture;
 
-	// pull out our notes
-	Note.find( { 'lecture' : lecture._id } ).sort( 'name', '1' ).run( function( err, notes ) {
-		if ( !req.user.loggedIn || !req.lecture.authorized ) {
-			notes = notes.filter(function( note ) {
-				if ( note.public ) return note;
-			})
-		}
-		res.render( 'lecture/index', {
-			'lecture'			: lecture,
-			'notes'				: notes,
-			'counts'			: counts,
+	// grab the associated course (this should be done with DBRefs eventually )
+	Course.findById( lecture.course, function( err, course ) {
+		if( course ) {
+			// pull out our notes
+			Note.find( { 'lecture' : lecture._id } ).sort( 'name', '1' ).run( function( err, notes ) {
+				if ( !req.user.loggedIn || !req.lecture.authorized ) {
+					notes = notes.filter(function( note ) {
+						if ( note.public ) return note;
+					})
+				}
+				res.render( 'lecture/index', {
+					'lecture'			: lecture,
+					'course'			: course,
+					'notes'				: notes,
+					'counts'			: counts,
 
-			'javascripts'	: [ 'counts.js' ]
-		});
+					'javascripts'	: [ 'counts.js' ]
+				});
+			});
+		} else {
+			// with DBRefs we will be able to reassign orphaned courses/lecture/pads
+
+			req.flash( 'error', 'That lecture is orphaned!' );
+
+			res.redirect( '/' );
+		}
 	});
 });
 
@@ -703,6 +721,10 @@ app.get( '/press', loadUser, function( req, res ) {
   res.render( 'static/press' );
 });
 
+app.get( '/conduct', loadUser, function( req, res ) {
+  res.render( 'static/conduct' );
+});
+
 app.get( '/terms', loadUser, function( req, res ) {
   res.render( 'static/terms' );
 });
@@ -753,6 +775,9 @@ app.post( '/login', function( req, res ) {
 	
 						// login complete, remember the user's email for next time
 						req.session.email = email;
+
+						// alert the successful login
+						req.flash( 'info', 'Successfully logged in!' );
 
 						// redirect to profile if we don't have a stashed request
 						res.redirect( redirect || '/profile' );
@@ -884,7 +909,7 @@ app.post( '/register', function( req, res ) {
 
 	var hostname = user.email.split( '@' ).pop();
 
-	if( hostname == 'finalsclub.org' ) {
+	if( /^(finalsclub.org|sleepless.com)$/.test( hostname ) ) {
 		user.admin = true;
 	}
 
@@ -1029,8 +1054,6 @@ app.post( '/profile', loadUser, loggedIn, function( req, res ) {
 	var error				= false;
 	var wasComplete	= user.isComplete;
 
-	console.log( fields );
-
 	if( ! fields.name ) {
 		req.flash( 'error', 'Please enter a valid name!' );
 
@@ -1105,6 +1128,25 @@ function checkId( req, res, next ) {
 	}
 }
 
+function loadSubject( req, res, next ) {
+	if( url.parse( req.url ).pathname.match(/subject/) ) {
+		sqlClient.query(
+			'SELECT name FROM subjects WHERE id = '+req.id,
+			function( err, results ) {
+				if ( err ) {
+					req.flash( 'err', 'Subject with this ID does not exist' )
+					res.redirect( '/archive' );
+				} else {
+					req.subject = results[0];
+					next()
+				}
+			}
+		)
+	} else {
+		next()
+	} 
+}
+
 function loadOldCourse( req, res, next ) {
 	if( url.parse( req.url ).pathname.match(/course/) ) {
 		sqlClient.query(
@@ -1137,7 +1179,7 @@ app.get( '/archive', loadUser, function( req, res ) {
 	)
 })
 
-app.get( '/archive/subject/:id', loadUser, checkId, function( req, res ) {
+app.get( '/archive/subject/:id', loadUser, checkId, loadSubject, function( req, res ) {
 	
 	sqlClient.query(
 		'SELECT c.id as id, c.name as name, c.section as section FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id) AND c.subject_id = '+req.id+' ORDER BY c.created_at desc', function( err, results ) {
@@ -1145,7 +1187,7 @@ app.get( '/archive/subject/:id', loadUser, checkId, function( req, res ) {
 				req.flash( 'error', 'There are no archived courses' );
 				res.redirect( '/' );
 			} else {
-				res.render( 'archive/courses', { 'courses' : results } );
+				res.render( 'archive/courses', { 'courses' : results, 'subject': req.subject } );
 			}
 		}
 	)
