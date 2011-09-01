@@ -494,6 +494,20 @@ app.get( '/course/:id', loadUser, loadCourse, function( req, res ) {
 	});
 });
 
+app.get( '/course/:id/delete', loadUser, loadCourse, function( req, res) {
+	var course = req.course;
+	var user = req.user;
+
+	if ( user.admin ) {
+		course.remove();
+		req.flash( 'info', 'Successfully removed course' )
+		res.redirect( '/schools' );
+	} else {
+		req.flash( 'error', 'You don\'t have permission to do that' )
+		res.redirect( '/schools' );
+	}
+})
+
 // subscribe and unsubscribe to course networks
 app.get( '/course/:id/subscribe', loadUser, loadCourse, function( req, res ) {
 	var course = req.course;
