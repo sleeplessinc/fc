@@ -1,7 +1,15 @@
-Hello,
+Dear <%= user.name %>,
 
-A user at FinalsClub.org has indicated that you are an instructor of the course <%- course.name %>. If this is correct please visit the following URL to get started:
+We are pleased to inform you that your students in <%= course.name %> at <%= school.name %> have chosen to participate in a unique non-profit open education project.  The project is hosted at finalsclub.org, a website which allows students to collaborate, learn, and share knowledge freely online.
+
+Since the launch of ocw.mit.edu and oyc.yale.edu, the internet has facilitated a new paradigm of open access to education.  Although those of us at finalsclub.org are committed to expanding open education, we will never sacrifice the rights of students or faculty.  Therefore, we secure the identity of every user, respond to all inquiries, and share all of our content under a Creative-Commons Attribution Share-Alike license. http://creativecommons.org/licenses/by-sa/3.0/us/
+
+Once again, finalsclub.org is a non-profit, open source, open education project that invites contributions from all members of the academic community.  If you are interested in contributing or managing the content your students generate, please follow this link to create your account:
 
 http://<%- serverHost %>/activate/<%- user._id %>
 
-Thank you!
+Of course, if you have any questions, comments, or concerns, please do not hesitate to email us at info@finalsclub.org and we will reply as quickly as possible.  Thank you for your helping us improve educational access, one lecture at a time.  
+
+Sincerest Regards,
+Andrew Magliozzi
+Founder, FinalsClub.org

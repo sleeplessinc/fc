@@ -373,6 +373,7 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 	var school = req.school;
 	var course = new Course;
 	var instructorEmail = req.body.email;
+	var instructorName = req.body.instructorName;
 
 	if( ( ! school ) || ( ! school.authorized ) ) {
 		res.redirect( '/schools' );
@@ -394,6 +395,7 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
     if ( !user ) {
       var user          = new User;
 
+			user.name					= instructorName
       user.email        = instructorEmail;
 			user.affil        = 'Instructor';
 
@@ -411,11 +413,12 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 					var message = {
 						to					: user.email,
 
-						'subject'		: 'You have been registered as a course instructor on FinalsClub.org!',
+						'subject'		: 'Welcome to FinalsClub.org',
 	
 						'template'	: 'instructorInvite',
 						'locals'		: {
 							'course'			: course,
+							'school'			: school,
 							'user'				: user,
 							'serverHost'	: serverHost
 						}
