@@ -92,6 +92,6 @@ div#wrapper
 				span.userAffil ${ userAffil }
 
 	div#editor
-		iframe( id = 'epliframe', src = 'http://#{ host }:9001/p/#{ note._id }', width = '100%', height = '100%', style = 'border: none;' )
+		iframe( id = 'epliframe', src = 'http://#{ host }:9001/p/#{ note._id }?showChat=false&userName=#{ user.name }', width = '100%', height = '100%', style = 'border: none;' )
 
 	div( style = 'clear: both; height: 1px;' )

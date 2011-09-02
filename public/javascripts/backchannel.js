@@ -161,7 +161,6 @@ $(document).ready(function(){
       refreshRO();
     }, 10*1000)
   } else if (RO === true) {
-    console.log('test')
     $('#editor').empty().append('<div class="readonly"></div>');
     $('#editor').css('overflow-y', 'auto')
     refreshRO();
@@ -308,7 +307,6 @@ $(document).ready(function(){
   socket.on('connect', function(){
     socket.emit('subscribe', lectureID, function(_posts) {
       posts = _posts;
-      console.log(posts)
       renderPosts(true);
     });
   });
