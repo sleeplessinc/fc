@@ -69,5 +69,23 @@ cd /usr/bin
 ln -sf /usr/local/bin/node .
 ln -sf /usr/local/bin/forever .
 
+
+
+## haproxy install (optional) 
+# assumes this script is running as root
+mkdir /usr/local/haproxy
+cd /usr/local/haproxy
+wget http://haproxy.1wt.eu/download/1.4/bin/haproxy-1.4.17-pcre-40kses-linux-i586.notstripped.gz
+gunzip haproxy-1.4.17-pcre-40kses-linux-i586.notstripped.gz
+ln -sf haproxy-1.4.17-pcre-40kses-linux-i586.notstripped haproxy
+chmod 770 haproxy*
+wget https://s3.amazonaws.com/finalsclub.org/haproxy.cfg 
+chmod 660 haproxy.cfg
+
+## command to start haproxy (from /usr/local/haproxy dir)
+#  sudo /usr/local/haproxy/haproxy -f /usr/local/haproxy/haproxy.cfg -p /var/run/haproxy.pid &
+
+
+
 curl https://s3.amazonaws.com/finalsclub.org/start.sh | sudo -u ec2-user sh
 
