@@ -39,10 +39,9 @@ var sqlClient = mysql.createClient({
 	host	 : process.env.MYSQL_DB_HOSTNAME || 'localhost',
 	user     : process.env.MYSQL_DB_USER || 'root',
 	password : process.env.MYSQL_DB_PASS || 'root',
-	port	 : process.env.MYSQL_DB_PORT || 3306
+	port	 : process.env.MYSQL_DB_PORT || 3306,
+	database : 'fcstatic',
 })
-
-sqlClient.query( 'USE fcstatic' );
 
 // Configuration
 
