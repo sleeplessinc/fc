@@ -45,7 +45,7 @@ var sqlClient = mysql.createClient({
 
 // Configuration
 
-var ADMIN_EMAIL = 'jacob.chapel@gmail.com';
+var ADMIN_EMAIL = 'info@finalsclub.org';
 
 var serverHost = process.env.SERVER_HOST;
 var serverPort = process.env.SERVER_PORT;
