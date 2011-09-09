@@ -45,7 +45,7 @@ var sqlClient = mysql.createClient({
 
 // Configuration
 
-var ADMIN_EMAIL = 'info@finalsclub.org';
+var ADMIN_EMAIL = 'jacob.chapel@gmail.com';
 
 var serverHost = process.env.SERVER_HOST;
 var serverPort = process.env.SERVER_PORT;
@@ -954,14 +954,17 @@ app.post( '/register', function( req, res ) {
 			School.findOne( { 'hostnames' : hostname }, function( err, school ) {
 				if( school ) {
 					log3('school recognized '+school.name);
+					if (!school.users) school.users = [];
 					school.users.push( user._id );
 
 					school.save( function( err ) {
 						log3('school.save() done');
-						req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network. Please check your email from the activation link' );
+						req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network. Please check your email for the activation link' );
+						res.redirect( '/' );
 					});
 				} else {
 					req.flash( 'info', 'Your account has been created, please check your email for the activation link' )
+					res.redirect( '/' );
 					var message = {
 						'to'       : ADMIN_EMAIL,
 
@@ -982,7 +985,6 @@ app.post( '/register', function( req, res ) {
 					})
 				}
 
-				res.redirect( '/' );
 			});
 		}
 
