@@ -730,7 +730,8 @@ app.get( '/note/:id', loadUser, loadNote, function( req, res ) {
 // static pages
 
 app.get( '/about', loadUser, function( req, res ) {
-  res.render( 'static/about' );
+  res.redirect( 'http://blog.finalsclub.org/about.html' );
+  //res.render( 'static/about' );
 });
 
 app.get( '/press', loadUser, function( req, res ) {
@@ -741,12 +742,14 @@ app.get( '/conduct', loadUser, function( req, res ) {
   res.render( 'static/conduct' );
 });
 
-app.get( '/terms', loadUser, function( req, res ) {
-  res.render( 'static/terms' );
+app.get( '/legal', loadUser, function( req, res ) {
+  res.redirect( 'http://blog.finalsclub.org/legal.html' );
+  //res.render( 'static/legal' );
 });
 
 app.get( '/contact', loadUser, function( req, res ) {
-	res.render( 'static/contact' );
+  res.redirect( 'http://blog.finalsclub.org/contact.html' );
+	//res.render( 'static/contact' );
 });
 
 app.get( '/privacy', loadUser, function( req, res ) {
@@ -1154,7 +1157,7 @@ function loadSubject( req, res, next ) {
 			'SELECT name FROM subjects WHERE id = '+req.id,
 			function( err, results ) {
 				if ( err ) {
-					req.flash( 'err', 'Subject with this ID does not exist' )
+					req.flash( 'error', 'Subject with this ID does not exist' )
 					res.redirect( '/archive' );
 				} else {
 					req.subject = results[0];
@@ -1173,7 +1176,7 @@ function loadOldCourse( req, res, next ) {
 			'SELECT name, description, section, instructor_name FROM courses WHERE id = '+req.id,
 			function( err, results ) {
 				if ( err ) {
-					req.flash( 'err', 'Course with this ID does not exist' )
+					req.flash( 'error', 'Course with this ID does not exist' )
 					res.redirect( '/archive' );
 				} else {
 					req.course = results[0];
@@ -1191,7 +1194,7 @@ var featuredCourses = [
 	{name: 'Justice', 'id': 797},
 	{name: 'Protest Literature', 'id': 1681},
 	{name: 'Animal Cognition', 'id': 681},
-	{name: 'Life Sciences', 'id': 1793},
+	{name: 'Positive Psychology', 'id': 1793},
 	{name: 'Social Psychology', 'id': 660},
 	{name: 'The Book from Gutenberg to the Internet', 'id': 1439},
 	{name: 'Cyberspace in Court', 'id': 1446},
@@ -1216,7 +1219,7 @@ app.get( '/archive', loadUser, function( req, res ) {
 	sqlClient.query(
 		'SELECT id, name FROM subjects WHERE id in (SELECT c.subject_id FROM courses c WHERE c.id in (SELECT course_id FROM notes WHERE course_id = c.id)) ORDER BY name', function( err, results ) {
 			if ( err ) {
-				req.flash( 'error', 'There are no archived courses' );
+				req.flash( 'error', 'There was a problem gathering the archived courses, please try again later.' );
 				res.redirect( '/' );
 			} else {
 				res.render( 'archive/index', { 'subjects' : results } );
