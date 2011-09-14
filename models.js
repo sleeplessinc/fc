@@ -24,6 +24,7 @@ var UserSchema = new Schema( {
 	school					: String,
 	name						: String,
 	affil						: String,
+  created         : { type : Date, default : Date.now },
 	hashed					: String,
 	activated				: Boolean,
 	activateCode		: String,
@@ -125,6 +126,7 @@ var SchoolSchema = new Schema( {
 	description	: String,
 	url					: String,
 
+  created     : { type : Date, default : Date.now },
 	hostnames		: Array,
 
 	users				: Array
@@ -142,11 +144,13 @@ var CourseSchema = new Schema( {
 	name				: { type : String, required : true },
 	number			: String,
 	description	: String,
-  instructor  : String,
+  instructor  : ObjectId,
 	// courses are tied to one school
 	school			: ObjectId,
 
 	// XXX: room for additional resources
+  created     : { type : Date, default : Date.now },
+  creator     : ObjectId,
 
 	// many users may subscribe to a course
 	users				: Array
@@ -201,6 +205,7 @@ var LectureSchema	= new Schema( {
 	name					: { type : String, required : true },
 	date					: { type : Date, default: Date.now },
 	live					: Boolean,
+  creator       : ObjectId,
 
 	course				: ObjectId
 });
@@ -227,6 +232,8 @@ var NoteSchema = new Schema( {
   public        : Boolean,
   roID          : String,
 	visits				: Number,
+  created         : { type : Date, default : Date.now },
+  creator       : ObjectId,
 
 	lecture				: ObjectId,
 

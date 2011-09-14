@@ -3,4 +3,10 @@ The following user created new course: <%= course.name %>
 Name: <%= user.name %>
 Email: <%= user.email %>
 
-Course instructor listed as: <%= course.instructor %>
+Course instructor listed as: <%= instructor.name %>
+
+If you wish to remove this course manually, you can do so by using this link:
+
+http://<%- serverHost %>/course/<%= course._id %>/delete
+
+This does not have any confirmation, if you are logged in, it will delete it.

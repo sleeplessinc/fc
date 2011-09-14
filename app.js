@@ -33,6 +33,8 @@ var Course	= mongoose.model( 'Course' );
 var Lecture	= mongoose.model( 'Lecture' );
 var Note		= mongoose.model( 'Note' );
 
+var ObjectId	= mongoose.SchemaTypes.ObjectId;
+
 // Mysql Init
 
 var sqlClient = mysql.createClient({
@@ -45,7 +47,7 @@ var sqlClient = mysql.createClient({
 
 // Configuration
 
-var ADMIN_EMAIL = 'info@finalsclub.org';
+var ADMIN_EMAIL = process.env.DEV_EMAIL || 'info@finalsclub.org';
 
 var serverHost = process.env.SERVER_HOST;
 var serverPort = process.env.SERVER_PORT;
@@ -387,7 +389,7 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 	course.name					= req.body.name;
 	course.description	= req.body.description;
 	course.school				= school._id;
-  course.instructor		= instructorEmail;
+  course.creator      = req.user._id;
 
 	// find our instructor or invite them if necessary
   User.findOne( { 'email' : instructorEmail }, function( err, user ) {
@@ -407,7 +409,7 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
       user.save(function( err ) {
         if ( err ) {
           req.flash( 'error', 'Invalid parameters!' )
-          res.render( 'course/new' );
+          return res.render( 'course/new' );
         } else {
 					var message = {
 						to					: user.email,
@@ -431,12 +433,13 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 						}
 					});
 
+          course.instructor = user._id;
 					course.save( function( err ) {
 						if( err ) {
 							// XXX: better validation
 							req.flash( 'error', 'Invalid parameters!' );
 
-							res.render( 'course/new' );
+							return res.render( 'course/new' );
 						} else {
 							var message = {
 								to					: ADMIN_EMAIL,
@@ -446,6 +449,7 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 								'template'	: 'newCourse',
 								'locals'		: {
 									'course'			: course,
+                  'instructor'  : user,
 									'user'				: req.user,
 									'serverHost'	: serverHost
 								}
@@ -465,13 +469,35 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 			})
 		} else {
 			if (user.affil === 'Instructor') {
+        course.instructor = user._id;
 				course.save( function( err ) {
 					if( err ) {
 						// XXX: better validation
 						req.flash( 'error', 'Invalid parameters!' );
 
-						res.render( 'course/new' );
+						return res.render( 'course/new' );
 					} else {
+						var message = {
+							to					: ADMIN_EMAIL,
+
+							'subject'		: school.name+' has a new course: '+course.name,
+					
+							'template'	: 'newCourse',
+							'locals'		: {
+								'course'			: course,
+                'instructor'  : user,
+								'user'				: req.user,
+								'serverHost'	: serverHost
+							}
+						};
+
+						mailer.send( message, function( err, result ) {
+							if ( err ) {
+								console.log( 'Error sending new course email to info@finalsclub.org' )
+							} else {
+								console.log( 'Successfully invited instructor to course')
+							}
+						})
 						res.redirect( '/schools' );
 					}
 				});
@@ -492,7 +518,9 @@ app.get( '/course/:id', loadUser, loadCourse, function( req, res ) {
 
 	// pull out our lectures
 	Lecture.find( { 'course' : course._id } ).sort( 'name', '1' ).run( function( err, lectures ) {
-		res.render( 'course/index', { 'course' : course, 'subscribed' : subscribed, 'lectures' : lectures } );
+    User.findById( course.instructor, function( err, instructor ) {
+      res.render( 'course/index', { 'course' : course, 'instructor': instructor, 'subscribed' : subscribed, 'lectures' : lectures } );
+    })
 	});
 });
 
@@ -563,6 +591,7 @@ app.post( '/course/:id/lecture/new', loadUser, loadCourse, function( req, res ) 
 	lecture.name		= req.body.name;
 	lecture.date		= req.body.date;
 	lecture.course	= course._id;
+  lecture.creator = req.user._id;
 
 	lecture.save( function( err ) {
 		if( err ) {
@@ -584,22 +613,25 @@ app.get( '/lecture/:id', loadUser, loadLecture, function( req, res ) {
 	// grab the associated course (this should be done with DBRefs eventually )
 	Course.findById( lecture.course, function( err, course ) {
 		if( course ) {
-			// pull out our notes
-			Note.find( { 'lecture' : lecture._id } ).sort( 'name', '1' ).run( function( err, notes ) {
-				if ( !req.user.loggedIn || !req.lecture.authorized ) {
-					notes = notes.filter(function( note ) {
-						if ( note.public ) return note;
-					})
-				}
-				res.render( 'lecture/index', {
-					'lecture'			: lecture,
-					'course'			: course,
-					'notes'				: notes,
-					'counts'			: counts,
+      User.findById( course.instructor, function( err, instructor ) {
+        // pull out our notes
+        Note.find( { 'lecture' : lecture._id } ).sort( 'name', '1' ).run( function( err, notes ) {
+          if ( !req.user.loggedIn || !req.lecture.authorized ) {
+            notes = notes.filter(function( note ) {
+              if ( note.public ) return note;
+            })
+          }
+          res.render( 'lecture/index', {
+            'lecture'			: lecture,
+            'course'			: course,
+            'instructor'  : instructor,
+            'notes'				: notes,
+            'counts'			: counts,
 
-					'javascripts'	: [ 'counts.js' ]
-				});
-			});
+            'javascripts'	: [ 'counts.js' ]
+          });
+        });
+      })
 		} else {
 			// with DBRefs we will be able to reassign orphaned courses/lecture/pads
 
@@ -640,6 +672,7 @@ app.post( '/lecture/:id/notes/new', loadUser, loadLecture, function( req, res ) 
 	note.date			= req.body.date;
 	note.lecture	= lecture._id;
 	note.public		= req.body.private ? false : true;
+  note.creator  = req.user._id;
 
 	note.save( function( err ) {
 		if( err ) {
