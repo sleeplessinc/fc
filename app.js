@@ -380,7 +380,7 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 		res.redirect( '/schools' );
 	}
 
-  if (!instructorEmail) {
+  if ( !instructorEmail || !instructorName ) {
     req.flash( 'error', 'Invalid parameters!' )
     return res.render( 'course/new' );
   }

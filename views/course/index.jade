@@ -2,7 +2,11 @@ div.content
 	div.container1
 
 		h1 #{ course.displayName }
-		p Instructor: #{ instructor.name }
+		- if ( course.authorized )
+			p Instructor: 
+				a( href = 'mailto:#{ instructor.email }' ) #{ instructor.name }
+		- else
+			p Instructor: #{ instructor.name }
 
 		hr
 
