@@ -125,7 +125,7 @@ function sendUserActivation( user ) {
 	var message = {
 		'to'				: user.email,
 
-		'subject'		: 'Welcome to FinalsClub.org!',
+		'subject'		: 'Activate your FinalsClub.org Account',
 
 		'template'	: 'userActivation',
 		'locals'		: {
@@ -145,6 +145,30 @@ function sendUserActivation( user ) {
 	});
 }
 
+function sendUserWelcome( user, school ) {
+  var template = school ? 'userWelcome' : 'userWelcomeNoSchool';
+	var message = {
+		'to'				: user.email,
+
+		'subject'		: 'Welcome to FinalsClub',
+
+		'template'	: template,
+		'locals'		: {
+			'user'				: user,
+			'serverHost'	: serverHost
+		}
+	};
+
+	mailer.send( message, function( err, result ) {
+		if( err ) {
+			// XXX: Add route to resend this email
+
+			console.log( 'Error sending user welcome email\nError Message: '+err.Message );
+		} else {
+			console.log( 'Successfully sent user welcome email.' );
+		}
+	});
+}
 // Middleware
 
 function loggedIn( req, res, next ) {
@@ -329,8 +353,6 @@ app.get( '/', loadUser, function( req, res ) {
 app.get( '/schools', loadUser, function( req, res ) {
 	var user = req.user;
 
-	log3("get /schools page");
-
 	// mongoose's documentation on sort is extremely poor, tread carefully
 	School.find( {} ).sort( 'name', '1' ).run( function( err, schools ) {
 		if( schools ) {
@@ -399,6 +421,7 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 			user.name					= instructorName
       user.email        = instructorEmail;
 			user.affil        = 'Instructor';
+      user.school       = school.name;
 
       user.activated    = false;
       
@@ -414,7 +437,7 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 					var message = {
 						to					: user.email,
 
-						'subject'		: 'Welcome to FinalsClub.org',
+						'subject'		: 'A non-profit open education initiative',
 	
 						'template'	: 'instructorInvite',
 						'locals'		: {
@@ -529,9 +552,11 @@ app.get( '/course/:id/delete', loadUser, loadCourse, function( req, res) {
 	var user = req.user;
 
 	if ( user.admin ) {
-		course.remove();
-		req.flash( 'info', 'Successfully removed course' )
-		res.redirect( '/schools' );
+		course.delete(function( err ) {
+      if ( err ) req.flash( 'info', 'There was a problem removing course: ' + err )
+      else req.flash( 'info', 'Successfully removed course' )
+      res.redirect( '/schools' );
+    });
 	} else {
 		req.flash( 'error', 'You don\'t have permission to do that' )
 		res.redirect( '/schools' );
@@ -989,6 +1014,7 @@ app.post( '/register', function( req, res ) {
 
 			School.findOne( { 'hostnames' : hostname }, function( err, school ) {
 				if( school ) {
+          sendUserWelcome( user, true );
 					log3('school recognized '+school.name);
 					if (!school.users) school.users = [];
 					school.users.push( user._id );
@@ -998,7 +1024,18 @@ app.post( '/register', function( req, res ) {
 						req.flash( 'info', 'You have automatically been added to the ' + school.name + ' network. Please check your email for the activation link' );
 						res.redirect( '/' );
 					});
+					var message = {
+						'to'       : ADMIN_EMAIL,
+
+						'subject'  : 'FC User Registration : User added to ' + school.name,
+
+						'template' : 'userNoSchool',
+						'locals'   : {
+							'user'   : user
+						}
+					}
 				} else {
+          sendUserWelcome( user, false );
 					req.flash( 'info', 'Your account has been created, please check your email for the activation link' )
 					res.redirect( '/' );
 					var message = {
@@ -1006,11 +1043,12 @@ app.post( '/register', function( req, res ) {
 
 						'subject'  : 'FC User Registration : Email did not match any schools',
 
-						'template' : 'userNoSchool',
+						'template' : 'userSchool',
 						'locals'   : {
 							'user'   : user
 						}
 					}
+				}
 					mailer.send( message, function( err, result ) {
 						if ( err ) {
 					
@@ -1019,7 +1057,6 @@ app.post( '/register', function( req, res ) {
 							console.log( 'Successfully sent user has no school email to admin.' );
 						}
 					})
-				}
 
 			});
 		}

@@ -37,8 +37,8 @@ Mailer.prototype.send = function( msg, callback ) {
 
 	var params = {
 		'Destination.ToAddresses.member.1'	: msg.to,
-		'Message.Body.Text.Charset'					: 'UTF-8',
-		'Message.Body.Text.Data'						: msg.body,
+		'Message.Body.Html.Charset'					: 'UTF-8',
+		'Message.Body.Html.Data'						: msg.body,
 		'Message.Subject.Charset'						: 'UTF-8',
 		'Message.Subject.Data'							: msg.subject,
 		'Source'										: 'FinalsClub.org <info@finalsclub.org>'
