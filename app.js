@@ -412,6 +412,8 @@ app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 	course.description	= req.body.description;
 	course.school				= school._id;
   course.creator      = req.user._id;
+  course.subject      = req.body.subject;
+  course.department   = req.body.department;
 
 	// find our instructor or invite them if necessary
   User.findOne( { 'email' : instructorEmail }, function( err, user ) {
@@ -1029,7 +1031,7 @@ app.post( '/register', function( req, res ) {
 
 						'subject'  : 'FC User Registration : User added to ' + school.name,
 
-						'template' : 'userNoSchool',
+						'template' : 'userSchool',
 						'locals'   : {
 							'user'   : user
 						}
@@ -1043,7 +1045,7 @@ app.post( '/register', function( req, res ) {
 
 						'subject'  : 'FC User Registration : Email did not match any schools',
 
-						'template' : 'userSchool',
+						'template' : 'userNoSchool',
 						'locals'   : {
 							'user'   : user
 						}

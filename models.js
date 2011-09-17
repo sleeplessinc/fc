@@ -145,6 +145,8 @@ var CourseSchema = new Schema( {
 	number			: String,
 	description	: String,
   instructor  : ObjectId,
+  subject     : String,
+  department  : String,
 	// courses are tied to one school
 	school			: ObjectId,
 
@@ -195,6 +197,14 @@ CourseSchema.method( 'unsubscribe', function( user, callback ) {
 	Course.collection.update( { '_id' : id }, { '$pull' : { 'users' : user } }, function( err ) {
 		callback( err );
 	});
+});
+
+CourseSchema.method( 'delete', function( callback ) {
+  var id = this._id;
+
+  Course.collection.update( { '_id' : id }, { '$set' : { 'deleted' : true } }, function( err ) {
+    callback( err );
+  })
 });
 
 var Course = mongoose.model( 'Course', CourseSchema );
@@ -279,5 +289,75 @@ var PostSchema = new Schema({
 })
 
 mongoose.model( 'Post', PostSchema );
+
+
+// Deleted documents
+
+var DeletedCourse = new Schema( {
+	name				: { type : String, required : true },
+	number			: String,
+	description	: String,
+  instructor  : ObjectId,
+	// courses are tied to one school
+	school			: ObjectId,
+
+	// XXX: room for additional resources
+  created     : { type : Date, default : Date.now },
+  creator     : ObjectId,
+
+	// many users may subscribe to a course
+	users				: Array
+});
+
+
+mongoose.model( 'DeletedCourse', DeletedCourse )
+
+var DeletedLecture = new Schema( {
+	name					: { type : String, required : true },
+	date					: { type : Date, default: Date.now },
+	live					: Boolean,
+  creator       : ObjectId,
+
+	course				: ObjectId
+});
+
+
+mongoose.model( 'DeletedLecture', DeletedLecture )
+
+var DeletedNote = new Schema( {
+	name					: { type : String, required : true },
+	path					: String,
+  public        : Boolean,
+  roID          : String,
+	visits				: Number,
+  created         : { type : Date, default : Date.now },
+  creator       : ObjectId,
+
+	lecture				: ObjectId,
+
+	collaborators : [String]
+});
+
+
+mongoose.model( 'DeletedNote', DeletedNote )
+
+var DeletedPost = new Schema({
+  date      : { type : Date, default : Date.now },
+  body      : String,
+  votes     : [String],
+  reports   : [String],
+  public    : Boolean,
+
+  userid    : String, // ObjectId,
+  userName  : String,
+  userAffil : String,
+
+  comments   : Array,
+
+  lecture   : String // ObjectId
+})
+
+
+mongoose.model( 'DeletedPost', DeletedPost )
 
 module.exports.mongoose = mongoose;
