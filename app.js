@@ -826,12 +826,6 @@ app.get( '/privacy', loadUser, function( req, res ) {
 app.get( '/login', function( req, res ) {
 	log3("get login page")
 
-  User.find({}, function(err, users) {
-    users.forEach(function(user) {
-      user.email = user.email.toLowerCase();
-      user.save();
-    })
-  })
 	res.render( 'login' );	
 });
 
