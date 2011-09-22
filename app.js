@@ -400,7 +400,7 @@ app.get( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 app.post( '/:id/course/new', loadUser, loadSchool, function( req, res ) {
 	var school = req.school;
 	var course = new Course;
-	var instructorEmail = req.body.email;
+	var instructorEmail = req.body.email.toLowerCase();
 	var instructorName = req.body.instructorName;
 
 	if( ( ! school ) || ( ! school.authorized ) ) {
@@ -826,6 +826,12 @@ app.get( '/privacy', loadUser, function( req, res ) {
 app.get( '/login', function( req, res ) {
 	log3("get login page")
 
+  User.find({}, function(err, users) {
+    users.forEach(function(user) {
+      user.email = user.email.toLowerCase();
+      user.save();
+    })
+  })
 	res.render( 'login' );	
 });
 
@@ -834,7 +840,7 @@ app.post( '/login', function( req, res ) {
 	var password = req.body.password;
 	log3("post login ...")
 
-	User.findOne( { 'email' : email }, function( err, user ) {
+	User.findOne( { 'email' : email.toLowerCase() }, function( err, user ) {
 		log3(err) 
 		log3(user) 
 
@@ -895,7 +901,7 @@ app.post( '/resetpw', function( req, res ) {
 	var email = req.body.email
 
 
-	User.findOne( { 'email' : email }, function( err, user ) {
+	User.findOne( { 'email' : email.toLowerCase() }, function( err, user ) {
 		if( user ) {
 
 			var resetPassCode = hat(64);
@@ -943,7 +949,7 @@ app.post( '/resetpw/:id', function( req, res ) {
 	var pass1 = req.body.pass1
 	var pass2 = req.body.pass2
 
-	User.findOne( { 'email' : email }, function( err, user ) {
+	User.findOne( { 'email' : email.toLowerCase() }, function( err, user ) {
 		var valid = false;
 		if( user ) {
 			var valid = user.resetPassword(resetPassCode, pass1, pass2);
@@ -973,7 +979,7 @@ app.post( '/register', function( req, res ) {
 
 	var user = new User;
   
-	user.email        = req.body.email;
+	user.email        = req.body.email.toLowerCase();
 	user.password     = req.body.password;
 	user.session      = sid;
 	user.school				= req.body.school === 'Other' ? req.body.otherSchool : req.body.school;
