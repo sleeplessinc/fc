@@ -3,7 +3,7 @@ div.content
 		- course.section = course.section.replace(/\)/, '')
 		h1 #{ course.section + ' - ' + course.name }
 		p
-			| Instructor: #{ course.instructor_name }
+			| Instructor: #{ course.instructor }
 		p
 			#{ course.description }
 		ul

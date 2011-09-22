@@ -360,4 +360,31 @@ var DeletedPost = new Schema({
 
 mongoose.model( 'DeletedPost', DeletedPost )
 
+
+var ArchivedCourse = new Schema({
+  id: Number,
+  instructor: String,
+  section: String,
+  name: String,
+  description: String,
+  subject_id: Number
+})
+
+mongoose.model( 'ArchivedCourse', ArchivedCourse )
+
+var ArchivedNote = new Schema({
+  course_id: Number,
+  topic: String,
+  text: String
+})
+
+mongoose.model( 'ArchivedNote', ArchivedNote )
+
+var ArchivedSubject = new Schema({
+  id: Number,
+  name: String
+})
+
+mongoose.model( 'ArchivedSubject', ArchivedSubject )
+
 module.exports.mongoose = mongoose;
